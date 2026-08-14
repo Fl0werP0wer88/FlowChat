@@ -4,22 +4,20 @@ using FlowChat.ChatService.Consumers.Configuration.Settings;
 using FlowChat.ChatService.Consumers.Kafka.Projections;
 using FlowChat.ChatService.Infrastructure;
 using FlowChat.ChatService.Persistence;
-using FlowChat.ChatService.Persistence.BulkUpsert.Projections;
-using FlowChat.ChatService.Persistence.Entities;
+using FlowChat.ChatService.Persistence.Projections;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Single;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
+using Silverback.Messaging.Configuration;
 
 namespace FlowChat.ChatService.Consumers;
 
 public static class ConsumersServiceRegistration
 {
-    internal const string UserProfileMainConsumerName = "user-profile-main";
-    internal const string UserProfileRetryConsumerName = "user-profile-retry";
-
     public static IServiceCollection AddConsumers(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -38,23 +36,18 @@ public static class ConsumersServiceRegistration
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .AddProjectionBulk(
-                consumerOptions,
-                UserProfileMainConsumerName,
-                UserProfileRetryConsumerName,
-                bulkBuilder => bulkBuilder
-                    .AddRepository<
-                        AppDbContext,
-                        UserProfileProjectionDto,
-                        UserProfileReadModelEntity,
-                        UserProfileProjectionBulkEntityFactory>()
-                    .AddCommandHandler<UserProfileProjectionDto>()
-                    .AddConsumer<
-                        AppDbContext,
-                        UserProfileReadModel,
-                        UserProfileProjectionDto,
-                        Guid,
-                        UserProfileProjectionValueFactory>());
+            .AddFlowChatTieredRetryConsumerPipeline<AppDbContext>(
+                consumerOptions.BootstrapServers,
+                [consumerOptions])
+            .WithConnectionToMessageBroker(options => options
+                .AddKafka()
+                .AddEntityFrameworkKafkaOffsetStore()
+                .AddEntityFrameworkOutbox())
+            .AddProjectionSingle<
+                UserProfileReadModel,
+                UserProfileProjectionDto,
+                UserProfileProjectionRepository,
+                UserProfileProjectionSubscriber>();
 
         return services;
     }

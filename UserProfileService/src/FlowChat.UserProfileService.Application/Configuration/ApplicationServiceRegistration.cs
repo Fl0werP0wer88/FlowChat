@@ -84,7 +84,7 @@ internal static class CommonApplicationServiceRegistration
         where TResponse : notnull
     {
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<TCommand, DomainUserProfile>,
+            IAggregateBeforeSaveProcessorV2<TCommand, DomainUserProfile>,
             UserProfileProjectionProcessor<TCommand>>();
 
         return services;

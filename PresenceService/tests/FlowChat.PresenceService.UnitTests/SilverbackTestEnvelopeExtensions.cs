@@ -14,6 +14,7 @@ internal static class SilverbackTestEnvelopeExtensions
     {
         var envelopeMock = new Mock<IInboundEnvelope<TMessage>>();
         envelopeMock.SetupGet(envelope => envelope.Message).Returns(message);
+        envelopeMock.SetupGet(envelope => envelope.Headers).Returns(new MessageHeaderCollection(0));
         envelopeMock
             .SetupGet(envelope => envelope.Endpoint)
             .Returns(new KafkaConsumerEndpoint(

@@ -15,10 +15,11 @@ public abstract class AggregateRootUpdateCommandHandlerBaseV3<TCommand, TRespons
     protected AggregateRootUpdateCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
         : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
     {
     }
 
-    protected void SetUpdated() => SetMutationType(MutationType.Updated);
+    protected static FlowChatResult<AggregateMutation<TResponse>> Updated(TResponse response) =>
+        Mutation(MutationType.Updated, response);
 }

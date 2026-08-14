@@ -1,0 +1,164 @@
+using FlowChat.Core.Exceptions;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
+using FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
+using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
+using Moq;
+using Silverback.Messaging.Broker;
+using Silverback.Messaging.Broker.Behaviors;
+using Silverback.Messaging.Messages;
+using Silverback.Messaging.Sequences;
+
+namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry.Behaviors;
+
+public sealed class DelayedRetryConsumerBehaviorTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 7, 31, 12, 0, 0, TimeSpan.Zero);
+    private readonly TestTieredRetryKafkaConsumerSettingsSection _settings =
+        TestTieredRetryKafkaConsumerSettingsSection.Create();
+    private readonly Mock<IKafkaRetryPartitionController> _partitionController = new();
+    private readonly FakeTimeProvider _timeProvider = new(Now);
+
+    [Fact]
+    public async Task HandleAsync_DueRetry_InvokesNextImmediately()
+    {
+        var context = CreateContext(1, Now.AddSeconds(-1).ToString("O"));
+        var nextCalled = false;
+
+        await CreateBehavior().HandleAsync(
+            context,
+            (_, _) =>
+            {
+                nextCalled = true;
+                return ValueTask.CompletedTask;
+            },
+            CancellationToken.None);
+
+        nextCalled.Should().BeTrue();
+        _partitionController.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task HandleAsync_FutureRetry_PausesAndResumesOnlySourcePartition()
+    {
+        var context = CreateContext(2, Now.AddMinutes(1).ToString("O"));
+        _partitionController.Setup(x => x.IsAssigned(context.Consumer, It.IsAny<Confluent.Kafka.TopicPartition>()))
+            .Returns(true);
+        var nextCalled = false;
+
+        var handling = CreateBehavior().HandleAsync(
+            context,
+            (_, _) =>
+            {
+                nextCalled = true;
+                return ValueTask.CompletedTask;
+            },
+            CancellationToken.None).AsTask();
+
+        _partitionController.Verify(
+            x => x.Pause(context.Consumer, It.Is<Confluent.Kafka.TopicPartition>(p => p.Partition.Value == 2)),
+            Times.Once);
+        nextCalled.Should().BeFalse();
+
+        _timeProvider.Advance(TimeSpan.FromMinutes(1));
+        await handling;
+
+        nextCalled.Should().BeTrue();
+        _partitionController.Verify(
+            x => x.Resume(context.Consumer, It.Is<Confluent.Kafka.TopicPartition>(p => p.Partition.Value == 2)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_PartitionRevokedDuringDelay_DoesNotResumePartition()
+    {
+        var context = CreateContext(1, Now.AddMinutes(1).ToString("O"));
+        _partitionController.Setup(x => x.IsAssigned(context.Consumer, It.IsAny<Confluent.Kafka.TopicPartition>()))
+            .Returns(false);
+
+        var handling = CreateBehavior().HandleAsync(
+            context,
+            (_, _) => ValueTask.CompletedTask,
+            CancellationToken.None).AsTask();
+
+        _timeProvider.Advance(TimeSpan.FromMinutes(1));
+        await handling;
+
+        _partitionController.Verify(
+            x => x.Resume(It.IsAny<IConsumer>(), It.IsAny<Confluent.Kafka.TopicPartition>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_CanceledDelay_DoesNotResumeOrInvokeNext()
+    {
+        var context = CreateContext(0, Now.AddMinutes(1).ToString("O"));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        var action = async () => await CreateBehavior().HandleAsync(
+            context,
+            (_, _) => throw new InvalidOperationException("next must not be called"),
+            cancellation.Token);
+
+        await action.Should().ThrowAsync<OperationCanceledException>();
+        _partitionController.Verify(x => x.Pause(context.Consumer, It.IsAny<Confluent.Kafka.TopicPartition>()), Times.Once);
+        _partitionController.Verify(
+            x => x.Resume(It.IsAny<IConsumer>(), It.IsAny<Confluent.Kafka.TopicPartition>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(0, null)]
+    [InlineData(1, null)]
+    [InlineData(0, "invalid")]
+    public async Task HandleAsync_InvalidRetryAt_MarksEnvelopeAndContinues(int tierIndex, string? retryAt)
+    {
+        var context = CreateContext(tierIndex, retryAt);
+
+        var nextCalled = false;
+
+        await CreateBehavior().HandleAsync(
+            context,
+            (_, _) =>
+            {
+                nextCalled = true;
+                return ValueTask.CompletedTask;
+            },
+            CancellationToken.None);
+
+        nextCalled.Should().BeTrue();
+        context.Envelope.Headers.GetValue("flowchat-invalid-retry-metadata").Should().NotBeNullOrWhiteSpace();
+    }
+
+    private DelayedRetryConsumerBehavior CreateBehavior() =>
+        new(
+            new TieredKafkaRetryTopology([_settings]),
+            _timeProvider,
+            _partitionController.Object,
+            NullLogger<DelayedRetryConsumerBehavior>.Instance);
+
+    private ConsumerPipelineContext CreateContext(int tierIndex, string? retryAt)
+    {
+        var headers = new MessageHeaderCollection();
+        if (retryAt is not null)
+            headers.Add(RetryMessageHeaders.RetryAtUtc, retryAt);
+
+        var envelope = new Mock<IRawInboundEnvelope>();
+        envelope.SetupGet(x => x.Headers).Returns(headers);
+        envelope.SetupGet(x => x.BrokerMessageIdentifier)
+            .Returns(new KafkaOffset(_settings.RetryTiers[tierIndex].Topic, tierIndex, 42));
+
+        return new ConsumerPipelineContext(
+            envelope.Object,
+            Mock.Of<IConsumer>(),
+            Mock.Of<ISequenceStore>(),
+            [],
+            new ServiceCollection().BuildServiceProvider());
+    }
+
+}

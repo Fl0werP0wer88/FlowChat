@@ -33,7 +33,7 @@ public sealed class UnmuteConversationParticipantController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new UnmuteConversationParticipantCommand(conversationId, userId),
+            new UnmuteConversationParticipantCommandV2(conversationId, userId),
             cancellationToken);
 
         if (!result.IsSuccess)

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { GroupConversation } from "../types/chat";
@@ -15,6 +15,8 @@ import {
 } from "./caches/groupConversationCache";
 import { useSendGroupMessageMutation } from "./mutations/useSendGroupMessageMutation";
 import { useGroupConversationQuery } from "./queries/useGroupConversationQuery";
+import { mergeSequencedMessage } from "./caches/sequencedMessageCache";
+import { useConversationMessageSync } from "./useConversationMessageSync";
 
 export function useGroupChatMessages(activeGroupConversation: GroupConversation | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
@@ -30,12 +32,28 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     isLoading: isLoadingConversation,
     error: conversationQueryError,
   } = useGroupConversationQuery(activeGroupConversation, accessToken, ownerUserId);
+  const conversationQueryKey = useMemo(
+    () => ["groupConversation", activeGroupConversation?.conversationId] as const,
+    [activeGroupConversation?.conversationId],
+  );
+  const mapSynchronizedMessage = useCallback(
+    (message: Parameters<typeof mapGroupConversationMessage>[0]) =>
+      mapGroupConversationMessage(message, ownerUserId),
+    [ownerUserId],
+  );
+  const synchronizeMessages = useConversationMessageSync<GroupConversationCacheEntry>({
+    conversationId: conversationData?.conversationId ?? null,
+    queryKey: conversationQueryKey,
+    accessToken,
+    mapMessage: mapSynchronizedMessage,
+  });
 
   const sendMessageMutation = useSendGroupMessageMutation({
     accessToken,
     activeGroupConversationId: activeGroupConversation?.conversationId,
     ownerUserId,
     onError: (message) => toast.error(message),
+    onSequenceGap: () => void synchronizeMessages(),
   });
 
   const loadOlderMessages = useCallback(async () => {
@@ -47,7 +65,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
       "groupConversation",
       activeGroupConversation.conversationId,
     ]);
-    if (!current?.hasMore || !current.nextBeforeSentAtUtc || !current.nextBeforeMessageId) {
+    if (!current?.hasMore || current.nextBeforeSequenceNum === null) {
       return;
     }
 
@@ -57,10 +75,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     try {
       const result = await getGroupConversationMessages(
         current.conversationId,
-        {
-          beforeSentAtUtc: current.nextBeforeSentAtUtc,
-          beforeMessageId: current.nextBeforeMessageId,
-        },
+        current.nextBeforeSequenceNum,
         accessToken,
       );
 
@@ -79,8 +94,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
           return {
             ...cached,
             messages: sortGroupMessages([...olderMessages, ...cached.messages]),
-            nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
-            nextBeforeMessageId: result.nextBeforeMessageId,
+            nextBeforeSequenceNum: result.nextBeforeSequenceNum,
             hasMore: result.hasMore,
           };
         },
@@ -93,28 +107,26 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   }, [accessToken, activeGroupConversation, ownerUserId, queryClient]);
 
-  const messageReceived = (payload: ChatMessageReceivedEvent) => {
+  const messageReceived = async (
+    payload: ChatMessageReceivedEvent,
+  ): Promise<number | null> => {
     if (!conversationData || payload.conversationId !== conversationData.conversationId) {
-      return;
+      return null;
     }
 
+    let needsCatchUp = false;
+    let requiresRefetch = false;
     queryClient.setQueryData<GroupConversationCacheEntry>(
-      ["groupConversation", activeGroupConversation?.conversationId],
+      conversationQueryKey,
       (current) => {
         if (!current) {
           return current;
         }
 
-        if (current.messages.some((m) => m.id === payload.messageId)) {
-          return current;
-        }
-
         const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
-        return {
-          ...current,
-          messages: sortGroupMessages([
-            ...current.messages,
-            createGroupMessage(
+        const result = mergeSequencedMessage(
+          current,
+          createGroupMessage(
               sender,
               payload.text,
               payload.sentAtUtc,
@@ -123,10 +135,22 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
               payload.senderUserId,
               payload.sequenceNum,
             ),
-          ]),
-        };
+        );
+        needsCatchUp = result.needsCatchUp;
+        requiresRefetch = result.requiresRefetch;
+        return result.state;
       },
     );
+
+    if (requiresRefetch) {
+      await queryClient.invalidateQueries({ queryKey: conversationQueryKey });
+      return null;
+    }
+    if (needsCatchUp) {
+      return synchronizeMessages();
+    }
+    return queryClient.getQueryData<GroupConversationCacheEntry>(conversationQueryKey)
+      ?.lastContiguousSequenceNum ?? null;
   };
 
   const sendDraft = async (draft: string): Promise<boolean> => {
@@ -148,12 +172,19 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   };
 
-  const markActiveGroupConversationAsRead = useCallback(async (conversation?: GroupConversation) => {
+  const markActiveGroupConversationAsRead = useCallback(async (
+    conversation?: GroupConversation,
+    sequenceNum?: number,
+  ) => {
     const targetConversation = conversation ?? activeGroupConversation;
 
     if (!targetConversation || !accessToken) {
       return;
     }
+    const contiguousSequenceNum = sequenceNum
+      ?? queryClient.getQueryData<GroupConversationCacheEntry>(conversationQueryKey)
+        ?.lastContiguousSequenceNum
+      ?? 0;
 
     queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
       current.map((item) => {
@@ -163,19 +194,26 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
 
         return {
           ...item,
-          lastReadMsgSeqNum: item.currentMsgSeqNum,
-          unreadCount: calculateUnreadCount(item.currentMsgSeqNum, item.currentMsgSeqNum),
+          lastReadMsgSeqNum: Math.max(item.lastReadMsgSeqNum, contiguousSequenceNum),
+          unreadCount: calculateUnreadCount(
+            item.currentMsgSeqNum,
+            Math.max(item.lastReadMsgSeqNum, contiguousSequenceNum),
+          ),
         };
       }),
     );
 
     try {
-      await markConversationAsRead(targetConversation.conversationId, accessToken);
+      await markConversationAsRead(
+        targetConversation.conversationId,
+        contiguousSequenceNum,
+        accessToken,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udalo sie oznaczyc grupy jako przeczytanej.");
       void queryClient.invalidateQueries({ queryKey: ["groupConversations"] });
     }
-  }, [accessToken, activeGroupConversation, queryClient]);
+  }, [accessToken, activeGroupConversation, conversationQueryKey, queryClient]);
 
   return {
     messages: conversationData?.messages ?? [],
@@ -190,6 +228,9 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     sendDraft,
     loadOlderMessages,
     messageReceived,
+    synchronizeMessages,
+    messageSyncStatus: conversationData?.syncStatus ?? "idle",
+    lastContiguousSequenceNum: conversationData?.lastContiguousSequenceNum ?? 0,
     markActiveGroupConversationAsRead,
   };
 }

@@ -35,7 +35,7 @@ public sealed class SendChatMessageController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new SendChatMessageCommand(
+            new SendChatMessageCommandV2(
                 request.Id,
                 request.ConversationId,
                 userId,
@@ -47,7 +47,10 @@ public sealed class SendChatMessageController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new SendChatMessageResponse(result.Value.MessageId, result.Value.SentAtUtc);
+        var response = new SendChatMessageResponse(
+            result.Value.MessageId,
+            result.Value.SentAtUtc,
+            result.Value.SequenceNum);
         return StatusCode(StatusCodes.Status201Created, response);
     }
 }

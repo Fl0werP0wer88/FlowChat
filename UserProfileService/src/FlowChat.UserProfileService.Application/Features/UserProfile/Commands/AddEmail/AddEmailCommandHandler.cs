@@ -23,7 +23,7 @@ public sealed class AddEmailCommandHandler
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<AddEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<AddEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;
@@ -50,18 +50,17 @@ public sealed class AddEmailCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         AddEmailCommand request,
         CancellationToken cancellationToken)
     {
         if (await _userProfileReadRepository.EmailAddressExistsAsync(_normalizedEmailAddress!.Value, cancellationToken))
         {
-            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{_normalizedEmailAddress.Value}' is already taken."));
+            return Failure(DomainError.Conflict($"Email '{_normalizedEmailAddress.Value}' is already taken."));
         }
 
         var email = AggregateRoot!.AddEmail(Id<DomainEmail>.FromGuid(request.EmailId), _normalizedEmailAddress);
-        SetUpdated();
 
-        return FlowChatResult<Guid>.Success(email.Id.Value);
+        return Updated(email.Id.Value);
     }
 }

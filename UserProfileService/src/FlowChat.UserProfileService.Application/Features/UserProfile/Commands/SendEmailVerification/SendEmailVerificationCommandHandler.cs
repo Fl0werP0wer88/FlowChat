@@ -26,7 +26,7 @@ public sealed class SendEmailVerificationCommandHandler
         IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<SendEmailVerificationCommand, EmailVerificationProcess>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<SendEmailVerificationCommand, EmailVerificationProcess>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;
@@ -67,10 +67,11 @@ public sealed class SendEmailVerificationCommandHandler
         return FlowChatResult<EmailVerificationProcess?>.Success(process);
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         SendEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         if (AggregateRoot is null)
         {
             AggregateRoot = EmailVerificationProcess.Create(
@@ -78,11 +79,11 @@ public sealed class SendEmailVerificationCommandHandler
                 Id<DomainEmail>.FromGuid(_email!.Id));
 
             await _emailVerificationProcessWriteRepository.AddAsync(AggregateRoot, cancellationToken);
-            SetInserted();
+            mutationType = FlowChat.Shared.Domain.MutationType.Created;
         }
         else
         {
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
         var verificationRequest = await _emailVerificationRequestIssuer.IssueAsync(
@@ -92,6 +93,6 @@ public sealed class SendEmailVerificationCommandHandler
             _email.Address,
             cancellationToken);
 
-        return FlowChatResult<Guid>.Success(verificationRequest.Id.Value);
+        return Mutation(mutationType, verificationRequest.Id.Value);
     }
 }

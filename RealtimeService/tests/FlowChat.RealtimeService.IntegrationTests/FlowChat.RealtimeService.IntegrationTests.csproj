@@ -13,6 +13,8 @@
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Testcontainers.Redis" Version="4.8.1" />
@@ -33,6 +35,7 @@
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Persistence\FlowChat.RealtimeService.Persistence.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Redis\FlowChat.RealtimeService.Redis.csproj" />
     <ProjectReference Include="..\..\src\Workers\FlowChat.RealtimeService.Consumers\FlowChat.RealtimeService.Consumers.csproj" />
+    <ProjectReference Include="..\..\src\Workers\FlowChat.RealtimeService.OutboxPublisher\FlowChat.RealtimeService.OutboxPublisher.csproj" />
   </ItemGroup>
 
 </Project>

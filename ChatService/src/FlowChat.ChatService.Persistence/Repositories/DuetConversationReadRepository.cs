@@ -15,11 +15,11 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
         var rawRows = await (
-            from duet in Active(dbContext.DuetConversationReads)
+            from duet in Active(dbContext.DuetConversationReadsV2)
             where duet.FirstUserId == first && duet.SecondUserId == second
-            join conversation in Active(dbContext.ConversationReads)
+            join conversation in Active(dbContext.ConversationReadsV2)
                 on duet.ConversationId equals conversation.Id
-            join participant in Active(dbContext.ParticipantUserReads)
+            join participant in Active(dbContext.ConversationParticipantReadsV2)
                 on conversation.Id equals participant.ConversationId
             join profile in Active(dbContext.UserProfileProjections)
                 on participant.UserId equals profile.UserId into profileGroup
@@ -78,17 +78,37 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
         Guid requestingUserId,
         CancellationToken cancellationToken = default)
     {
+        var currentSequences = dbContext.ConversationMessageSequenceReadsV2
+            .AsNoTracking()
+            .Select(sequence => new
+            {
+                sequence.ConversationId,
+                CurrentMsgSeqNum = (long?)sequence.LastAssignedSequenceNum
+            });
+
         var rawRows = await (
-            from duet in Active(dbContext.DuetConversationReads)
-            where duet.FirstUserId == requestingUserId || duet.SecondUserId == requestingUserId
-            join conversation in Active(dbContext.ConversationReads)
+            from duet in Active(dbContext.DuetConversationReadsV2)
+            join conversation in Active(dbContext.ConversationReadsV2)
                 on duet.ConversationId equals conversation.Id
-            join myParticipant in Active(dbContext.ParticipantUserReads)
+            join myParticipant in Active(dbContext.ConversationParticipantReadsV2)
                 on conversation.Id equals myParticipant.ConversationId
-            where myParticipant.UserId == requestingUserId && !myParticipant.IsHidden
-            join partnerParticipant in Active(dbContext.ParticipantUserReads)
-                on conversation.Id equals partnerParticipant.ConversationId
-            where partnerParticipant.UserId != requestingUserId
+            where myParticipant.UserId == requestingUserId
+                  && !myParticipant.IsHidden
+                  && myParticipant.DuetPartnerUserId != null
+            join partnerParticipant in Active(dbContext.ConversationParticipantReadsV2)
+                on new
+                {
+                    myParticipant.ConversationId,
+                    UserId = myParticipant.DuetPartnerUserId
+                }
+                equals new
+                {
+                    partnerParticipant.ConversationId,
+                    UserId = (Guid?)partnerParticipant.UserId
+                }
+            join sequence in currentSequences
+                on conversation.Id equals sequence.ConversationId into sequenceGroup
+            from sequence in sequenceGroup.DefaultIfEmpty()
             join profile in Active(dbContext.UserProfileProjections)
                 on partnerParticipant.UserId equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
@@ -102,7 +122,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
                 ProfileAvatarUrl = (string?)profile.AvatarUrl,
                 ProfileEmail = (string?)profile.Email,
                 LastReadMsgSeqNum = myParticipant.LastReadMessageSequenceNum,
-                CurrentMsgSeqNum = conversation.LastMsgSequenceNum,
+                CurrentMsgSeqNum = sequence.CurrentMsgSeqNum ?? 0,
                 IsBlocked = myParticipant.IsBlocked,
                 IsBlockedByPartner = partnerParticipant.IsBlocked,
                 IsMuted = myParticipant.IsMuted,

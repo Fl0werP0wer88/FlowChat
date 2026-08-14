@@ -2,7 +2,7 @@ import type { ConversationMessageDto } from "../getConversationMessages/Conversa
 
 export interface GetGroupConversationMessagesResponseDto {
   items?: ConversationMessageDto[];
-  nextBeforeSentAtUtc?: string | null;
-  nextBeforeMessageId?: string | null;
-  hasMore?: boolean;
+  nextBeforeSequenceNum?: number | null;
+  currentSequenceNum: number;
+  hasMore: boolean;
 }

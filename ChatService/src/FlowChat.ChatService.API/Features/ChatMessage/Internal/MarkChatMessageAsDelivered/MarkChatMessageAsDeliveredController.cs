@@ -10,6 +10,7 @@ namespace FlowChat.ChatService.Api.Features.ChatMessage.Internal.MarkChatMessage
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
+//ToDo: Ten route na razie jest martwy.
 [Route("internal/messages/{messageId:guid}/delivery")]
 public sealed class MarkChatMessageAsDeliveredController : ApiControllerBase
 {
@@ -32,7 +33,7 @@ public sealed class MarkChatMessageAsDeliveredController : ApiControllerBase
             return Unauthorized();
 
         var result = await _mediator.Send(
-            new MarkChatMessageAsDeliveredCommand(messageId, request.ConversationId, request.DeliveredAtUtc),
+            new MarkChatMessageAsDeliveredCommandV2(messageId, request.ConversationId, request.DeliveredAtUtc),
             cancellationToken);
 
         return result.IsSuccess

@@ -47,17 +47,19 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             CreatedByUserId = notification.CreatedByUserId
         });
 
-    public Task GroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
-        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).GroupConversationParticipantsAdded(new GroupConversationParticipantsAddedNotification
+    public Task ConversationParticipantsAddedAsync(ConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
+        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).ConversationParticipantsAdded(new ConversationParticipantsAddedNotification
         {
             ConversationId = notification.ConversationId,
+            ConversationType = notification.ConversationType,
             ParticipantUserIds = notification.ParticipantUserIds
         });
 
-    public Task GroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
-        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).GroupConversationParticipantsRemoved(new GroupConversationParticipantsRemovedNotification
+    public Task ConversationParticipantsRemovedAsync(ConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
+        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).ConversationParticipantsRemoved(new ConversationParticipantsRemovedNotification
         {
             ConversationId = notification.ConversationId,
+            ConversationType = notification.ConversationType,
             ParticipantUserIds = notification.ParticipantUserIds
         });
 

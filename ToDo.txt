@@ -24,3 +24,61 @@
 14. Niektore REadREpo pobierają cały agreagat i dopiero mapuja, to raczej bez sensu. Niech pobieraja z bazy tylko te dane ktore potrzebują. 
 15. Trzeba wyciągnąć pole name z Conversations i przeniesc na Nową tabele GroupConversations.  Ponieważ konwersacja 1:1 nie powinna mieć edytowalnej nazwy.
 16. Trzeba będzie przeprojektować obsługe wyjątków i wewnętrzne rodzaje wyjątków bo zaczyna się tam robić bałagan
+17: Poustawiać IsConcurrencyToken na poszczególnych polach encji EF ktore maja konkurowac concyurency.
+
+18. RESOLVED: Silverback RetryErrorPolicy nie współpracuje z client-side Kafka offset store
+
+- Wadliwy in-place `policy.Retry(...)` został całkowicie usunięty z kodu i konfiguracji FlowChat.
+- Wszystkie produkcyjne consumery korzystają z trwałego tiered retry: każda próba jest nową wiadomością Kafka, a offset źródłowy i rekord outboxa są zatwierdzane atomowo.
+- ProjectionBulk pozostaje wyłącznie testowym mechanizmem batchowania w HarnessService i nie posiada retry ani DLQ.
+- Tiery retry mają jawne sufiksy opóźnienia: `.retry.5s`, `.retry.20s`, `.retry.60s` i `.retry.300s`.
+- SignalR nadal nie jest atomowy z zapisem offsetu; RealtimeService wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty.
+- SMTP pozostaje efektem at-least-once i może wysłać duplikat po awarii pomiędzy przyjęciem wiadomości a commitem.
+
+19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException
+
+Objaw:
+- Podczas wykonywania MarkConversationAsReadCommandHandler EF Core rzuca DbUpdateConcurrencyException z komunikatem: "The database operation was expected to affect 1 row(s), but actually affected 0 row(s)".
+- Błąd może wystąpić sporadycznie przy szybkich wiadomościach, kilku równoległych wywołaniach MarkConversationAsRead albo jednoczesnej zmianie innego stanu tej samej konwersacji.
+
+Przyczyna:
+- MarkConversationAsRead zmienia ParticipantUser.LastReadMessageSequenceNum na aktualne Conversation.LastMsgSequenceNum.
+- Jeżeli wartość faktycznie się zmieniła, handler wywołuje SetUpdated().
+- AggregateRootCommandHandlerBaseV3 zwiększa wtedy Conversation.Version oraz aktualizuje pola audytowe agregatu.
+- Conversation.Version jest skonfigurowane jako token optymistycznej współbieżności przez IsConcurrencyToken(). Zapis Conversation zawiera więc warunek wymagający, aby wersja w bazie nadal odpowiadała wersji załadowanej przez bieżący request.
+- Jeżeli inna operacja zdąży wcześniej zapisać tę samą Conversation, jej Version zostaje zmienione. UPDATE bieżącego requestu nie znajduje już wiersza z poprzednią wersją, aktualizuje 0 rekordów i EF Core rzuca DbUpdateConcurrencyException.
+- Konflikt może zachodzić między kilkoma MarkConversationAsRead albo między MarkConversationAsRead i ChatMessageSequencedDomainEventHandler, który również aktualizuje Conversation.LastMsgSequenceNum, Version oraz pola audytowe.
+- Nie oznacza to, że rekord konwersacji został usunięty. W typowym przypadku oznacza, że od momentu jego odczytu inna transakcja zapisała nowszą wersję.
+
+Obecna obsługa:
+- ExceptionHandlingPipelineBehavior przechwytuje DbUpdateConcurrencyException i zwraca ogólny błąd, ale nie ponawia operacji.
+- MarkConversationAsRead jest semantycznie idempotentne, dlatego taki konflikt można bezpiecznie obsłużyć przez ponowienie całej transakcji na świeżych danych.
+
+Rekomendowany kierunek:
+- Dodać ograniczoną politykę retry dla DbUpdateConcurrencyException na poziomie obejmującym całą transakcję command handlera.
+- Każda próba musi używać nowego DbContextu albo wyczyścić stan trackera, ponownie pobrać Conversation wraz z Participants i ponownie wykonać MarkParticipantAsRead. Samo ponowne SaveChangesAsync na starej encji nie wystarczy.
+- Retry powinno mieć mały, jawnie ograniczony limit. Po jego wyczerpaniu należy zwrócić kontrolowany konflikt albo błąd przejściowy zamiast ogólnego nieoczekiwanego błędu.
+- Dodać test integracyjny uruchamiający konkurencyjne aktualizacje tej samej Conversation i potwierdzający, że finalny LastReadMessageSequenceNum odpowiada najnowszemu LastMsgSequenceNum.
+- Przy projektowaniu rozwiązania zdecydować, czy każda zmiana stanu ParticipantUser rzeczywiście powinna podbijać wersję całego agregatu Conversation. Rezygnacja z tego wymaga świadomej zmiany granicy współbieżności, a nie tylko usunięcia SetUpdated().
+
+20. PRZYSZŁOŚĆ: Atomowy allocator ConversationMessageSequence
+
+Kontekst:
+- Każdy ChatMessage jest właścicielem przypisanego mu SequenceNum, natomiast następny numer wiadomości jest stanem obejmującym całą konwersację i nie należy do pojedynczego agregatu ChatMessage.
+- Obecny SetChatMessageSequenceNumberCommandHandler wylicza MAX(ChatMessages.SequenceNum) + 1. Dwa równoległe wywołania dla tej samej konwersacji mogłyby odczytać ten sam MAX i spróbować zapisać ten sam numer; unikalny indeks chroni spójność bazy, ale jedno wywołanie zakończyłoby się błędem.
+- W aktualnej konfiguracji ryzyko jest ograniczone: tylko RealtimeService wywołuje endpoint sekwencjonowania, główny topic dev.flowchat.chat.message.v1 ma jedną partycję, a jego rekordy są normalnie obsługiwane kolejno.
+- Nie należy jednak traktować tej kolejności jako trwałego invariantu. Main topic i retry topic mają osobne endpointy konsumenckie i mogą przetwarzać wiadomości równolegle, a przyszłe włączenie równoległego przetwarzania w obrębie partycji albo dodanie nowego klienta endpointu ponownie otworzy wyścig MAX + 1. Samo zwiększenie liczby partycji lub instancji nie powinno złamać kolejności dla jednej konwersacji, dopóki KafkaKey pozostaje równe ConversationId.
+
+Docelowy kierunek:
+- Wprowadzić tabelę ConversationMessageSequences z kluczem ConversationId i polem LastAssignedSequenceNum.
+- Przydzielać numer atomowo w PostgreSQL przez UPDATE ... SET LastAssignedSequenceNum = LastAssignedSequenceNum + 1 ... RETURNING LastAssignedSequenceNum.
+- Aktualizację licznika i zapis SequenceNum wiadomości wykonywać w tej samej transakcji, aby rollback zapisu wiadomości wycofywał również przydział numeru.
+- Utworzyć rekord licznika razem z konwersacją i usunąć go razem z nią albo zapewnić równoważny, idempotentny lifecycle.
+- Zachować unikalny indeks (ConversationId, SequenceNum) jako ostateczną ochronę spójności.
+- Read side powinien wyliczać bieżący numer z faktycznie zapisanych ChatMessages, np. MAX(SequenceNum), zamiast uzależniać się od wartości allocatora.
+
+Powiązany refactor:
+- Rozważyć usunięcie LastMsgSequenceNum z agregatu Conversation i tabeli Conversations jako zduplikowanego stanu pochodnego.
+- Po usunięciu ostatniego użycia usunąć osierocone ChatMessageSequencedDomainEvent, jego handler oraz metodę Conversation.SetSequenceNumber.
+- Przepisać read repositories dla grup i duetów tak, aby CurrentMsgSeqNum pochodziło z agregacji ChatMessages, z wartością 0 dla konwersacji bez wiadomości.
+- Oddzielnie rozwiązać monotoniczną aktualizację ParticipantUser.LastReadMessageSequenceNum bez podbijania Conversation.Version.

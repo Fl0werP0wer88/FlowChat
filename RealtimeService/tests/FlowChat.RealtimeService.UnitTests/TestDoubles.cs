@@ -19,8 +19,8 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
     public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
-    public GroupConversationParticipantsAddedParam? LastGroupConversationParticipantsAddedNotification { get; private set; }
-    public GroupConversationParticipantsRemovedParam? LastGroupConversationParticipantsRemovedNotification { get; private set; }
+    public ConversationParticipantsAddedParam? LastConversationParticipantsAddedNotification { get; private set; }
+    public ConversationParticipantsRemovedParam? LastConversationParticipantsRemovedNotification { get; private set; }
 
     public Task MessageReceivedAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -40,15 +40,15 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
         return Task.CompletedTask;
     }
 
-    public Task GroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken)
+    public Task ConversationParticipantsAddedAsync(ConversationParticipantsAddedParam notification, CancellationToken cancellationToken)
     {
-        LastGroupConversationParticipantsAddedNotification = notification;
+        LastConversationParticipantsAddedNotification = notification;
         return Task.CompletedTask;
     }
 
-    public Task GroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
+    public Task ConversationParticipantsRemovedAsync(ConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
     {
-        LastGroupConversationParticipantsRemovedNotification = notification;
+        LastConversationParticipantsRemovedNotification = notification;
         return Task.CompletedTask;
     }
 }
@@ -58,9 +58,8 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
     public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
-    public GroupConversationParticipantsAddedParam? LastGroupConversationParticipantsAddedNotification { get; private set; }
-    public GroupConversationParticipantsRemovedParam? LastGroupConversationParticipantsRemovedNotification { get; private set; }
-    public DuetConversationCreatedParam? LastDuetConversationCreatedNotification { get; private set; }
+    public ConversationParticipantsAddedParam? LastConversationParticipantsAddedNotification { get; private set; }
+    public ConversationParticipantsRemovedParam? LastConversationParticipantsRemovedNotification { get; private set; }
 
     public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -80,21 +79,15 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
         return Task.CompletedTask;
     }
 
-    public Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken)
+    public Task RouteConversationParticipantsAddedAsync(ConversationParticipantsAddedParam notification, CancellationToken cancellationToken)
     {
-        LastGroupConversationParticipantsAddedNotification = notification;
+        LastConversationParticipantsAddedNotification = notification;
         return Task.CompletedTask;
     }
 
-    public Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
+    public Task RouteConversationParticipantsRemovedAsync(ConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
     {
-        LastGroupConversationParticipantsRemovedNotification = notification;
-        return Task.CompletedTask;
-    }
-
-    public Task RouteDuetConversationCreatedAsync(DuetConversationCreatedParam notification, CancellationToken cancellationToken)
-    {
-        LastDuetConversationCreatedNotification = notification;
+        LastConversationParticipantsRemovedNotification = notification;
         return Task.CompletedTask;
     }
 }

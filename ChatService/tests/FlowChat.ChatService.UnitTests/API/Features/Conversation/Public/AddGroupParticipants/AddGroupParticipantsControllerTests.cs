@@ -47,11 +47,11 @@ public sealed class AddGroupParticipantsControllerTests
         var conversationId = Guid.NewGuid();
         var participantId1 = Guid.NewGuid();
         var participantId2 = Guid.NewGuid();
-        AddGroupParticipantsCommand? capturedCommand = null;
+        AddGroupParticipantsCommandV2? capturedCommand = null;
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (AddGroupParticipantsCommand)cmd)
+            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (AddGroupParticipantsCommandV2)cmd)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var controller = CreateController();
@@ -73,7 +73,7 @@ public sealed class AddGroupParticipantsControllerTests
         var conversationId = Guid.NewGuid();
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var actionResult = await CreateController().AddGroupParticipants(
@@ -88,7 +88,7 @@ public sealed class AddGroupParticipantsControllerTests
     public async Task AddGroupParticipants_WhenConversationNotFound_ReturnsNotFound()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 
@@ -105,7 +105,7 @@ public sealed class AddGroupParticipantsControllerTests
     public async Task AddGroupParticipants_WhenDuetConversation_ReturnsBadRequest()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Cannot add participants to a one-on-one conversation.")));
 

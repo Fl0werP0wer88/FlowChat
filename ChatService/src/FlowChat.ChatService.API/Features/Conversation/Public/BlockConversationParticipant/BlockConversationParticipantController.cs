@@ -34,7 +34,7 @@ public sealed class BlockConversationParticipantController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new BlockConversationParticipantCommand(conversationId, userId),
+            new BlockConversationParticipantCommandV2(conversationId, userId),
             cancellationToken);
 
         if (!result.IsSuccess)

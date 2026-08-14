@@ -19,7 +19,7 @@ function Clear-MigrationDirectory([string]$path) {
         return
     }
 
-    $items = Get-ChildItem -LiteralPath $path -Force
+    $items = @(Get-ChildItem -LiteralPath $path -Force)
     if ($null -eq $items -or $items.Count -eq 0) {
         Write-Host "Directory already empty: $path"
         return
@@ -33,8 +33,10 @@ function Clear-MigrationDirectory([string]$path) {
 Write-Host "Resetting FlowChat databases..."
 & $bootstrapScript -ComposeFile $composeFile -DropDb
 
-$migrationDirectories = Get-ChildItem -Path $repoRoot -Recurse -Directory |
-    Where-Object { $_.Name -ieq 'Migrations' -and $_.FullName -notmatch '\\(bin|obj)\\' }
+$migrationDirectories = @(
+    Get-ChildItem -Path $repoRoot -Recurse -Directory |
+        Where-Object { $_.Name -ieq 'Migrations' -and $_.FullName -notmatch '\\(bin|obj)\\' }
+)
 
 if ($null -eq $migrationDirectories -or $migrationDirectories.Count -eq 0) {
     Write-Host 'No migration directories found.'

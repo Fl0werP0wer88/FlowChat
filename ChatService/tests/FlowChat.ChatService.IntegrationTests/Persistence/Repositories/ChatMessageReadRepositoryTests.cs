@@ -9,92 +9,97 @@ namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 public sealed class ChatMessageReadRepositoryTests
 {
     [Fact]
-    public async Task GetPageBeforeAsync_WithoutCursor_ReturnsNewestMessagesAndNextCursor()
+    public async Task GetRangeDescendingAsync_ReturnsNewestActiveRowsWithinInclusiveRange()
     {
-        var senderId = Guid.NewGuid();
-        var recipientId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var oldest = CreateMessage(conversationId, senderId, "Oldest", 8);
-        var middle = CreateMessage(conversationId, recipientId, "Middle", 9);
-        var newest = CreateMessage(conversationId, senderId, "Newest", 10);
-        var deleted = CreateMessage(conversationId, senderId, "Deleted", 11);
-        deleted.DeletedAt = new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero);
+        var senderId = Guid.NewGuid();
+        var deleted = Message(conversationId, senderId, 11);
+        deleted.DeletedAt = DateTimeOffset.UtcNow;
         var databaseName = Guid.NewGuid().ToString();
+        await Seed(databaseName,
+            Message(conversationId, senderId, 8),
+            Message(conversationId, senderId, 9),
+            Message(conversationId, senderId, 10),
+            deleted,
+            Message(conversationId, senderId, 12));
 
-        await using (var seedContext = CreateDbContext(databaseName))
-        {
-            seedContext.ChatMessageReads.AddRange(oldest, middle, newest, deleted);
-            await seedContext.SaveChangesAsync();
-        }
+        await using var context = Context(databaseName);
+        var result = await new ChatMessageReadRepository(context)
+            .GetRangeDescendingAsync(
+                conversationId, startSequenceNum: 8,
+                endSequenceNum: 10, limit: 3);
 
-        await using var readContext = CreateDbContext(databaseName);
-        var repository = new ChatMessageReadRepository(readContext);
-
-        var result = await repository.GetPageBeforeAsync(conversationId, 2, null, null, CancellationToken.None);
-
-        result.Items.Select(message => message.Text).Should().Equal("Newest", "Middle");
-        result.HasMore.Should().BeTrue();
-        result.NextBeforeSentAtUtc.Should().Be(middle.SentAtUtc);
-        result.NextBeforeMessageId.Should().Be(middle.Id);
+        result.Select(item => item.SequenceNum).Should().Equal(10, 9, 8);
     }
 
     [Fact]
-    public async Task GetPageBeforeAsync_WithCursor_ReturnsOlderMessagesWithoutDuplicates()
+    public async Task GetRangeDescendingAsync_ExcludesRowsOutsideRange()
     {
-        var senderId = Guid.NewGuid();
-        var recipientId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var oldest = CreateMessage(conversationId, senderId, "Oldest", 8);
-        var middle = CreateMessage(conversationId, recipientId, "Middle", 9);
-        var newest = CreateMessage(conversationId, senderId, "Newest", 10);
+        var senderId = Guid.NewGuid();
         var databaseName = Guid.NewGuid().ToString();
+        await Seed(databaseName,
+            Message(conversationId, senderId, 8),
+            Message(conversationId, senderId, 9),
+            Message(conversationId, senderId, 10));
 
-        await using (var seedContext = CreateDbContext(databaseName))
-        {
-            seedContext.ChatMessageReads.AddRange(oldest, middle, newest);
-            await seedContext.SaveChangesAsync();
-        }
+        await using var context = Context(databaseName);
+        var result = await new ChatMessageReadRepository(context)
+            .GetRangeDescendingAsync(
+                conversationId, startSequenceNum: 8,
+                endSequenceNum: 9, limit: 10);
 
-        await using var readContext = CreateDbContext(databaseName);
-        var repository = new ChatMessageReadRepository(readContext);
-
-        var firstPage = await repository.GetPageBeforeAsync(conversationId, 2, null, null, CancellationToken.None);
-        var secondPage = await repository.GetPageBeforeAsync(
-            conversationId,
-            2,
-            firstPage.NextBeforeSentAtUtc,
-            firstPage.NextBeforeMessageId,
-            CancellationToken.None);
-
-        secondPage.Items.Select(message => message.Text).Should().Equal("Oldest");
-        secondPage.Items.Select(message => message.Id)
-            .Should().NotIntersectWith(firstPage.Items.Select(message => message.Id));
-        secondPage.HasMore.Should().BeFalse();
-        secondPage.NextBeforeSentAtUtc.Should().BeNull();
-        secondPage.NextBeforeMessageId.Should().BeNull();
+        result.Select(item => item.SequenceNum).Should().Equal(9, 8);
     }
 
-    private static ChatMessageReadEntity CreateMessage(
+    [Fact]
+    public async Task GetRangeAscendingAsync_ReturnsActiveRowsWithinInclusiveRange()
+    {
+        var conversationId = Guid.NewGuid();
+        var senderId = Guid.NewGuid();
+        var deleted = Message(conversationId, senderId, 11);
+        deleted.DeletedAt = DateTimeOffset.UtcNow;
+        var databaseName = Guid.NewGuid().ToString();
+        await Seed(databaseName,
+            Message(conversationId, senderId, 10),
+            deleted,
+            Message(conversationId, senderId, 12),
+            Message(conversationId, senderId, 13));
+
+        await using var context = Context(databaseName);
+        var result = await new ChatMessageReadRepository(context)
+            .GetRangeAscendingAsync(
+                conversationId, startSequenceNum: 10,
+                endSequenceNum: 12, limit: 100);
+
+        result.Select(item => item.SequenceNum).Should().Equal(10, 12);
+    }
+
+    private static ChatMessageReadEntityV2 Message(
         Guid conversationId,
         Guid senderId,
-        string text,
-        int hour) =>
+        long sequenceNum) =>
         new()
         {
             Id = Guid.NewGuid(),
             ConversationId = conversationId,
             SenderUserId = senderId,
-            Text = text,
-            SentAtUtc = new DateTimeOffset(2026, 4, 24, hour, 0, 0, TimeSpan.Zero)
+            Text = $"Message {sequenceNum}",
+            SentAtUtc = DateTimeOffset.UtcNow.AddSeconds(sequenceNum),
+            SequenceNum = sequenceNum
         };
 
-    private static AppDbContext CreateDbContext(string databaseName)
+    private static async Task Seed(
+        string databaseName,
+        params ChatMessageReadEntityV2[] messages)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName)
-            .Options;
-
-        var context = new AppDbContext(options);
-        return context;
+        await using var context = Context(databaseName);
+        context.ChatMessageReadsV2.AddRange(messages);
+        await context.SaveChangesAsync();
     }
+
+    private static AppDbContext Context(string databaseName) =>
+        new(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName)
+            .Options);
 }

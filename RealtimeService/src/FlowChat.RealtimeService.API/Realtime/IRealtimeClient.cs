@@ -10,7 +10,7 @@ public interface IRealtimeClient
 
     Task GroupConversationChanged(GroupConversationChangedNotification payload);
 
-    Task GroupConversationParticipantsAdded(GroupConversationParticipantsAddedNotification payload);
+    Task ConversationParticipantsAdded(ConversationParticipantsAddedNotification payload);
 
-    Task GroupConversationParticipantsRemoved(GroupConversationParticipantsRemovedNotification payload);
+    Task ConversationParticipantsRemoved(ConversationParticipantsRemovedNotification payload);
 }

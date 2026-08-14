@@ -1,7 +1,12 @@
 using AutoFixture;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
+using FlowChat.RealtimeService.Domain.Enums;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -10,63 +15,55 @@ public sealed class RouteMessageCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
-    private readonly Mock<IChatServiceInternalApiClient> _chatServiceApiClientMock = new();
+    private readonly Mock<IRealtimeGroupMembershipRevisionTrackerRepository> _revisionTrackerRepositoryMock = new();
+    private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _groupMembershipReadModelRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RouteMessageCommandHandler _handler;
 
     public RouteMessageCommandHandlerTests()
     {
-        _chatServiceApiClientMock
-            .Setup(x => x.SetChatMessageSequenceNumberAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(42);
-
         _routerMock
             .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _chatServiceApiClientMock
-            .Setup(x => x.MarkChatMessageAsDeliveredAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<DateTimeOffset>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        _revisionTrackerRepositoryMock
+            .Setup(x => x.GetRevisionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
-        _handler = new RouteMessageCommandHandler(_routerMock.Object, _chatServiceApiClientMock.Object);
+        _groupMembershipReadModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([_fixture.Create<Guid>()]);
+
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
+                (operation, cancellationToken) => operation(cancellationToken));
+
+        _handler = new RouteMessageCommandHandler(
+            _routerMock.Object,
+            _revisionTrackerRepositoryMock.Object,
+            _groupMembershipReadModelRepositoryMock.Object,
+            _unitOfWorkMock.Object);
     }
 
     [Fact]
     public async Task Handle_MapsNotificationAndRoutesToRecipients()
     {
         ChatMessageParam? capturedNotification = null;
-        DateTimeOffset? deliveredAtUtc = null;
+        var senderUserId = _fixture.Create<Guid>();
         var recipientUserId = _fixture.Create<Guid>();
         var messageId = _fixture.Create<Guid>();
         var conversationId = _fixture.Create<Guid>();
         const long sequenceNum = 42;
-        var sequence = new MockSequence();
+        _groupMembershipReadModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([recipientUserId, recipientUserId, senderUserId, Guid.Empty]);
 
-        _chatServiceApiClientMock.InSequence(sequence)
-            .Setup(x => x.SetChatMessageSequenceNumberAsync(
-                messageId,
-                conversationId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sequenceNum);
-
-        _routerMock.InSequence(sequence)
+        _routerMock
             .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Callback<ChatMessageParam, CancellationToken>((notification, _) => capturedNotification = notification)
-            .Returns(Task.CompletedTask);
-
-        _chatServiceApiClientMock.InSequence(sequence)
-            .Setup(x => x.MarkChatMessageAsDeliveredAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<DateTimeOffset>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<Guid, Guid, DateTimeOffset, CancellationToken>((_, _, value, _) => deliveredAtUtc = value)
             .Returns(Task.CompletedTask);
 
         var beforeHandleUtc = DateTimeOffset.UtcNow;
@@ -74,10 +71,11 @@ public sealed class RouteMessageCommandHandlerTests
             new RouteMessageCommand(
                 messageId,
                 conversationId,
-                _fixture.Create<Guid>(),
+                senderUserId,
                 " Hello there ",
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-                [recipientUserId, recipientUserId, Guid.Empty]),
+                sequenceNum,
+                1),
             CancellationToken.None);
         var afterHandleUtc = DateTimeOffset.UtcNow;
 
@@ -87,44 +85,12 @@ public sealed class RouteMessageCommandHandlerTests
         capturedNotification.SequenceNum.Should().Be(sequenceNum);
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
         capturedNotification.DeliveredAtUtc.Offset.Should().Be(TimeSpan.Zero);
-        deliveredAtUtc.Should().NotBeNull();
-        deliveredAtUtc!.Value.Offset.Should().Be(TimeSpan.Zero);
-        capturedNotification.DeliveredAtUtc.Should().Be(deliveredAtUtc.Value);
-        deliveredAtUtc.Value.Should().BeOnOrAfter(beforeHandleUtc);
-        deliveredAtUtc.Value.Should().BeOnOrBefore(afterHandleUtc);
-        _chatServiceApiClientMock.Verify(
-            x => x.MarkChatMessageAsDeliveredAsync(messageId, conversationId, deliveredAtUtc.Value, It.IsAny<CancellationToken>()),
-            Times.Once);
+        capturedNotification.DeliveredAtUtc.Should().BeOnOrAfter(beforeHandleUtc);
+        capturedNotification.DeliveredAtUtc.Should().BeOnOrBefore(afterHandleUtc);
     }
 
     [Fact]
-    public async Task Handle_WhenSetSequenceNumberFails_DoesNotRouteMessageOrMarkDelivered()
-    {
-        _chatServiceApiClientMock
-            .Setup(x => x.SetChatMessageSequenceNumberAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("boom"));
-
-        var act = () => _handler.Handle(CreateValidCommand(), CancellationToken.None);
-
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("boom");
-        _routerMock.Verify(
-            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        _chatServiceApiClientMock.Verify(
-            x => x.MarkChatMessageAsDeliveredAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<DateTimeOffset>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_WhenRouteMessageFails_DoesNotMarkDelivered()
+    public async Task Handle_WhenRouteMessageFails_PropagatesException()
     {
         _routerMock
             .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
@@ -134,12 +100,57 @@ public sealed class RouteMessageCommandHandlerTests
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("boom");
-        _chatServiceApiClientMock.Verify(
-            x => x.MarkChatMessageAsDeliveredAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<DateTimeOffset>(),
-                It.IsAny<CancellationToken>()),
+    }
+
+    [Fact]
+    public async Task Handle_WhenConversationMembershipRevisionIsNewerThanTrackedRevision_ReturnsTransientFailureAndDoesNotRoute()
+    {
+        var conversationId = _fixture.Create<Guid>();
+        _revisionTrackerRepositoryMock
+            .Setup(x => x.GetRevisionAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var command = new RouteMessageCommand(
+            _fixture.Create<Guid>(),
+            conversationId,
+            _fixture.Create<Guid>(),
+            "Hello there",
+            new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+            42,
+            2);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.FailureKind.Should().Be(FailureKind.Transient);
+        _routerMock.Verify(
+            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenNoKnownRecipientsOtherThanSender_ReturnsFailureAndDoesNotRoute()
+    {
+        var senderUserId = _fixture.Create<Guid>();
+        var conversationId = _fixture.Create<Guid>();
+        _groupMembershipReadModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([senderUserId]);
+
+        var command = new RouteMessageCommand(
+            _fixture.Create<Guid>(),
+            conversationId,
+            senderUserId,
+            "Hello there",
+            new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+            42,
+            1);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        _routerMock.Verify(
+            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -150,5 +161,6 @@ public sealed class RouteMessageCommandHandlerTests
             _fixture.Create<Guid>(),
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-            [_fixture.Create<Guid>()]);
+            42,
+            1);
 }

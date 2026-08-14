@@ -36,7 +36,7 @@ public sealed class CreateGroupConversationController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new CreateGroupConversationCommand(
+            new CreateGroupConversationCommandV2(
                 request.ConversationId,
                 userId,
                 request.ParticipantUserIds,

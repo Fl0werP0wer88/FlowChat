@@ -47,29 +47,29 @@ static void LogStartupDiagnostics(IHost host)
         .CreateLogger("FlowChat.ChatService.OutboxPublisher.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var chatMessageSentProducerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerSettingsSection>>().Value;
-    var groupConversationChangedProducerOptions = host.Services.GetRequiredService<IOptions<GroupConversationChangedProducerSettingsSection>>().Value;
+    var chatMessageProducerOptions = host.Services.GetRequiredService<IOptions<ChatMessageV2ProducerSettingsSection>>().Value;
+    var conversationProducerOptions = host.Services.GetRequiredService<IOptions<ConversationV2ProducerSettingsSection>>().Value;
     var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var chatDbTarget = GetChatDbTarget(configuration.GetConnectionString("ChatDb"));
 
     logger.LogInformation(
         "Starting ChatService outbox publisher in {Environment}. ChatDb target: {Host}:{Port}/{Database}. " +
-        "ChatMessageSent Kafka: {ChatMessageBootstrapServers} -> {ChatMessageTopic}. " +
-        "GroupConversationChanged Kafka: {ConversationBootstrapServers} -> {ConversationTopic}. " +
-        "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
-        "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
+        "ChatMessageV2 Kafka: {ChatMessageBootstrapServers} -> {ChatMessageTopic}. " +
+        "ConversationV2 Kafka: {ConversationBootstrapServers} -> {ConversationTopic}. " +
+        "Outbox worker settings: BatchSize={BatchSize}, PollInterval={PollInterval}, " +
+        "InitialRetryDelay={InitialRetryDelay}, MaxRetryDelay={MaxRetryDelay}.",
         environment.EnvironmentName,
         chatDbTarget.Host,
         chatDbTarget.Port,
         chatDbTarget.Database,
-        chatMessageSentProducerOptions.BootstrapServers,
-        chatMessageSentProducerOptions.Topic,
-        groupConversationChangedProducerOptions.BootstrapServers,
-        groupConversationChangedProducerOptions.Topic,
+        chatMessageProducerOptions.BootstrapServers,
+        chatMessageProducerOptions.Topic,
+        conversationProducerOptions.BootstrapServers,
+        conversationProducerOptions.Topic,
         outboxOptions.BatchSize,
-        outboxOptions.PollIntervalSeconds,
-        outboxOptions.RetryBaseDelaySeconds,
-        outboxOptions.MaxRetryDelaySeconds);
+        outboxOptions.PollInterval,
+        outboxOptions.InitialRetryDelay,
+        outboxOptions.MaxRetryDelay);
 }
 
 static (string Host, string Port, string Database) GetChatDbTarget(string? connectionString)

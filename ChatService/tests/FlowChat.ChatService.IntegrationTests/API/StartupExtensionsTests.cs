@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Api;
+using FlowChat.ChatService.Infrastructure.Configuration.Settings;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,10 +21,14 @@ public sealed class StartupExtensionsTests
             ["JwtSettings:Key"] = "FLOWCHAT_DEVELOPMENT_JWT_KEY_CHANGE_ME_123456789",
             ["JwtSettings:Issuer"] = "https://localhost:7236/",
             ["JwtSettings:Audience"] = "FlowChat.Client",
-            ["Kafka:ChatMessageSentProducer:BootstrapServers"] = "localhost:9092",
-            ["Kafka:ChatMessageSentProducer:Topic"] = "dev.flowchat.chat.message.v1",
-            ["Kafka:GroupConversationChangedProducer:BootstrapServers"] = "localhost:9092",
-            ["Kafka:GroupConversationChangedProducer:Topic"] = "dev.flowchat.chat.group-conversation.v1",
+            ["Kafka:ConversationV2Producer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:ConversationV2Producer:Topic"] = "dev.flowchat.chat.conversation-projection.v2",
+            ["Kafka:ConversationMembershipV2ProjectionProducer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:ConversationMembershipV2ProjectionProducer:Topic"] = "dev.flowchat.chat.conversation-membership-projection.v2",
+            ["Kafka:ConversationParticipantV2Producer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:ConversationParticipantV2Producer:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2",
+            ["Kafka:ChatMessageV2Producer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:ChatMessageV2Producer:Topic"] = "dev.flowchat.chat.message.v2",
             ["ConnectionStrings:ChatDb"] = "Host=localhost;Port=5432;Database=flowchat_chat_test_db;Username=test;Password=test"
         });
 
@@ -37,5 +42,7 @@ public sealed class StartupExtensionsTests
         authenticationOptions.DefaultChallengeScheme.Should().Be(JwtBearerDefaults.AuthenticationScheme);
         jwtBearerOptions.TokenValidationParameters.ValidIssuer.Should().Be("https://localhost:7236/");
         jwtBearerOptions.TokenValidationParameters.ValidAudience.Should().Be("FlowChat.Client");
+        app.Services.GetRequiredService<IOptions<ConversationV2ProducerSettingsSection>>()
+            .Value.Topic.Should().Be("dev.flowchat.chat.conversation-projection.v2");
     }
 }

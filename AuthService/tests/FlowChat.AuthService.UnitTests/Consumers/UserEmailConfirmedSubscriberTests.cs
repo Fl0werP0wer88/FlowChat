@@ -4,6 +4,7 @@ using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Core.Results;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
@@ -17,6 +18,7 @@ public sealed class UserEmailConfirmedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
+    private readonly Mock<IConsumedOffsetCommitter> _offsetCommitterMock = new();
     private readonly Mock<ILogger<UserEmailConfirmedSubscriber>> _loggerMock = new();
     private readonly UserEmailConfirmedSubscriber _subscriber;
 
@@ -28,6 +30,7 @@ public sealed class UserEmailConfirmedSubscriberTests
 
         _subscriber = new UserEmailConfirmedSubscriber(
             _mediatorMock.Object,
+            _offsetCommitterMock.Object,
             _loggerMock.Object);
     }
 
@@ -58,10 +61,13 @@ public sealed class UserEmailConfirmedSubscriberTests
 
         capturedCommand.Should().NotBeNull();
         capturedCommand!.EmailAddress.Should().Be("john@example.com");
+        _offsetCommitterMock.Verify(
+            x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenEmailIsNotAuth_DoesNotSendCommand()
+    public async Task HandleAsync_WhenEmailIsNotAuth_CommitsOffsetWithoutSendingCommand()
     {
         var message = new UserEmailConfirmedIntegrationEvent
         {
@@ -76,6 +82,36 @@ public sealed class UserEmailConfirmedSubscriberTests
 
         await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _offsetCommitterMock.Verify(
+            x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenFilteredOffsetCommitFails_PropagatesException()
+    {
+        var expectedException = new InvalidOperationException("offset commit failed");
+        _offsetCommitterMock
+            .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(expectedException);
+        var message = new UserEmailConfirmedIntegrationEvent
+        {
+            UserProfileId = _fixture.Create<Guid>(),
+            EmailId = _fixture.Create<Guid>(),
+            Email = new Email
+            {
+                Address = "john@example.com",
+                IsAuth = false
+            }
+        };
+
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage(expectedException.Message);
         _mediatorMock.Verify(
             x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()),
             Times.Never);

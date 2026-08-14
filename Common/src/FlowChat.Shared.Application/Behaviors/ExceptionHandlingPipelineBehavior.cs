@@ -103,20 +103,6 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.SetTag("db.exception.type", exception.GetType().Name);
             Activity.Current?.SetTag("db.concurrency.entry_count", exception.Entries.Count);
 
-            foreach (var entry in exception.Entries)
-            {
-                var databaseValues = await entry.GetDatabaseValuesAsync(cancellationToken);
-
-                if (databaseValues is null)
-                {
-                    //ToDo: Think about concurrency handling for missing or deleted rows
-                }
-                else
-                {
-                    //ToDo: Think about optimistic concurrency handling for existing rows
-                }
-            }
-
             var domainError = DomainError.UnExpected("An unexpected error occurred.");
             return TResponse.Failure(domainError);
         }

@@ -19,18 +19,13 @@ public interface IRealtimeInstanceInternalApiClient
         GroupConversationChangedParam notification,
         CancellationToken cancellationToken);
 
-    Task PublishGroupConversationParticipantsAddedAsync(
+    Task PublishConversationParticipantsAddedAsync(
         Uri baseAddress,
-        GroupConversationParticipantsAddedParam notification,
+        ConversationParticipantsAddedParam notification,
         CancellationToken cancellationToken);
 
-    Task PublishGroupConversationParticipantsRemovedAsync(
+    Task PublishConversationParticipantsRemovedAsync(
         Uri baseAddress,
-        GroupConversationParticipantsRemovedParam notification,
-        CancellationToken cancellationToken);
-
-    Task PublishDuetConversationCreatedAsync(
-        Uri baseAddress,
-        DuetConversationCreatedParam notification,
+        ConversationParticipantsRemovedParam notification,
         CancellationToken cancellationToken);
 }

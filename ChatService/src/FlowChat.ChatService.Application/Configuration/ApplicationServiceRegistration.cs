@@ -1,11 +1,23 @@
 using FlowChat.ChatService.Application.Features.Conversation.Commands.BlockConversationParticipant;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.RemoveGroupParticipants;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.UnblockConversationParticipant;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.MarkConversationAsRead;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.MuteConversationParticipant;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.UnmuteConversationParticipant;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.HideConversationParticipant;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.UnhideConversationParticipant;
+using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
+using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.ChatService.Application.Features.Conversation.Processors;
-using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.ChatService.Application;
@@ -37,14 +49,55 @@ internal static class CommonApplicationServiceRegistration
         });
         services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
-            DuetConversationProjectionProcessor<CreateDuetConversationCommand>>();
+            IAggregateBeforeSaveProcessorV2<CreateGroupConversationCommandV2, ConversationV2>,
+            CreateGroupConversationMetadataProcessorV2>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<BlockConversationParticipantCommand, DuetConversationAggregate>,
-            DuetConversationProjectionProcessor<BlockConversationParticipantCommand>>();
+            IAggregateBeforeSaveProcessorV2<CreateDuetConversationCommandV2, ConversationV2>,
+            CreateDuetConversationMetadataProcessorV2>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<UnblockConversationParticipantCommand, DuetConversationAggregate>,
-            DuetConversationProjectionProcessor<UnblockConversationParticipantCommand>>();
+            IAggregateBeforeSaveProcessorV2<CreateGroupFromDuetCommandV2, ConversationV2>,
+            CreateGroupFromDuetConversationMetadataProcessorV2>();
+
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<ConversationParticipantsAddedDomainEventV2, ConversationParticipant>,
+            ConversationParticipantsAddedProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<ConversationParticipantsRemovedDomainEventV2, ConversationParticipant>,
+            ConversationParticipantsRemovedProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveDeltaProcessorV2<
+                ConversationParticipantsAddedDomainEventV2,
+                ConversationParticipant>,
+            AddConversationMembershipDeltaProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveDeltaProcessorV2<
+                ConversationParticipantsRemovedDomainEventV2,
+                ConversationParticipant>,
+            RemoveConversationMembershipDeltaProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<MarkConversationAsReadCommandV2, ConversationParticipant>,
+            MarkConversationAsReadParticipantProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<BlockConversationParticipantCommandV2, ConversationParticipant>,
+            BlockConversationParticipantProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<UnblockConversationParticipantCommandV2, ConversationParticipant>,
+            UnblockConversationParticipantProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<MuteConversationParticipantCommandV2, ConversationParticipant>,
+            MuteConversationParticipantProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<UnmuteConversationParticipantCommandV2, ConversationParticipant>,
+            UnmuteConversationParticipantProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<HideConversationParticipantCommandV2, ConversationParticipant>,
+            HideConversationParticipantProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<UnhideConversationParticipantCommandV2, ConversationParticipant>,
+            UnhideConversationParticipantProcessorV2>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessorV2<ChatMessageSentDomainEventV2, ConversationParticipant>,
+            ChatMessageSentParticipantProcessorV2>();
 
         return services;
     }

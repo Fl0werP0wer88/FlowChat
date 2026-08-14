@@ -37,6 +37,7 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
             catch
             {
                 await transaction.RollbackAsync(cancellationToken);
+                DbContext.ChangeTracker.Clear();
                 throw;
             }
             finally
@@ -73,6 +74,7 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
                 else
                 {
                     await transaction.RollbackAsync(cancellationToken);
+                    DbContext.ChangeTracker.Clear();
                 }
 
                 return result;
@@ -80,6 +82,7 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
             catch
             {
                 await transaction.RollbackAsync(cancellationToken);
+                DbContext.ChangeTracker.Clear();
                 throw;
             }
             finally

@@ -168,6 +168,66 @@ public sealed class WorkerRealtimeEventRouterTests
         calledParticipants.Should().ContainSingle().Which.Should().Be(userId);
     }
 
+    [Fact]
+    public async Task RouteConversationParticipantsAddedAsync_SelectsInstancesByRecipientUserIds()
+    {
+        var changedUserId = _fixture.Create<Guid>();
+        var existingUserId = _fixture.Create<Guid>();
+        ConversationParticipantsAddedParam? publishedParam = null;
+        IReadOnlyCollection<Guid>? routingUserIds = null;
+
+        _userInstanceRoutingReaderMock
+            .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyCollection<Guid>, CancellationToken>((userIds, _) => routingUserIds = userIds)
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>
+            {
+                [existingUserId] = ["instance-a"]
+            });
+        _addressResolverMock.Setup(x => x.Resolve("instance-a")).Returns(new Uri("http://instance-a"));
+        _internalApiClientMock
+            .Setup(x => x.PublishConversationParticipantsAddedAsync(
+                It.IsAny<Uri>(),
+                It.IsAny<ConversationParticipantsAddedParam>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<Uri, ConversationParticipantsAddedParam, CancellationToken>((_, param, _) => publishedParam = param)
+            .Returns(Task.CompletedTask);
+
+        await CreateRouter().RouteConversationParticipantsAddedAsync(
+            new ConversationParticipantsAddedParam(
+                _fixture.Create<Guid>(),
+                2,
+                [changedUserId],
+                [changedUserId, existingUserId]),
+            CancellationToken.None);
+
+        routingUserIds.Should().BeEquivalentTo([changedUserId, existingUserId]);
+        publishedParam.Should().NotBeNull();
+        publishedParam!.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(changedUserId);
+    }
+
+    [Fact]
+    public async Task RouteConversationParticipantsRemovedAsync_SelectsInstancesByRecipientUserIds()
+    {
+        var removedUserId = _fixture.Create<Guid>();
+        var remainingUserId = _fixture.Create<Guid>();
+        IReadOnlyCollection<Guid>? routingUserIds = null;
+
+        _userInstanceRoutingReaderMock
+            .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyCollection<Guid>, CancellationToken>((userIds, _) => routingUserIds = userIds)
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>());
+
+        await CreateRouter().RouteConversationParticipantsRemovedAsync(
+            new ConversationParticipantsRemovedParam(
+                _fixture.Create<Guid>(),
+                1,
+                [removedUserId],
+                [removedUserId, remainingUserId]),
+            CancellationToken.None);
+
+        routingUserIds.Should().BeEquivalentTo([removedUserId, remainingUserId]);
+    }
+
     private WorkerRealtimeEventRouter CreateRouter() =>
         new(
             _userInstanceRoutingReaderMock.Object,

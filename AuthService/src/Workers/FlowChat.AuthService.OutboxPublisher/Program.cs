@@ -56,6 +56,7 @@ static void LogStartupDiagnostics(IHost host)
     var accountRegisteredOptions = host.Services.GetRequiredService<IOptions<AccountRegisteredProducerSettingsSection>>().Value;
     var accountConfirmedOptions = host.Services.GetRequiredService<IOptions<AccountConfirmedProducerSettingsSection>>().Value;
     var phoneNumberConfirmedOptions = host.Services.GetRequiredService<IOptions<PhoneNumberConfirmedProducerSettingsSection>>().Value;
+    var retryOutboxOptions = host.Services.GetRequiredService<IOptions<RetryOutboxKafkaSettingsSection>>().Value;
     var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var authDbTarget = GetAuthDbTarget(configuration.GetConnectionString("AuthDb"));
 
@@ -64,8 +65,9 @@ static void LogStartupDiagnostics(IHost host)
         "AccountRegistered Kafka: {AccountRegisteredBootstrapServers} -> {AccountRegisteredTopic}. " +
         "AccountConfirmed Kafka: {AccountConfirmedBootstrapServers} -> {AccountConfirmedTopic}. " +
         "PhoneNumberConfirmed Kafka: {PhoneNumberConfirmedBootstrapServers} -> {PhoneNumberConfirmedTopic}. " +
-        "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
-        "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
+        "Retry outbox Kafka: {RetryOutboxBootstrapServers} -> {RetryOutboxTopics}. " +
+        "Outbox worker settings: BatchSize={BatchSize}, PollInterval={PollInterval}, " +
+        "InitialRetryDelay={InitialRetryDelay}, MaxRetryDelay={MaxRetryDelay}.",
         environment.EnvironmentName,
         authDbTarget.Host,
         authDbTarget.Port,
@@ -76,10 +78,12 @@ static void LogStartupDiagnostics(IHost host)
         accountConfirmedOptions.Topic,
         phoneNumberConfirmedOptions.BootstrapServers,
         phoneNumberConfirmedOptions.Topic,
+        retryOutboxOptions.BootstrapServers,
+        string.Join(", ", retryOutboxOptions.Topics),
         outboxOptions.BatchSize,
-        outboxOptions.PollIntervalSeconds,
-        outboxOptions.RetryBaseDelaySeconds,
-        outboxOptions.MaxRetryDelaySeconds);
+        outboxOptions.PollInterval,
+        outboxOptions.InitialRetryDelay,
+        outboxOptions.MaxRetryDelay);
 }
 
 static (string Host, string Port, string Database) GetAuthDbTarget(string? connectionString)

@@ -12,14 +12,14 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.
 public sealed class UserProfileCreatedDomainEventHandler(
     IEmailVerificationProcessWriteRepository emailVerificationProcessWriteRepository,
     IEmailVerificationRequestIssuer emailVerificationRequestIssuer)
-    : DomainEventHandlerBase<UserProfileCreatedDomainEvent>
+    : IDomainEventHandler<UserProfileCreatedDomainEvent>
 {
     private const string SystemActor = "system";
 
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository = emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
 
-    protected override async Task ExecuteAsync(
+    public async Task Handle(
         UserProfileCreatedDomainEvent notification,
         CancellationToken cancellationToken)
     {

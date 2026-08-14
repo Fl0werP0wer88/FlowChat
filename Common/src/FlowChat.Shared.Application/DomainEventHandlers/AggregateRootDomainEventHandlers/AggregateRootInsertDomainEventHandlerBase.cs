@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 
@@ -10,10 +11,11 @@ public abstract class AggregateRootInsertDomainEventHandlerBase<TNotification, T
 {
     protected AggregateRootInsertDomainEventHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TNotification, TAggregate>> beforeSaveProcessors)
         : base(localEventsDispatcher, beforeSaveProcessors)
     {
     }
 
-    protected void SetInserted() => SetMutationType(MutationType.Created);
+    protected static FlowChatResult<MutationType> Created() =>
+        Mutation(MutationType.Created);
 }

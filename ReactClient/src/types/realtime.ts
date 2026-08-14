@@ -23,13 +23,15 @@ export interface GroupConversationChangedEvent {
   createdByUserId: string;
 }
 
-export interface GroupConversationParticipantsAddedEvent {
+export interface ConversationParticipantsAddedEvent {
   conversationId: string;
+  conversationType: number;
   participantUserIds: string[];
 }
 
-export interface GroupConversationParticipantsRemovedEvent {
+export interface ConversationParticipantsRemovedEvent {
   conversationId: string;
+  conversationType: number;
   participantUserIds: string[];
 }
 

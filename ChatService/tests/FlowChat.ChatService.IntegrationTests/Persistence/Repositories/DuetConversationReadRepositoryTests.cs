@@ -1,234 +1,283 @@
-using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.UserProfiles;
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Persistence.Entities;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using ChatMessageAggregateV2 = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessageV2;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
 public sealed class DuetConversationReadRepositoryTests
 {
     [Fact]
-    public async Task GetByUserIdsAsync_WhenDuetConversationExists_ReturnsOrderedParticipantDetails()
+    public async Task GetByUserIdsAsync_WhenDuetConversationExists_ReturnsParticipantDetails()
     {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
+        await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
-            createdByUserId: requestingUserId,
-            partnerUserId: partnerUserId);
-        MarkCreated(conversation);
+        var duet = CreateDuet(requestingUserId, partnerUserId);
+        duet.Participants[0].ChangeDisplayName("Requester override");
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
-            seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
+            AddDuet(seedContext, duet);
             seedContext.UserProfileProjections.AddRange(
-                CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"),
-                CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png"));
-
+                CreateProfile(requestingUserId, "Requester", avatarUrl: "requester.png"),
+                CreateProfile(partnerUserId, "Partner", avatarUrl: "partner.png"));
             await seedContext.SaveChangesAsync();
         }
 
         await using var readContext = CreateDbContext(connection);
-        var repository = new DuetConversationReadRepository(readContext);
-
-        var result = await repository.GetByUserIdsAsync(requestingUserId, partnerUserId, CancellationToken.None);
-        var participants = result!.Participants.ToList();
+        var result = await new DuetConversationReadRepository(readContext)
+            .GetByUserIdsAsync(requestingUserId, partnerUserId);
 
         result.Should().NotBeNull();
-        result.ConversationId.Should().Be(conversation.Id.Value);
-        participants.Should().HaveCount(2);
-        participants.Select(x => x.UserId).Should().Equal(requestingUserId, partnerUserId);
-        participants.Select(x => x.ParticipantUserId).Should().Equal(requestingUserId, partnerUserId);
-        participants.Select(x => x.DisplayName).Should().Equal("Requester", "Partner");
-        participants.Select(x => x.AvatarUrl).Should().Equal("requester.png", "partner.png");
+        result!.ConversationId.Should().Be(duet.Conversation.Id.Value);
+        result.Participants.Should().HaveCount(2);
+        result.Participants.Should().ContainSingle(x =>
+            x.UserId == requestingUserId
+            && x.DisplayName == "Requester override"
+            && x.AvatarUrl == "requester.png");
+        result.Participants.Should().ContainSingle(x =>
+            x.UserId == partnerUserId
+            && x.DisplayName == "Partner"
+            && x.AvatarUrl == "partner.png");
     }
 
     [Fact]
-    public async Task GetByUserIdsAsync_WhenProfileIsMissing_ReturnsFallbackValuesForMissingProjection()
+    public async Task GetByUserIdsAsync_WhenProfileIsDeleted_ReturnsFallbackValues()
     {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
+        await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
-            createdByUserId: requestingUserId,
-            partnerUserId: partnerUserId);
-        MarkCreated(conversation);
+        var duet = CreateDuet(requestingUserId, partnerUserId);
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
-            seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
+            AddDuet(seedContext, duet);
             seedContext.UserProfileProjections.AddRange(
-                CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"),
+                CreateProfile(requestingUserId, "Requester", avatarUrl: "requester.png"),
                 CreateProfile(
                     partnerUserId,
-                    "deleted-partner",
-                    firstName: "Deleted",
+                    "Deleted",
                     avatarUrl: "deleted.png",
-                    deletedAt: new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero)));
-
+                    deletedAt: DateTimeOffset.UtcNow));
             await seedContext.SaveChangesAsync();
         }
 
         await using var readContext = CreateDbContext(connection);
-        var repository = new DuetConversationReadRepository(readContext);
+        var result = await new DuetConversationReadRepository(readContext)
+            .GetByUserIdsAsync(requestingUserId, partnerUserId);
 
-        var result = await repository.GetByUserIdsAsync(requestingUserId, partnerUserId, CancellationToken.None);
-        var participants = result!.Participants.ToList();
-
-        result.Should().NotBeNull();
-        participants.Should().HaveCount(2);
-        participants[1].UserId.Should().Be(partnerUserId);
-        participants[1].DisplayName.Should().BeNull();
-        participants[1].AvatarUrl.Should().BeNull();
-        participants[1].ParticipantUserId.Should().Be(partnerUserId);
+        var partner = result!.Participants.Single(x => x.UserId == partnerUserId);
+        partner.DisplayName.Should().BeNull();
+        partner.AvatarUrl.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetByUserIdsAsync_WhenDuetMappingPointsToMissingConversation_ReturnsNull()
+    public async Task GetByUserIdsAsync_WhenDuetLookupPointsToMissingConversation_ReturnsNull()
     {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
+        await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
+        var (first, second) = Normalize(requestingUserId, partnerUserId);
         var missingConversationId = Guid.NewGuid();
 
         await using (var seedContext = CreateDbContext(connection))
         {
             await seedContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = OFF;");
-            var normalizedIds = Normalize(requestingUserId, partnerUserId);
             await seedContext.Database.ExecuteSqlInterpolatedAsync(
                 $"""
-                INSERT INTO "DuetConversations" ("FirstUserId", "SecondUserId", "ConversationId")
-                VALUES ({normalizedIds.First}, {normalizedIds.Second}, {missingConversationId})
+                INSERT INTO "DuetConversationsV2" ("FirstUserId", "SecondUserId", "ConversationId")
+                VALUES ({first}, {second}, {missingConversationId})
                 """);
             await seedContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;");
         }
 
         await using var readContext = CreateDbContext(connection);
-        var repository = new DuetConversationReadRepository(readContext);
-
-        var result = await repository.GetByUserIdsAsync(requestingUserId, partnerUserId, CancellationToken.None);
+        var result = await new DuetConversationReadRepository(readContext)
+            .GetByUserIdsAsync(requestingUserId, partnerUserId);
 
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetContactsForUserAsync_WhenPartnerHasBlockedRequester_ReturnsIsBlockedByPartnerTrue()
+    public async Task GetContactsForUserAsync_WhenPartnerBlockedRequester_ReturnsParticipantState()
     {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
+        await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
-            createdByUserId: requestingUserId,
-            partnerUserId: partnerUserId);
-        conversation.MarkParticipantAsRead(requestingUserId);
-        conversation.BlockParticipant(partnerUserId);
-        MarkCreated(conversation);
+        var duet = CreateDuet(requestingUserId, partnerUserId);
+        duet.Participants[0].AdvanceReadCursor(3);
+        duet.Participants[0].Mute();
+        duet.Participants[1].Block();
+        var message = ChatMessageAggregateV2.Create(
+            Id<ChatMessageAggregateV2>.New(),
+            duet.Conversation.Id,
+            Id<UserProfile>.FromGuid(partnerUserId),
+            "Latest",
+            sequenceNum: 12);
+        MarkCreated(message);
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
-            seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
+            AddDuet(seedContext, duet);
+            seedContext.ChatMessagesV2.Add(message);
             seedContext.UserProfileProjections.Add(
-                CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png", email: "partner@example.com"));
-
+                CreateProfile(
+                    partnerUserId,
+                    "Partner",
+                    avatarUrl: "partner.png",
+                    email: "partner@example.com"));
             await seedContext.SaveChangesAsync();
+            await seedContext.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO "ConversationMessageSequencesV2" ("ConversationId", "LastAssignedSequenceNum")
+                VALUES ({duet.Conversation.Id.Value}, {12L})
+                """);
         }
 
         await using var readContext = CreateDbContext(connection);
-        var repository = new DuetConversationReadRepository(readContext);
-
-        var result = await repository.GetContactsForUserAsync(requestingUserId, CancellationToken.None);
+        var result = await new DuetConversationReadRepository(readContext)
+            .GetContactsForUserAsync(requestingUserId);
 
         var contact = result.Should().ContainSingle().Subject;
         contact.PartnerUserId.Should().Be(partnerUserId);
         contact.DisplayName.Should().Be("Partner");
         contact.AvatarUrl.Should().Be("partner.png");
         contact.Email.Should().Be("partner@example.com");
-        contact.ConversationId.Should().Be(conversation.Id.Value);
+        contact.ConversationId.Should().Be(duet.Conversation.Id.Value);
         contact.IsBlocked.Should().BeFalse();
         contact.IsBlockedByPartner.Should().BeTrue();
-        contact.IsMuted.Should().BeFalse();
+        contact.IsMuted.Should().BeTrue();
         contact.IsHidden.Should().BeFalse();
+        contact.LastReadMsgSeqNum.Should().Be(3);
+        contact.CurrentMsgSeqNum.Should().Be(12);
     }
 
     [Fact]
-    public async Task GetContactsForUserAsync_WhenRequesterHasHiddenContact_ExcludesItFromResults()
+    public async Task GetContactsForUserAsync_WhenRequesterHiddenContact_ReturnsNoContact()
     {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
+        await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
-            createdByUserId: requestingUserId,
-            partnerUserId: partnerUserId);
-        conversation.HideParticipant(requestingUserId);
-        MarkCreated(conversation);
+        var duet = CreateDuet(requestingUserId, partnerUserId);
+        duet.Participants[0].Hide();
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
-            seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
-
+            AddDuet(seedContext, duet);
             await seedContext.SaveChangesAsync();
         }
 
         await using var readContext = CreateDbContext(connection);
-        var repository = new DuetConversationReadRepository(readContext);
-
-        var result = await repository.GetContactsForUserAsync(requestingUserId, CancellationToken.None);
+        var result = await new DuetConversationReadRepository(readContext)
+            .GetContactsForUserAsync(requestingUserId);
 
         result.Should().BeEmpty();
     }
 
-    private static DuetConversationLookupEntity CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
+    [Fact]
+    public async Task GetByUserIdsAsync_WhenPartnerParticipantDeleted_ReturnsNull()
     {
-        var (first, second) = Normalize(userId1, userId2);
+        await using var connection = await CreateOpenConnectionAsync();
+        var requestingUserId = Guid.NewGuid();
+        var partnerUserId = Guid.NewGuid();
+        var duet = CreateDuet(requestingUserId, partnerUserId);
+        duet.Participants[1].Delete(UtcDateTimeOffset.UtcNow);
 
-        return new DuetConversationLookupEntity
+        await using (var seedContext = CreateDbContext(connection))
         {
-            FirstUserId = first,
-            SecondUserId = second,
-            ConversationId = Id<Conversation>.FromGuid(conversationId)
+            AddDuet(seedContext, duet);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var result = await new DuetConversationReadRepository(readContext)
+            .GetByUserIdsAsync(requestingUserId, partnerUserId);
+
+        result.Should().BeNull();
+    }
+
+    private static DuetData CreateDuet(Guid requestingUserId, Guid partnerUserId)
+    {
+        var conversation = ConversationV2.CreateDuet(
+            Id<UserProfile>.FromGuid(requestingUserId),
+            Id<UserProfile>.FromGuid(partnerUserId));
+        var participants = new[]
+        {
+            ConversationParticipant.Create(
+                Id<ConversationParticipant>.New(),
+                conversation.Id,
+                ConversationType.Duet,
+                Id<UserProfile>.FromGuid(requestingUserId),
+                Id<UserProfile>.FromGuid(partnerUserId)),
+            ConversationParticipant.Create(
+                Id<ConversationParticipant>.New(),
+                conversation.Id,
+                ConversationType.Duet,
+                Id<UserProfile>.FromGuid(partnerUserId),
+                Id<UserProfile>.FromGuid(requestingUserId))
         };
+        var (first, second) = Normalize(requestingUserId, partnerUserId);
+        var lookup = new DuetConversationLookupEntityV2
+        {
+            ConversationId = conversation.Id,
+            FirstUserId = first,
+            SecondUserId = second
+        };
+
+        MarkCreated(conversation);
+        foreach (var participant in participants)
+        {
+            MarkCreated(participant);
+        }
+
+        return new DuetData(conversation, participants, lookup);
+    }
+
+    private static void AddDuet(AppDbContext context, DuetData duet)
+    {
+        context.ConversationsV2.Add(duet.Conversation);
+        context.ConversationParticipantsV2.AddRange(duet.Participants);
+        context.DuetConversationsV2.Add(duet.Lookup);
     }
 
     private static UserProfileReadModelEntity CreateProfile(
         Guid userId,
-        string friendlyUserId,
-        string? firstName = null,
-        string? lastName = null,
+        string firstName,
         string? avatarUrl = null,
         string? email = null,
         DateTimeOffset? deletedAt = null) =>
         new()
         {
             UserId = userId,
-            FriendlyUserId = friendlyUserId,
+            FriendlyUserId = userId.ToString("N"),
             FirstName = firstName,
-            LastName = lastName,
             AvatarUrl = avatarUrl,
             Email = email,
+            SourceVersion = 1,
+            SourceCreatedAtUtc = DateTimeOffset.UtcNow,
+            SourceLastModifiedAtUtc = DateTimeOffset.UtcNow,
             SourceDeletedAtUtc = deletedAt
         };
 
-    private static (Guid First, Guid Second) Normalize(Guid userId1, Guid userId2) =>
-        userId1 < userId2 ? (userId1, userId2) : (userId2, userId1);
+    private static (Guid First, Guid Second) Normalize(Guid firstUserId, Guid secondUserId) =>
+        firstUserId.CompareTo(secondUserId) < 0
+            ? (firstUserId, secondUserId)
+            : (secondUserId, firstUserId);
+
+    private static async Task<SqliteConnection> CreateOpenConnectionAsync()
+    {
+        var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        return connection;
+    }
 
     private static AppDbContext CreateDbContext(SqliteConnection connection)
     {
@@ -241,9 +290,26 @@ public sealed class DuetConversationReadRepositoryTests
         return context;
     }
 
-    private static void MarkCreated(Conversation conversation)
+    private static void MarkCreated(ConversationV2 conversation)
     {
         conversation.SetCreated("integration-test");
         conversation.SetUpdated("integration-test");
     }
+
+    private static void MarkCreated(ConversationParticipant participant)
+    {
+        participant.SetCreated("integration-test");
+        participant.SetUpdated("integration-test");
+    }
+
+    private static void MarkCreated(ChatMessageAggregateV2 message)
+    {
+        message.SetCreated("integration-test");
+        message.SetUpdated("integration-test");
+    }
+
+    private sealed record DuetData(
+        ConversationV2 Conversation,
+        IReadOnlyList<ConversationParticipant> Participants,
+        DuetConversationLookupEntityV2 Lookup);
 }

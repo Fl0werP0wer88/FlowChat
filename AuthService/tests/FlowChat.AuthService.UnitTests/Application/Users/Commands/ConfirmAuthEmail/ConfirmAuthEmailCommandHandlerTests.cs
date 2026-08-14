@@ -76,5 +76,28 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
     }
 
+    [Fact]
+    public async Task Handle_WhenEmailIsAlreadyConfirmed_ReturnsSuccessWithoutUpdatingOrDispatchingEvent()
+    {
+        var emailAddress = EmailAddress.Create("flower@example.com");
+        var account = Account.Restore(Guid.NewGuid(), "flower", emailAddress, "hash", "stamp", 0, true);
+
+        _accountRepositoryMock
+            .Setup(x => x.GetByEmailAsync(emailAddress, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        var result = await _handler.Handle(
+            new ConfirmAuthEmailCommand { EmailAddress = "flower@example.com" },
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        _accountRepositoryMock.Verify(
+            x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
 }
 

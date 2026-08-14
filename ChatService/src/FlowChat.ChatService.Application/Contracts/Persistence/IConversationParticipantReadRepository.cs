@@ -11,4 +11,8 @@ public interface IConversationParticipantReadRepository
     Task<IReadOnlyCollection<ParticipantStateDto>?> GetParticipantStatesAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default);
+
+    Task<int?> GetMembershipRevisionAsync(
+        Guid conversationId,
+        CancellationToken cancellationToken = default);
 }

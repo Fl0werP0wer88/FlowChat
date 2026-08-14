@@ -38,7 +38,7 @@ public sealed class ChangeUserPresencePreferencesCommandHandlerTests
             _repositoryMock.Object,
             _unitOfWorkMock.Object,
             _dispatcherMock.Object,
-            Array.Empty<IAggregateBeforeSaveProcessor<ChangeUserPresencePreferencesCommand, UserPresencePreferences>>());
+            Array.Empty<IAggregateBeforeSaveProcessorV2<ChangeUserPresencePreferencesCommand, UserPresencePreferences>>());
     }
 
     [Theory]

@@ -2,6 +2,7 @@ using FlowChat.AuthService.OutboxPublisher.Configuration.Settings;
 using FlowChat.AuthService.Persistence;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -32,6 +33,10 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new PhoneNumberConfirmedProducerSettingsSection().SectionName)
             .Get<PhoneNumberConfirmedProducerSettingsSection>()
             ?? new PhoneNumberConfirmedProducerSettingsSection();
+        var retryKafkaOptions = configuration
+            .GetSection(new RetryOutboxKafkaSettingsSection().SectionName)
+            .Get<RetryOutboxKafkaSettingsSection>()
+            ?? new RetryOutboxKafkaSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(accountRegisteredOptions.BootstrapServers)
             ? accountRegisteredOptions.BootstrapServers
             : !string.IsNullOrWhiteSpace(accountConfirmedOptions.BootstrapServers)
@@ -46,6 +51,8 @@ public static class OutboxPublisherServiceRegistration
             .BindConfiguration(new AccountConfirmedProducerSettingsSection().SectionName);
         services.AddOptions<PhoneNumberConfirmedProducerSettingsSection>()
             .BindConfiguration(new PhoneNumberConfirmedProducerSettingsSection().SectionName);
+        services.AddOptions<RetryOutboxKafkaSettingsSection>()
+            .BindConfiguration(new RetryOutboxKafkaSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -56,11 +63,11 @@ public static class OutboxPublisherServiceRegistration
                 options.AddOutboxWorker(worker => worker
                     .ProcessOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())
                     .WithBatchSize(outboxOptions.BatchSize)
-                    .WithInterval(TimeSpan.FromSeconds(outboxOptions.PollIntervalSeconds))
+                    .WithInterval(outboxOptions.PollInterval)
                     .WithExponentialRetryDelay(
-                        TimeSpan.FromSeconds(outboxOptions.RetryBaseDelaySeconds),
+                        outboxOptions.InitialRetryDelay,
                         2,
-                        TimeSpan.FromSeconds(outboxOptions.MaxRetryDelaySeconds))
+                        outboxOptions.MaxRetryDelay)
                     .WithoutDistributedLock());
             })
             .AddKafkaClients(clients =>
@@ -78,7 +85,10 @@ public static class OutboxPublisherServiceRegistration
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
                             .ProduceTo(phoneNumberConfirmedOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-            });
+            })
+            .AddFlowChatTieredRetryProducerPipeline(
+                retryKafkaOptions.BootstrapServers,
+                retryKafkaOptions.Topics);
 
         return services;
     }

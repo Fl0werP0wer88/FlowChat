@@ -8,77 +8,50 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IChatMessageReadRepository
 {
-    public async Task<ConversationMessagesPageDto> GetPageBeforeAsync(
+    public async Task<IReadOnlyCollection<ChatMessageDto>> GetRangeDescendingAsync(
         Guid conversationId,
+        long startSequenceNum,
+        long endSequenceNum,
         int limit,
-        DateTimeOffset? beforeSentAtUtc,
-        Guid? beforeMessageId,
         CancellationToken cancellationToken = default)
     {
-        var query = Active(dbContext.ChatMessageReads)
-            .Where(message => message.ConversationId == conversationId);
+        var rows = await Active(dbContext.ChatMessageReadsV2)
+            .Where(message =>
+                message.ConversationId == conversationId &&
+                message.SequenceNum >= startSequenceNum &&
+                message.SequenceNum <= endSequenceNum)
+            .OrderByDescending(message => message.SequenceNum)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
 
-        List<ChatMessageReadEntity> rows;
-        if (beforeSentAtUtc.HasValue && beforeMessageId.HasValue)
-        {
-            var beforeUtc = beforeSentAtUtc.Value.ToUniversalTime();
-            var sameTimestampRows = await query
-                .Where(message => message.SentAtUtc == beforeUtc)
-                .ToListAsync(cancellationToken);
-
-            rows = sameTimestampRows
-                .Where(message => message.Id.CompareTo(beforeMessageId.Value) < 0)
-                .OrderByDescending(message => message.Id)
-                .Take(limit + 1)
-                .ToList();
-
-            if (rows.Count < limit + 1)
-            {
-                var olderRows = await query
-                    .Where(message => message.SentAtUtc < beforeUtc)
-                    .OrderByDescending(message => message.SentAtUtc)
-                    .ThenByDescending(message => message.Id)
-                    .Take(limit + 1 - rows.Count)
-                    .ToListAsync(cancellationToken);
-
-                rows.AddRange(olderRows);
-            }
-        }
-        else
-        {
-            if (beforeSentAtUtc.HasValue)
-            {
-                var beforeUtc = beforeSentAtUtc.Value.ToUniversalTime();
-                query = query.Where(message => message.SentAtUtc < beforeUtc);
-            }
-
-            rows = await query
-                .OrderByDescending(message => message.SentAtUtc)
-                .ThenByDescending(message => message.Id)
-                .Take(limit + 1)
-                .ToListAsync(cancellationToken);
-        }
-
-        var dtos = rows
-            .Select(MapToDto)
-            .ToList();
-
-        var hasMore = dtos.Count > limit;
-        var items = dtos.Take(limit).ToList();
-        var nextCursor = items.LastOrDefault();
-
-        return new ConversationMessagesPageDto(
-            items,
-            hasMore ? nextCursor?.SentAtUtc : null,
-            hasMore ? nextCursor?.Id : null,
-            hasMore);
+        return rows.Select(MapToDto).ToList();
     }
 
-    private static ChatMessageDto MapToDto(ChatMessageReadEntity message) =>
+    public async Task<IReadOnlyCollection<ChatMessageDto>> GetRangeAscendingAsync(
+        Guid conversationId,
+        long startSequenceNum,
+        long endSequenceNum,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await Active(dbContext.ChatMessageReadsV2)
+            .Where(message =>
+                message.ConversationId == conversationId &&
+                message.SequenceNum >= startSequenceNum &&
+                message.SequenceNum <= endSequenceNum)
+            .OrderBy(message => message.SequenceNum)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(MapToDto).ToList();
+    }
+
+    private static ChatMessageDto MapToDto(ChatMessageReadEntityV2 message) =>
         new(
             message.Id,
             message.ConversationId,
             message.SenderUserId,
             message.Text,
-            message.SentAtUtc);
+            message.SentAtUtc,
+            message.SequenceNum);
 }

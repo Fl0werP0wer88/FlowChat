@@ -5,6 +5,7 @@ using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.ChatService.Persistence;
 
@@ -24,7 +25,11 @@ public static class ConsumerPersistenceServiceRegistration
 {
     public static IServiceCollection AddConsumerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
+        services.AddScoped<IConsumedOffsetCommitter>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
         services.AddCommonDbContextServices(configuration);
         services.AddChatRepositories();
 
@@ -54,13 +59,15 @@ internal static class CommonPersistenceServiceRegistration
     public static IServiceCollection AddChatRepositories(this IServiceCollection services)
     {
         services.AddScoped<IChatMessageReadRepository, ChatMessageReadRepository>();
-        services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
+        services.AddScoped<IChatMessageV2WriteRepository, ChatMessageV2WriteRepository>();
         services.AddScoped<IConversationParticipantReadRepository, ConversationParticipantReadRepository>();
-        services.AddScoped<IConversationWriteRepository, ConversationWriteRepository>();
-        services.AddScoped<IGroupConversationWriteRepository, GroupConversationWriteRepository>();
+        services.AddScoped<IConversationV2WriteRepository, ConversationV2WriteRepository>();
+        services.AddScoped<IConversationMembershipWriteRepository, ConversationMembershipWriteRepository>();
+        services.AddScoped<IConversationParticipantWriteRepository, ConversationParticipantWriteRepository>();
+        services.AddScoped<IConversationMessageSequenceRepositoryV2, ConversationMessageSequenceRepositoryV2>();
+        services.AddScoped<IConversationMessageSequenceReadRepository, ConversationMessageSequenceReadRepository>();
         services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
-        services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
 
         return services;

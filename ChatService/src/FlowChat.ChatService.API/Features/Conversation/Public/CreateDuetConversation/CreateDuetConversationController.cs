@@ -37,7 +37,7 @@ public sealed class CreateDuetConversationController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new CreateDuetConversationCommand(userId, request.PartnerUserId),
+            new CreateDuetConversationCommandV2(userId, request.PartnerUserId),
             cancellationToken);
 
         if (!result.IsSuccess)

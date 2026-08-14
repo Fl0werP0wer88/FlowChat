@@ -32,11 +32,23 @@ public static class ConsumerPersistenceServiceRegistration
     {
         services.AddCommonDbContextServices(configuration);
 
-        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
+        services.AddScoped<IConsumedOffsetCommitter>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
         services.AddNotificationRepositories();
 
         return services;
     }
+}
+
+public static class OutboxPublisherPersistenceServiceRegistration
+{
+    public static IServiceCollection AddOutboxPublisherPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration) =>
+        services.AddCommonDbContextServices(configuration);
 }
 
 internal static class CommonPersistenceServiceRegistration

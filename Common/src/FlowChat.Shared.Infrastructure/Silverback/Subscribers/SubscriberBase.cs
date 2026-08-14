@@ -3,6 +3,7 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Subscribers;
@@ -20,15 +21,17 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
     {
         var message = envelope.Message ?? throw new InvalidOperationException("Inbound envelope message cannot be null.");
         var sourceTopic = envelope.Endpoint.RawName;
-        var deliveryKind = sourceTopic.EndsWith(".retry", StringComparison.OrdinalIgnoreCase)
-            ? "retry"
-            : "main";
+        var headers = envelope.Headers;
+        var retryAttempt = headers?.GetValue(RetryMessageHeaders.RetryAttempt);
+        var deliveryKind = string.IsNullOrWhiteSpace(retryAttempt)
+            ? "main"
+            : "retry";
 
         Activity.Current?.SetTag("flowchat.subscriber.event_type", GetEventTypeName(message));
         Activity.Current?.SetTag("flowchat.subscriber.name", GetType().Name);
         Activity.Current?.SetTag("flowchat.subscriber.delivery_kind", deliveryKind);
         Activity.Current?.SetTag("flowchat.subscriber.source_topic", sourceTopic);
-        Activity.Current?.SetTag("flowchat.subscriber.message_id", envelope.Headers.GetValue(IntegrationMessageHeaders.EventId));
+        Activity.Current?.SetTag("flowchat.subscriber.message_id", headers?.GetValue(IntegrationMessageHeaders.EventId));
 
         try
         {

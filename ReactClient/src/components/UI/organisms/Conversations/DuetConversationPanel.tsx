@@ -10,6 +10,7 @@ import { ConversationBody } from "../../molecules/ConversationBody";
 import { ConversationFooter } from "../../molecules/ConversationFooter";
 import { DuetConversationHeader } from "../../molecules/DuetConversationHeader";
 import { DuetConversationSettings } from "../../molecules/DuetConversationSettings";
+import type { MessageSyncStatus } from "../../../../hooks/caches/sequencedMessageCache";
 
 interface DuetConversationPanelProps {
   activeContact: Contact | null;
@@ -27,6 +28,8 @@ interface DuetConversationPanelProps {
   onSendDraft: () => Promise<void>;
   onLoadOlderMessages: () => Promise<void>;
   onCreateGroupFromDuet: (request: { groupName: string; initialUserIds: string[] }) => void;
+  messageSyncStatus: MessageSyncStatus;
+  onRetryMessageSync: () => void;
 }
 
 export function DuetConversationPanel({
@@ -45,6 +48,8 @@ export function DuetConversationPanel({
   onSendDraft,
   onLoadOlderMessages,
   onCreateGroupFromDuet,
+  messageSyncStatus,
+  onRetryMessageSync,
 }: DuetConversationPanelProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const accessToken = useAuthStore((state) => state.accessToken) ?? "";
@@ -134,6 +139,8 @@ export function DuetConversationPanel({
             messages={messages}
             participants={participants}
             onLoadOlderMessages={onLoadOlderMessages}
+            messageSyncStatus={messageSyncStatus}
+            onRetryMessageSync={onRetryMessageSync}
           />
         )}
       <ConversationFooter

@@ -30,7 +30,7 @@ public sealed class AddGroupParticipantsController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new AddGroupParticipantsCommand(conversationId, request.ParticipantUserIds),
+            new AddGroupParticipantsCommandV2(conversationId, request.ParticipantUserIds),
             cancellationToken);
 
         if (!result.IsSuccess)

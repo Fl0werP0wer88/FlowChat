@@ -1,6 +1,8 @@
+using FlowChat.HarnessService.Application.Features.KafkaRetry;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FlowChat.HarnessService.Application;
 
@@ -30,6 +32,8 @@ internal static class CommonApplicationServiceRegistration
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
+        services.AddSingleton<RetryPipelineTestAttemptTracker>();
+        services.TryAddSingleton(TimeProvider.System);
 
         return services;
     }

@@ -2,20 +2,26 @@ using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsAdded;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationMembershipDeltaV2;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationProjectionV2;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Routing;
+using FlowChat.RealtimeService.Persistence;
 using FlowChat.Core.Results;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Persistence;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Silverback.Messaging.Broker;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
+using Silverback.Messaging.Producing.TransactionalOutbox;
 using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -43,39 +49,42 @@ public sealed class ConsumersConfigurationTests
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
-        var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
+        var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentV2Subscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
-        var conversationSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationChangedSubscriber>();
-        var participantsAddedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsAddedSubscriber>();
-        var participantsRemovedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsRemovedSubscriber>();
+        var conversationSubscriber = scope.ServiceProvider.GetRequiredService<ConversationProjectionV2Subscriber>();
+        var conversationMembershipSubscriber = scope.ServiceProvider
+            .GetRequiredService<ConversationMembershipDeltaV2Subscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
         var realtimeInstanceInternalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInstanceInternalApiClient>();
-        var chatServiceInternalApiClient = scope.ServiceProvider.GetRequiredService<IChatServiceInternalApiClient>();
         var groupMembershipRepository = scope.ServiceProvider.GetRequiredService<IRealtimeGroupMembershipReadModelRepository>();
-        var groupConversationChangedHandler = scope.ServiceProvider
-            .GetRequiredService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>();
-        var groupConversationParticipantsAddedHandler = scope.ServiceProvider
-            .GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsAddedCommand, FlowChatResult<Unit>>>();
-        var groupConversationParticipantsRemovedHandler = scope.ServiceProvider
-            .GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsRemovedCommand, FlowChatResult<Unit>>>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        var conversationProjectionHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<RouteConversationProjectionV2Command, FlowChatResult<Unit>>>();
+        var conversationMembershipDeltaHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<RouteConversationMembershipDeltaV2Command, FlowChatResult<Unit>>>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var offsetCommitter = scope.ServiceProvider.GetRequiredService<IConsumedOffsetCommitter>();
 
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
         conversationSubscriber.Should().NotBeNull();
-        participantsAddedSubscriber.Should().NotBeNull();
-        participantsRemovedSubscriber.Should().NotBeNull();
+        conversationMembershipSubscriber.Should().NotBeNull();
         mediator.Should().NotBeNull();
         eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
         routingReader.Should().NotBeNull();
         realtimeInstanceInternalApiClient.Should().NotBeNull();
-        chatServiceInternalApiClient.Should().NotBeNull();
         groupMembershipRepository.Should().NotBeNull();
-        groupConversationChangedHandler.Should().NotBeNull();
-        groupConversationParticipantsAddedHandler.Should().NotBeNull();
-        groupConversationParticipantsRemovedHandler.Should().NotBeNull();
+        dbContext.Model.FindEntityType(typeof(SilverbackStoredOffset)).Should().NotBeNull();
+        dbContext.Model.FindEntityType(typeof(SilverbackOutboxMessage)).Should().NotBeNull();
+        dbContextFactory.Should().NotBeNull();
+        conversationProjectionHandler.Should().NotBeNull();
+        conversationMembershipDeltaHandler.Should().NotBeNull();
+        unitOfWork.Should().BeSameAs(offsetCommitter)
+            .And.BeOfType<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
     }
 
     [Fact]
@@ -87,14 +96,21 @@ public sealed class ConsumersConfigurationTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
         services.AddLogging();
+        services.AddSingleton(Mock.Of<IHostApplicationLifetime>());
         services.AddSingleton(Mock.Of<IConnectionMultiplexer>());
         services.AddConsumers(configuration);
 
         await using var serviceProvider = services.BuildServiceProvider();
 
+        await serviceProvider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
+        var producerCollection = serviceProvider.GetRequiredService<IProducerCollection>();
+        var topology = serviceProvider.GetRequiredService<TieredKafkaRetryTopology>();
 
-        consumerCollection.Should().NotBeNull();
+        consumerCollection.Should().HaveCount(20);
+        topology.Streams.SelectMany(stream => stream.RetryTiers.Select(tier => tier.Topic).Append(stream.DeadLetterTopic))
+            .Should()
+            .AllSatisfy(topic => producerCollection.GetProducerForEndpoint(topic).Should().NotBeNull());
     }
 
     [Theory]
@@ -107,102 +123,79 @@ public sealed class ConsumersConfigurationTests
             .Build();
 
         var chatOptions = configuration
-            .GetSection(new ChatMessageSentConsumerSettingsSection().SectionName)
-            .Get<ChatMessageSentConsumerSettingsSection>();
+            .GetSection(new ChatMessageV2ConsumerSettingsSection().SectionName)
+            .Get<ChatMessageV2ConsumerSettingsSection>();
         var presenceOptions = configuration
             .GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
             .Get<PresenceStatusChangedConsumerSettingsSection>();
         var conversationOptions = configuration
-            .GetSection(new GroupConversationChangedConsumerSettingsSection().SectionName)
-            .Get<GroupConversationChangedConsumerSettingsSection>();
+            .GetSection(new ConversationV2ProjectionConsumerSettingsSection().SectionName)
+            .Get<ConversationV2ProjectionConsumerSettingsSection>();
+        var conversationMembershipOptions = configuration
+            .GetSection(new ConversationMembershipV2ProjectionConsumerSettingsSection().SectionName)
+            .Get<ConversationMembershipV2ProjectionConsumerSettingsSection>();
 
         chatOptions.Should().NotBeNull();
         chatOptions!.GroupId.Should().Be("realtime-service");
         chatOptions.RetryGroupId.Should().Be("realtime-service-retry");
-        chatOptions.Topic.Should().Be("dev.flowchat.chat.message.v1");
-        chatOptions.RetryTopic.Should().Be("dev.flowchat.chat.message.v1.realtime-service.retry");
-        chatOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.message.v1.realtime-service.dlq");
+        chatOptions.Topic.Should().Be("dev.flowchat.chat.message.v2");
+        AssertRetryTiers(chatOptions, "dev.flowchat.chat.message.v2.realtime-service.retry");
+        chatOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.message.v2.realtime-service.dlq");
 
         presenceOptions.Should().NotBeNull();
         presenceOptions!.GroupId.Should().Be("realtime-service");
         presenceOptions.RetryGroupId.Should().Be("realtime-service-retry");
         presenceOptions.Topic.Should().Be("dev.flowchat.presence.presence");
-        presenceOptions.RetryTopic.Should().Be("dev.flowchat.presence.presence.realtime-service.retry");
+        AssertRetryTiers(presenceOptions, "dev.flowchat.presence.presence.realtime-service.retry");
         presenceOptions.DeadLetterTopic.Should().Be("dev.flowchat.presence.presence.realtime-service.dlq");
 
         conversationOptions.Should().NotBeNull();
         conversationOptions!.GroupId.Should().Be("realtime-service");
         conversationOptions.RetryGroupId.Should().Be("realtime-service-retry");
-        conversationOptions.Topic.Should().Be("dev.flowchat.chat.group-conversation.v1");
-        conversationOptions.RetryTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.retry");
-        conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.dlq");
-    }
+        conversationOptions.Topic.Should().Be("dev.flowchat.chat.conversation-projection.v2");
+        AssertRetryTiers(conversationOptions, "dev.flowchat.chat.conversation-projection.v2.realtime-service.retry");
+        conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.conversation-projection.v2.realtime-service.dlq");
 
-    [Fact]
-    public void DevelopmentAppSettings_UseChatServiceInternalApiKey()
-    {
-        var realtimeConsumersConfiguration = new ConfigurationBuilder()
-            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.json"))
-            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.Development.json"))
-            .Build();
-        var chatServiceApiConfiguration = new ConfigurationBuilder()
-            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.json"))
-            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.Development.json"))
-            .Build();
-
-        var realtimeChatServiceOptions = realtimeConsumersConfiguration
-            .GetSection(new ChatServiceSettingsSection().SectionName)
-            .Get<ChatServiceSettingsSection>();
-        var chatServiceInternalApiKey = chatServiceApiConfiguration["FlowChat:InternalApi:ApiKey"];
-
-        realtimeChatServiceOptions.Should().NotBeNull();
-        realtimeChatServiceOptions!.ApiKey.Should().Be(chatServiceInternalApiKey);
+        conversationMembershipOptions.Should().NotBeNull();
+        conversationMembershipOptions!.GroupId.Should().Be("realtime-service");
+        conversationMembershipOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        conversationMembershipOptions.Topic.Should().Be("dev.flowchat.chat.conversation-membership-projection.v2");
+        AssertRetryTiers(
+            conversationMembershipOptions,
+            "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.retry");
+        conversationMembershipOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.dlq");
     }
 
     private static IConfiguration CreateConfiguration()
     {
         return new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath(
+                "RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.Development.json"))
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
                 ["ConnectionStrings:RealtimeDb"] = "Host=localhost;Port=5432;Database=flowchat_realtime_db;Username=flowchat_app;Password=flowchat_app_pw;",
                 ["RealtimeConnections:InstanceId"] = "realtime-consumers",
-                ["RealtimeApi:Instances:realtime-api"] = "http://localhost:5215",
-                ["ChatServiceApi:BaseUrl"] = "http://localhost:5254",
-                ["ChatServiceApi:ApiKey"] = "internal-key",
-                ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:ChatMessageSentConsumer:GroupId"] = "realtime-service",
-                ["Kafka:ChatMessageSentConsumer:RetryGroupId"] = "realtime-service-retry",
-                ["Kafka:ChatMessageSentConsumer:Topic"] = "dev.flowchat.chat.message.v1",
-                ["Kafka:ChatMessageSentConsumer:RetryTopic"] = "dev.flowchat.chat.message.v1.retry",
-                ["Kafka:ChatMessageSentConsumer:DeadLetterTopic"] = "dev.flowchat.chat.message.v1.dlq",
-                ["Kafka:ChatMessageSentConsumer:MaxRetryCount"] = "5",
-                ["Kafka:ChatMessageSentConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:ChatMessageSentConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:ChatMessageSentConsumer:AutoOffsetReset"] = "Earliest",
-                ["Kafka:PresenceStatusChangedConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:PresenceStatusChangedConsumer:GroupId"] = "realtime-service",
-                ["Kafka:PresenceStatusChangedConsumer:RetryGroupId"] = "realtime-service-retry",
-                ["Kafka:PresenceStatusChangedConsumer:Topic"] = "dev.flowchat.presence.presence",
-                ["Kafka:PresenceStatusChangedConsumer:RetryTopic"] = "dev.flowchat.presence.presence.retry",
-                ["Kafka:PresenceStatusChangedConsumer:DeadLetterTopic"] = "dev.flowchat.presence.presence.dlq",
-                ["Kafka:PresenceStatusChangedConsumer:MaxRetryCount"] = "5",
-                ["Kafka:PresenceStatusChangedConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:PresenceStatusChangedConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:PresenceStatusChangedConsumer:AutoOffsetReset"] = "Earliest",
-                ["Kafka:GroupConversationChangedConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:GroupConversationChangedConsumer:GroupId"] = "realtime-service",
-                ["Kafka:GroupConversationChangedConsumer:RetryGroupId"] = "realtime-service-retry",
-                ["Kafka:GroupConversationChangedConsumer:Topic"] = "dev.flowchat.chat.group-conversation.v1",
-                ["Kafka:GroupConversationChangedConsumer:RetryTopic"] = "dev.flowchat.chat.group-conversation.v1.retry",
-                ["Kafka:GroupConversationChangedConsumer:DeadLetterTopic"] = "dev.flowchat.chat.group-conversation.v1.dlq",
-                ["Kafka:GroupConversationChangedConsumer:MaxRetryCount"] = "5",
-                ["Kafka:GroupConversationChangedConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:GroupConversationChangedConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:GroupConversationChangedConsumer:AutoOffsetReset"] = "Earliest"
+                ["RealtimeApi:Instances:realtime-api"] = "http://localhost:5215"
             })
             .Build();
+    }
+
+    private static void AssertRetryTiers(
+        ITieredRetryKafkaConsumerSettingsSection settings,
+        string firstRetryTopic)
+    {
+        settings.RetryTiers.Select(tier => tier.Topic).Should().Equal(
+            $"{firstRetryTopic}.5s",
+            $"{firstRetryTopic}.20s",
+            $"{firstRetryTopic}.60s",
+            $"{firstRetryTopic}.300s");
+        settings.RetryTiers.Select(tier => tier.Delay).Should().Equal(
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(20),
+            TimeSpan.FromSeconds(60),
+            TimeSpan.FromSeconds(300));
     }
 
     private static string GetRepositoryPath(string relativePath)

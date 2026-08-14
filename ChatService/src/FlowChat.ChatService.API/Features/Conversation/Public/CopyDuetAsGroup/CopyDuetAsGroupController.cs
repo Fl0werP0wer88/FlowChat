@@ -37,7 +37,7 @@ public sealed class CopyDuetAsGroupController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new CreateGroupFromDuetCommand(request.NewGroupConversationId, userId, request.PartnerUserId),
+            new CreateGroupFromDuetCommandV2(request.NewGroupConversationId, userId, request.PartnerUserId),
             cancellationToken);
 
         if (!result.IsSuccess)

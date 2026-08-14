@@ -16,7 +16,7 @@ public sealed class UpdateProfileCommandHandlerTests
     private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<UpdateProfileCommand, UserProfile>> _beforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<UpdateProfileCommand, UserProfile>> _beforeSaveProcessorMock = new();
     private readonly UpdateProfileCommandHandler _handler;
 
     public UpdateProfileCommandHandlerTests()

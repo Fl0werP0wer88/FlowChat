@@ -24,17 +24,30 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         INotificationSender notificationSender,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<UserEmailVerificationRequestedCommand, NotificationEntity>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<UserEmailVerificationRequestedCommand, NotificationEntity>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _notificationWriteRepository = notificationWriteRepository;
         _notificationSender = notificationSender;
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         UserEmailVerificationRequestedCommand request,
         CancellationToken cancellationToken)
     {
+        if (!string.IsNullOrWhiteSpace(request.SourceMessageKey))
+        {
+            var existingNotification = await _notificationWriteRepository.GetBySourceMessageKeyAsync(
+                request.SourceMessageKey,
+                cancellationToken);
+
+            if (existingNotification is not null)
+            {
+                _notification = existingNotification;
+                return Unchanged(Unit.Value);
+            }
+        }
+
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
             ? request.UserName.Trim()
             : request.DisplayName.Trim();
@@ -59,16 +72,16 @@ public sealed class UserEmailVerificationRequestedCommandHandler
 
         if (!sendResult.IsSuccess)
         {
-            return FlowChatResult<Unit>.Failure(
+            return Failure(
                 DomainError.UnExpected(
-                    $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}"));
+                    $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}",
+                    FailureKind.Transient));
         }
 
         _notification.MarkSent(sendResult.ProviderMessageId);
         await _notificationWriteRepository.AddAsync(_notification, cancellationToken);
-        SetInserted();
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Created(Unit.Value);
     }
 
     protected override NotificationEntity GetAggregateRoot() =>

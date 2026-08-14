@@ -64,8 +64,14 @@ export function ChatFeature() {
 
   useRealtimeConnection({
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
-    onGroupConversationParticipantsAdded: groupConversations.applyGroupConversationParticipantsAdded,
-    onGroupConversationParticipantsRemoved: groupConversations.applyGroupConversationParticipantsRemoved,
+    onConversationParticipantsAdded: (payload) => {
+      contacts.applyConversationParticipantsAdded(payload);
+      groupConversations.applyConversationParticipantsAdded(payload);
+    },
+    onConversationParticipantsRemoved: (payload) => {
+      contacts.applyConversationParticipantsRemoved(payload);
+      groupConversations.applyConversationParticipantsRemoved(payload);
+    },
     onPresenceChanged: contacts.applyPresenceChanged,
     onMessageReceived: (payload) => {
       const documentVisible = isDocumentVisible();
@@ -74,16 +80,32 @@ export function ChatFeature() {
 
       contacts.applyRealtimeMessage(payload, activeDuetConversationId);
       groupConversations.applyRealtimeMessage(payload, activeGroupConversationId);
-      chat.messageReceived(payload);
-      groupChat.messageReceived(payload);
+      void (async () => {
+        const duetWatermark = await chat.messageReceived(payload);
+        const groupWatermark = await groupChat.messageReceived(payload);
 
-      if (documentVisible && payload.conversationId === chat.activeConversationId) {
-        scheduleActiveDuetMarkAsRead(payload.conversationId);
-      }
+        if (
+          documentVisible &&
+          duetWatermark !== null &&
+          payload.conversationId === chat.activeConversationId
+        ) {
+          scheduleActiveDuetMarkAsRead(payload.conversationId);
+        }
 
-      if (documentVisible && payload.conversationId === groupChat.activeConversationId) {
-        scheduleActiveGroupMarkAsRead(payload.conversationId);
-      }
+        if (
+          documentVisible &&
+          groupWatermark !== null &&
+          payload.conversationId === groupChat.activeConversationId
+        ) {
+          scheduleActiveGroupMarkAsRead(payload.conversationId);
+        }
+      })();
+    },
+    onReconnected: () => {
+      contacts.invalidateContactsList();
+      groupConversations.invalidateGroupConversationsList();
+      if (chat.activeConversationId) void chat.synchronizeMessages();
+      if (groupChat.activeConversationId) void groupChat.synchronizeMessages();
     },
   });
 
@@ -161,6 +183,8 @@ export function ChatFeature() {
             }}
             onSendDraft={sendGroupDraft}
             onLoadOlderMessages={groupChat.loadOlderMessages}
+            messageSyncStatus={groupChat.messageSyncStatus}
+            onRetryMessageSync={() => void groupChat.synchronizeMessages()}
           />
         )
         : (
@@ -184,6 +208,8 @@ export function ChatFeature() {
             }}
             onSendDraft={sendDuetDraft}
             onLoadOlderMessages={chat.loadOlderMessages}
+            messageSyncStatus={chat.messageSyncStatus}
+            onRetryMessageSync={() => void chat.synchronizeMessages()}
             onCreateGroupFromDuet={(request) => openGroupBuilder(request.groupName, request.initialUserIds)}
           />
         )}

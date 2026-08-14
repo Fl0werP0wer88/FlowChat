@@ -16,7 +16,7 @@ public sealed class DeleteProfileCommandHandler
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<DeleteProfileCommand, UserProfileAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<DeleteProfileCommand, UserProfileAggregate>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
@@ -35,13 +35,12 @@ public sealed class DeleteProfileCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         DeleteProfileCommand request,
         CancellationToken cancellationToken)
     {
         await _userProfileRepository.SoftDeleteAsync(AggregateRoot!, cancellationToken);
-        SetDeleted();
 
-        return FlowChatResult<Guid>.Success(AggregateRoot!.Id.Value);
+        return Deleted(AggregateRoot!.Id.Value);
     }
 }

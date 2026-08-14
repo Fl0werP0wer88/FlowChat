@@ -15,7 +15,7 @@ export interface DuetConversationMessage {
   conversationId: string;
   senderUserId: string;
   text: string;
-  sequenceNum: number | null;
+  sequenceNum: number;
   sentAtUtc: string;
 }
 
@@ -24,7 +24,7 @@ export interface GroupConversationMessage {
   conversationId: string;
   senderUserId: string;
   text: string;
-  sequenceNum: number | null;
+  sequenceNum: number;
   sentAtUtc: string;
 }
 
@@ -53,26 +53,36 @@ export interface GroupConversation {
 
 export interface DuetConversationMessagesResult {
   messages: DuetConversationMessage[];
-  nextBeforeSentAtUtc: string | null;
-  nextBeforeMessageId: string | null;
+  nextBeforeSequenceNum: number | null;
+  currentSequenceNum: number;
   hasMore: boolean;
 }
 
 export interface GroupConversationMessagesResult {
   messages: GroupConversationMessage[];
-  nextBeforeSentAtUtc: string | null;
-  nextBeforeMessageId: string | null;
+  nextBeforeSequenceNum: number | null;
+  currentSequenceNum: number;
+  hasMore: boolean;
+}
+
+export interface ConversationMessagesCatchUpResult {
+  messages: DuetConversationMessage[];
+  nextAfterSequenceNum: number | null;
+  currentSequenceNum: number;
+  throughSequenceNum: number;
   hasMore: boolean;
 }
 
 export interface SendChatMessageResult {
   messageId: string;
   sentAtUtc: string;
+  sequenceNum: number;
 }
 
 export interface SendGroupChatMessageResult {
   messageId: string;
   sentAtUtc: string;
+  sequenceNum: number;
 }
 
 export interface CopyDuetAsGroupResult {
@@ -85,8 +95,8 @@ export interface OpenDuetConversationResult {
   conversationId: string;
   participants: DuetConversationParticipant[];
   messages: DuetConversationMessage[];
-  nextBeforeSentAtUtc: string | null;
-  nextBeforeMessageId: string | null;
+  nextBeforeSequenceNum: number | null;
+  currentSequenceNum: number;
   hasMore: boolean;
 }
 
@@ -95,7 +105,7 @@ export interface OpenGroupConversationResult {
   name: string;
   participants: GroupConversationParticipant[];
   messages: GroupConversationMessage[];
-  nextBeforeSentAtUtc: string | null;
-  nextBeforeMessageId: string | null;
+  nextBeforeSequenceNum: number | null;
+  currentSequenceNum: number;
   hasMore: boolean;
 }

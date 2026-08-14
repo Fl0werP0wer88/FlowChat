@@ -1,3 +1,5 @@
+using FlowChat.HarnessService.Application.Contracts.Persistence;
+using FlowChat.HarnessService.Persistence.Repositories;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.Shared.Persistance;
@@ -28,8 +30,11 @@ public static class ConsumerPersistenceServiceRegistration
         IConfiguration configuration)
     {
         services.AddCommonPersistenceServices(configuration);
-
-        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
+        services.AddScoped<IConsumedOffsetCommitter>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
 
         return services;
     }
@@ -46,5 +51,6 @@ internal static class CommonPersistenceServiceRegistration
         services.AddDbContextFactory<AppDbContext>(
             (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("HarnessDb")),
             ServiceLifetime.Scoped);
+        services.AddScoped<IRetryPipelineTestResultRepository, RetryPipelineTestResultRepository>();
     }
 }

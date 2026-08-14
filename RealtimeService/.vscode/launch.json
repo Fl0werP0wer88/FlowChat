@@ -54,6 +54,33 @@
       "env": {
         "DOTNET_ENVIRONMENT": "Development"
       }
+    },
+    {
+      "name": "RealtimeService OutboxPublisher",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: RealtimeService OutboxPublisher",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.OutboxPublisher/bin/Debug/net10.0/FlowChat.RealtimeService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "RealtimeService OutboxPublisher (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.OutboxPublisher/bin/Debug/net10.0/FlowChat.RealtimeService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
     }
   ],
   "compounds": [
@@ -61,7 +88,8 @@
       "name": "RealtimeService",
       "configurations": [
         "RealtimeService API",
-        "RealtimeService Consumers"
+        "RealtimeService Consumers",
+        "RealtimeService OutboxPublisher"
       ],
       "stopAll": true
     }

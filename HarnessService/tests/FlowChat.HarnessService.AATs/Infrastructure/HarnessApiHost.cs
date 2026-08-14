@@ -1,8 +1,10 @@
 using FlowChat.HarnessService.API;
+using FlowChat.HarnessService.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,7 +46,12 @@ public sealed class HarnessApiHost : IAsyncLifetime
             .ConfigureServices()
             .ConfigurePipeline();
 
-        await _app.MigrateDatabaseAsync();
+        await using (var scope = _app.Services.CreateAsyncScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await context.Database.MigrateAsync();
+        }
+
         await _app.StartAsync();
 
         var address = _app.Services

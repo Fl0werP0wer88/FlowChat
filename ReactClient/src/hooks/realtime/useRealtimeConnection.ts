@@ -4,8 +4,8 @@ import { useAuthStore } from "../../store/authStore";
 import { useRealtimeStore } from "../../store/realtimeStore";
 import type {
   GroupConversationChangedEvent,
-  GroupConversationParticipantsAddedEvent,
-  GroupConversationParticipantsRemovedEvent,
+  ConversationParticipantsAddedEvent,
+  ConversationParticipantsRemovedEvent,
   PresenceChangedEvent,
   ChatMessageReceivedEvent,
 } from "../../types/realtime";
@@ -15,8 +15,9 @@ interface UseRealtimeConnectionOptions {
   onMessageReceived?: (payload: ChatMessageReceivedEvent) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
   onGroupConversationChanged?: (payload: GroupConversationChangedEvent) => void;
-  onGroupConversationParticipantsAdded?: (payload: GroupConversationParticipantsAddedEvent) => void;
-  onGroupConversationParticipantsRemoved?: (payload: GroupConversationParticipantsRemovedEvent) => void;
+  onConversationParticipantsAdded?: (payload: ConversationParticipantsAddedEvent) => void;
+  onConversationParticipantsRemoved?: (payload: ConversationParticipantsRemovedEvent) => void;
+  onReconnected?: () => void;
 }
 
 function resolveErrorMessage(error: unknown): string | null {
@@ -31,8 +32,9 @@ export function useRealtimeConnection({
   onMessageReceived,
   onPresenceChanged,
   onGroupConversationChanged,
-  onGroupConversationParticipantsAdded,
-  onGroupConversationParticipantsRemoved,
+  onConversationParticipantsAdded,
+  onConversationParticipantsRemoved,
+  onReconnected,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const { setStatus, setLastError } = useRealtimeStore.getState();
@@ -49,12 +51,15 @@ export function useRealtimeConnection({
     onGroupConversationChanged?.(payload);
   });
 
-  const handleGroupConversationParticipantsAdded = useEffectEvent((payload: GroupConversationParticipantsAddedEvent) => {
-    onGroupConversationParticipantsAdded?.(payload);
+  const handleConversationParticipantsAdded = useEffectEvent((payload: ConversationParticipantsAddedEvent) => {
+    onConversationParticipantsAdded?.(payload);
   });
 
-  const handleGroupConversationParticipantsRemoved = useEffectEvent((payload: GroupConversationParticipantsRemovedEvent) => {
-    onGroupConversationParticipantsRemoved?.(payload);
+  const handleConversationParticipantsRemoved = useEffectEvent((payload: ConversationParticipantsRemovedEvent) => {
+    onConversationParticipantsRemoved?.(payload);
+  });
+  const handleReconnected = useEffectEvent(() => {
+    onReconnected?.();
   });
 
   useEffect(() => {
@@ -93,15 +98,15 @@ export function useRealtimeConnection({
       }
     });
 
-    connection.on("GroupConversationParticipantsAdded", (payload: GroupConversationParticipantsAddedEvent) => {
+    connection.on("ConversationParticipantsAdded", (payload: ConversationParticipantsAddedEvent) => {
       if (!isDisposed) {
-        handleGroupConversationParticipantsAdded(payload);
+        handleConversationParticipantsAdded(payload);
       }
     });
 
-    connection.on("GroupConversationParticipantsRemoved", (payload: GroupConversationParticipantsRemovedEvent) => {
+    connection.on("ConversationParticipantsRemoved", (payload: ConversationParticipantsRemovedEvent) => {
       if (!isDisposed) {
-        handleGroupConversationParticipantsRemoved(payload);
+        handleConversationParticipantsRemoved(payload);
       }
     });
 
@@ -121,6 +126,7 @@ export function useRealtimeConnection({
 
       setStatus("connected");
       setLastError(null);
+      handleReconnected();
     });
 
     connection.onclose((error) => {
@@ -162,8 +168,8 @@ export function useRealtimeConnection({
       connection.off("MessageReceived");
       connection.off("PresenceChanged");
       connection.off("GroupConversationChanged");
-      connection.off("GroupConversationParticipantsAdded");
-      connection.off("GroupConversationParticipantsRemoved");
+      connection.off("ConversationParticipantsAdded");
+      connection.off("ConversationParticipantsRemoved");
       void startPromise.finally(() => connection.stop().catch(() => undefined));
     };
   }, [accessToken]);

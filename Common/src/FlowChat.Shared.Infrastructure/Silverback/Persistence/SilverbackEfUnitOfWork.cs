@@ -6,7 +6,7 @@ using Silverback.Storage;
 
 namespace FlowChat.Shared.Infrastructure.Silverback.Persistence;
 
-//ToDo: This one suppose to be used on Api not subscriber.Consider naming change.
+// This variant coordinates application writes with the Silverback outbox in API and worker hosts
 public class SilverbackEfUnitOfWork<TDbContext>(
     TDbContext dbContext,
     ISilverbackContext silverbackContext)

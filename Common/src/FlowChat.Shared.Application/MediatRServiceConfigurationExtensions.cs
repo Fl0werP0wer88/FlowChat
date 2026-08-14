@@ -11,6 +11,7 @@ public static class MediatRServiceConfigurationExtensions
         configuration.AddOpenBehavior(typeof(LoggingPipelineBehaviour<,>));
         configuration.AddOpenBehavior(typeof(ExceptionHandlingPipelineBehavior<,>));
         configuration.AddOpenBehavior(typeof(ValidationPipelineBehaviour<,>));
+        configuration.AddOpenBehavior(typeof(RetryPipelineBehavior<,>));
 
         return configuration;
     }

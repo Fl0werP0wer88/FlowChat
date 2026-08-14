@@ -19,7 +19,7 @@ public sealed class ConfirmAuthEmailCommandHandler
         IAccountRepository accountRepository,
         ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<ConfirmAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ConfirmAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;
@@ -40,17 +40,16 @@ public sealed class ConfirmAuthEmailCommandHandler
         return FlowChatResult<DomainAccount?>.Success(account);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ConfirmAuthEmailCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(ConfirmAuthEmailCommand request, CancellationToken cancellationToken)
     {
         if (AggregateRoot!.IsEmailConfirmed)
         {
-            return FlowChatResult<Unit>.Failure(DomainError.Conflict("Email is already confirmed."));
+            return Unchanged(Unit.Value);
         }
 
         AggregateRoot.ConfirmEmail();
         await _accountRepository.UpdateAsync(AggregateRoot, cancellationToken);
-        SetUpdated();
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Updated(Unit.Value);
     }
 }

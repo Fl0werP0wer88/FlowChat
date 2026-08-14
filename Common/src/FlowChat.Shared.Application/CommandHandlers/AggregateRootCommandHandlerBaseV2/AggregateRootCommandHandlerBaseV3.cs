@@ -15,13 +15,12 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
     where TAggregate : class, IAggregateRoot
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
-    private readonly IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
-    private MutationType _mutationType = MutationType.Unchanged;
+    private readonly IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> _beforeSaveProcessors;
 
     protected AggregateRootCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
         : base(unitOfWork)
     {
         _localEventsDispatcher = localEventsDispatcher;
@@ -34,48 +33,52 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
         TCommand request,
         CancellationToken cancellationToken)
     {
-        var operationResult = await ExecuteAsync(request, cancellationToken);
+        var executionResult = await ExecuteAsync(request, cancellationToken);
 
-        if (operationResult.IsSuccess)
+        if (executionResult.IsFailure)
         {
-            var aggregateRoot = GetAggregateRoot();
-
-            if (_mutationType == MutationType.Unchanged)
-            {
-                return operationResult;
-            }
-
-            aggregateRoot.IncrementVersion();
-            var domainEvents = aggregateRoot.PopDomainEvents();
-            var localEvents = domainEvents
-                .Cast<ILocalEvent>();
-
-            await DispatchLocalEventsAsync(localEvents, cancellationToken);
-            ApplyAuditInfo(aggregateRoot, _mutationType);
-
-            foreach (var processor in _beforeSaveProcessors)
-            {
-                await processor.ProcessAsync(request, aggregateRoot, _mutationType, cancellationToken);
-            }
+            return FlowChatResult<TResponse>.Failure(executionResult.Error);
         }
 
-        return operationResult;
-    }
+        var operationResult = executionResult.Value;
+        var aggregateRoot = GetAggregateRoot();
 
-    protected void SetMutationType(MutationType mutationType)
-    {
-        _mutationType = mutationType;
-    }
+        if (operationResult.MutationType == MutationType.Unchanged)
+        {
+            return FlowChatResult<TResponse>.Success(operationResult.Response);
+        }
 
-    protected void CapturePreMutationSnapshot(TAggregate aggregate)
-    {
+        aggregateRoot.IncrementVersion();
+        var domainEvents = aggregateRoot.PopDomainEvents();
+        DomainEventBase.StampVersions(domainEvents, aggregateRoot.Version);
+        var localEvents = domainEvents
+            .Cast<ILocalEvent>();
+
+        await DispatchLocalEventsAsync(localEvents, cancellationToken);
+        ApplyAuditInfo(aggregateRoot, operationResult.MutationType);
+
         foreach (var processor in _beforeSaveProcessors)
         {
-            processor.CaptureBeforeState(aggregate);
+            await processor.ProcessAsync(request, aggregateRoot, operationResult.MutationType, cancellationToken);
         }
+
+        return FlowChatResult<TResponse>.Success(operationResult.Response);
     }
 
-    protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
+    protected static FlowChatResult<AggregateMutation<TResponse>> Unchanged(TResponse response) =>
+        Mutation(MutationType.Unchanged, response);
+
+    protected static FlowChatResult<AggregateMutation<TResponse>> Failure(IDomainError error) =>
+        FlowChatResult<AggregateMutation<TResponse>>.Failure(error);
+
+    protected static FlowChatResult<AggregateMutation<TResponse>> Mutation(
+        MutationType mutationType,
+        TResponse response) =>
+        FlowChatResult<AggregateMutation<TResponse>>.Success(new AggregateMutation<TResponse>(response, mutationType));
+
+    protected abstract Task<FlowChatResult<AggregateMutation<TResponse>>> ExecuteAsync(
+        TCommand request,
+        CancellationToken cancellationToken);
 
     protected virtual TAggregate GetAggregateRoot() =>
         AggregateRoot ?? throw new InvalidOperationException("Aggregate root instance is not available.");

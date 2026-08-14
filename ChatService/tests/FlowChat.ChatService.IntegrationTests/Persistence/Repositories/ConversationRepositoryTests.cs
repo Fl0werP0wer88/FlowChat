@@ -1,10 +1,12 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.UserProfiles;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Shared.Domain;
 using FlowChat.ChatService.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using ChatMessageAggregateV2 = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessageV2;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
@@ -19,29 +21,42 @@ public sealed class ConversationRepositoryTests
         var creatorUserId = Guid.NewGuid();
         var memberUserId = Guid.NewGuid();
         var requestedUserId = Guid.NewGuid();
-        var matchingConversation = GroupConversation.Create(
-            Id<Conversation>.New(),
-            creatorUserId,
-            [creatorUserId, memberUserId],
+        var matchingConversation = ConversationV2.CreateGroup(
+            Id<ConversationV2>.New(),
+            Id<UserProfile>.FromGuid(creatorUserId),
+            [Id<UserProfile>.FromGuid(memberUserId), Id<UserProfile>.FromGuid(requestedUserId)],
             "Friends");
-        matchingConversation.AddParticipants([requestedUserId], lastReadMessageSequenceNum: 42);
-        matchingConversation.SetSequenceNumber(84);
-
-        var otherGroupConversation = GroupConversation.Create(
-            Id<Conversation>.New(),
-            creatorUserId,
-            [creatorUserId, Guid.NewGuid()],
-            "Other");
-        var duetConversation = DuetConversation.Create(requestedUserId, Guid.NewGuid());
+        var participants = new[]
+        {
+            CreateGroupParticipant(matchingConversation.Id, creatorUserId),
+            CreateGroupParticipant(matchingConversation.Id, memberUserId),
+            CreateGroupParticipant(matchingConversation.Id, requestedUserId, lastReadSequence: 42)
+        };
+        var latestMessage = ChatMessageAggregateV2.Create(
+            Id<ChatMessageAggregateV2>.New(),
+            matchingConversation.Id,
+            Id<UserProfile>.FromGuid(creatorUserId),
+            "Latest",
+            sequenceNum: 84);
+        MarkCreated(latestMessage);
 
         MarkCreated(matchingConversation);
-        MarkCreated(otherGroupConversation);
-        MarkCreated(duetConversation);
+        foreach (var participant in participants)
+        {
+            MarkCreated(participant);
+        }
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.AddRange(matchingConversation, otherGroupConversation, duetConversation);
+            seedContext.ConversationsV2.Add(matchingConversation);
+            seedContext.ConversationParticipantsV2.AddRange(participants);
+            seedContext.ChatMessagesV2.Add(latestMessage);
             await seedContext.SaveChangesAsync();
+            await seedContext.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO "ConversationMessageSequencesV2" ("ConversationId", "LastAssignedSequenceNum")
+                VALUES ({matchingConversation.Id.Value}, {84L})
+                """);
         }
 
         await using var readContext = CreateDbContext(connection);
@@ -58,127 +73,41 @@ public sealed class ConversationRepositoryTests
     }
 
     [Fact]
-    public async Task ConversationWriteRepository_GetByIdAsync_WhenConversationExists_ReturnsConversationWithParticipantsForAnyConversationType()
-    {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
-        var createdByUserId = Guid.NewGuid();
-        var groupMemberId = Guid.NewGuid();
-        var duetPartnerId = Guid.NewGuid();
-        var groupConversation = GroupConversation.Create(
-            Id<Conversation>.New(),
-            createdByUserId,
-            [createdByUserId, groupMemberId],
-            "Friends");
-        var duetConversation = DuetConversation.Create(createdByUserId, duetPartnerId);
-        MarkCreated(groupConversation);
-        MarkCreated(duetConversation);
-
-        await using (var seedContext = CreateDbContext(connection))
-        {
-            seedContext.Conversations.AddRange(groupConversation, duetConversation);
-            await seedContext.SaveChangesAsync();
-        }
-
-        await using var readContext = CreateDbContext(connection);
-        var repository = new ConversationWriteRepository(readContext);
-
-        var groupResult = await repository.GetByIdAsync(groupConversation.Id, CancellationToken.None);
-        var duetResult = await repository.GetByIdAsync(duetConversation.Id, CancellationToken.None);
-
-        groupResult.Should().BeOfType<GroupConversation>();
-        groupResult!.Participants.Select(participant => participant.UserId.Value)
-            .Should().BeEquivalentTo([createdByUserId, groupMemberId]);
-        duetResult.Should().BeOfType<DuetConversation>();
-        duetResult!.Participants.Select(participant => participant.UserId.Value)
-            .Should().BeEquivalentTo([createdByUserId, duetPartnerId]);
-    }
-
-    [Fact]
-    public async Task GroupConversationWriteRepository_GetByIdAsync_WhenGroupExists_ReturnsGroupWithParticipants()
-    {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
-        var createdByUserId = Guid.NewGuid();
-        var memberUserId = Guid.NewGuid();
-        var groupConversation = GroupConversation.Create(Id<Conversation>.New(), createdByUserId, [createdByUserId, memberUserId], "Friends");
-        var duetConversation = DuetConversation.Create(createdByUserId, Guid.NewGuid());
-        MarkCreated(groupConversation);
-        MarkCreated(duetConversation);
-
-        await using (var seedContext = CreateDbContext(connection))
-        {
-            seedContext.Conversations.AddRange(groupConversation, duetConversation);
-            await seedContext.SaveChangesAsync();
-        }
-
-        await using var readContext = CreateDbContext(connection);
-        var repository = new GroupConversationWriteRepository(readContext);
-
-        var result = await repository.GetByIdAsync(groupConversation.Id.Value, CancellationToken.None);
-        var duetResult = await repository.GetByIdAsync(duetConversation.Id.Value, CancellationToken.None);
-
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(groupConversation.Id);
-        result.Participants.Select(participant => participant.UserId.Value)
-            .Should().BeEquivalentTo([createdByUserId, memberUserId]);
-        duetResult.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task DuetConversationWriteRepository_GetByIdAsync_WhenDuetExists_ReturnsDuetWithParticipants()
+    public async Task GroupConversationReadRepository_GetByParticipantUserIdAsync_WhenConversationHasNoMessages_ReturnsZeroCurrentSequenceNumber()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        var conversation = ConversationV2.CreateGroup(
+            Id<ConversationV2>.New(),
+            Id<UserProfile>.FromGuid(requestingUserId),
+            [Id<UserProfile>.FromGuid(partnerUserId)],
+            "Empty conversation");
+        var participants = new[]
+        {
+            CreateGroupParticipant(conversation.Id, requestingUserId),
+            CreateGroupParticipant(conversation.Id, partnerUserId)
+        };
         MarkCreated(conversation);
+        foreach (var participant in participants)
+        {
+            MarkCreated(participant);
+        }
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
+            seedContext.ConversationsV2.Add(conversation);
+            seedContext.ConversationParticipantsV2.AddRange(participants);
             await seedContext.SaveChangesAsync();
         }
 
         await using var readContext = CreateDbContext(connection);
-        var repository = new DuetConversationWriteRepository(readContext);
+        var result = await new GroupConversationReadRepository(readContext)
+            .GetByParticipantUserIdAsync(requestingUserId, CancellationToken.None);
 
-        var result = await repository.GetByIdAsync(conversation.Id.Value, CancellationToken.None);
-
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(conversation.Id);
-        result.Participants.Select(participant => participant.UserId.Value)
-            .Should().BeEquivalentTo([requestingUserId, partnerUserId]);
-    }
-
-    [Fact]
-    public async Task DuetConversationWriteRepository_AddAsync_PersistsConversationAndDuetMapping()
-    {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
-        await using var context = CreateDbContext(connection);
-        var requestingUserId = Guid.NewGuid();
-        var partnerUserId = Guid.NewGuid();
-        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
-        MarkCreated(conversation);
-        var repository = new DuetConversationWriteRepository(context);
-
-        await repository.AddAsync(conversation, CancellationToken.None);
-        await context.SaveChangesAsync();
-
-        var persistedConversation = await context.Set<DuetConversation>()
-            .Include(x => x.Participants)
-            .SingleAsync(x => x.Id == conversation.Id);
-        var persistedMapping = await context.DuetConversations.SingleAsync();
-
-        persistedConversation.Participants.Select(participant => participant.UserId.Value)
-            .Should().BeEquivalentTo([requestingUserId, partnerUserId]);
-        persistedMapping.ConversationId.Should().Be(conversation.Id);
+        result.Should().ContainSingle().Which.CurrentMsgSeqNum.Should().Be(0);
     }
 
     [Fact]
@@ -189,12 +118,24 @@ public sealed class ConversationRepositoryTests
 
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        var conversation = ConversationV2.CreateDuet(
+            Id<UserProfile>.FromGuid(requestingUserId),
+            Id<UserProfile>.FromGuid(partnerUserId));
+        var participants = new[]
+        {
+            CreateDuetParticipant(conversation.Id, requestingUserId, partnerUserId),
+            CreateDuetParticipant(conversation.Id, partnerUserId, requestingUserId)
+        };
         MarkCreated(conversation);
+        foreach (var participant in participants)
+        {
+            MarkCreated(participant);
+        }
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
+            seedContext.ConversationsV2.Add(conversation);
+            seedContext.ConversationParticipantsV2.AddRange(participants);
             await seedContext.SaveChangesAsync();
         }
 
@@ -219,9 +160,44 @@ public sealed class ConversationRepositoryTests
         return context;
     }
 
-    private static void MarkCreated(Conversation conversation)
+    private static ConversationParticipant CreateGroupParticipant(
+        Id<ConversationV2> conversationId,
+        Guid userId,
+        long lastReadSequence = 0) =>
+        ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            conversationId,
+            ConversationType.Group,
+            Id<UserProfile>.FromGuid(userId),
+            duetPartnerUserId: null,
+            lastReadMessageSequenceNum: lastReadSequence);
+
+    private static ConversationParticipant CreateDuetParticipant(
+        Id<ConversationV2> conversationId,
+        Guid userId,
+        Guid partnerUserId) =>
+        ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            conversationId,
+            ConversationType.Duet,
+            Id<UserProfile>.FromGuid(userId),
+            Id<UserProfile>.FromGuid(partnerUserId));
+
+    private static void MarkCreated(ConversationV2 conversation)
     {
         conversation.SetCreated("integration-test");
         conversation.SetUpdated("integration-test");
+    }
+
+    private static void MarkCreated(ConversationParticipant participant)
+    {
+        participant.SetCreated("integration-test");
+        participant.SetUpdated("integration-test");
+    }
+
+    private static void MarkCreated(ChatMessageAggregateV2 message)
+    {
+        message.SetCreated("integration-test");
+        message.SetUpdated("integration-test");
     }
 }

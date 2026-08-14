@@ -103,6 +103,25 @@ function Get-Users {
         }
     }
 
+    for ($i = 0; $i -lt 100; $i++) {
+        $sequence = $i + 51
+        $lastName = '{0:D2}' -f $i
+        $organization = $organizations[$i % $organizations.Count]
+        $id = [Guid]::Parse(('00000000-0000-0000-0000-{0:x12}' -f $sequence))
+        $friendlyUserId = "piotr.$lastName"
+        $email = "piotr.$lastName@seed.flowchat.local"
+
+        $users += [PSCustomObject]@{
+            Id = $id
+            FriendlyUserId = $friendlyUserId
+            Email = $email
+            Password = $password
+            FirstName = 'Piotr'
+            LastName = $lastName
+            Organization = $organization
+        }
+    }
+
     return $users
 }
 
@@ -292,7 +311,7 @@ Write-Host "Password for every user: $password"
 
 for ($index = 0; $index -lt $users.Count; $index++) {
     $user = $users[$index]
-    $position = '{0:D2}/50' -f ($index + 1)
+    $position = '{0:D3}/{1}' -f ($index + 1), $users.Count
 
     if ($DryRun) {
         Write-Host "[$position] DRY-RUN $($user.FriendlyUserId) <$($user.Email)> [$($user.Organization)]"
@@ -396,7 +415,7 @@ Write-Host "Fetched notifications: $($notifications.Count)"
 
 for ($index = 0; $index -lt $users.Count; $index++) {
     $user = $users[$index]
-    $position = '{0:D2}/50' -f ($index + 1)
+    $position = '{0:D3}/{1}' -f ($index + 1), $users.Count
     $notification = Get-LatestEmailVerificationNotification -Notifications $notifications -Email $user.Email
 
     if ($null -eq $notification) {

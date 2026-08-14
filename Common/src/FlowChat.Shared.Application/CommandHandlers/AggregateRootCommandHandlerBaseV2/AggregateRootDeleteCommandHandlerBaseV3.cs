@@ -15,10 +15,11 @@ public abstract class AggregateRootDeleteCommandHandlerBaseV3<TCommand, TRespons
     protected AggregateRootDeleteCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
         : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
     {
     }
 
-    protected void SetDeleted() => SetMutationType(MutationType.Deleted);
+    protected static FlowChatResult<AggregateMutation<TResponse>> Deleted(TResponse response) =>
+        Mutation(MutationType.Deleted, response);
 }

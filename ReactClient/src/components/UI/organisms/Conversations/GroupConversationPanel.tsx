@@ -5,6 +5,7 @@ import { ConversationBody } from "../../molecules/ConversationBody";
 import { ConversationFooter } from "../../molecules/ConversationFooter";
 import { GroupConversationHeader } from "../../molecules/GroupConversationHeader";
 import { GroupConversationSettings } from "../../molecules/GroupConversationSettings";
+import type { MessageSyncStatus } from "../../../../hooks/caches/sequencedMessageCache";
 
 interface GroupConversationPanelProps {
   activeGroupConversation: GroupConversation | null;
@@ -22,6 +23,8 @@ interface GroupConversationPanelProps {
   onDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onSendDraft: () => Promise<void>;
   onLoadOlderMessages: () => Promise<void>;
+  messageSyncStatus: MessageSyncStatus;
+  onRetryMessageSync: () => void;
 }
 
 export function GroupConversationPanel({
@@ -40,6 +43,8 @@ export function GroupConversationPanel({
   onDraftKeyDown,
   onSendDraft,
   onLoadOlderMessages,
+  messageSyncStatus,
+  onRetryMessageSync,
 }: GroupConversationPanelProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
@@ -76,6 +81,8 @@ export function GroupConversationPanel({
             messages={messages}
             participants={participants}
             onLoadOlderMessages={onLoadOlderMessages}
+            messageSyncStatus={messageSyncStatus}
+            onRetryMessageSync={onRetryMessageSync}
           />
         )}
       <ConversationFooter

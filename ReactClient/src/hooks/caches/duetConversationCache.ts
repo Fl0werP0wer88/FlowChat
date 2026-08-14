@@ -1,12 +1,16 @@
 import type { ChatMessage, DuetConversationMessage, DuetConversationParticipant, MessageSender } from "../../types/chat";
+import type { MessageSyncStatus } from "./sequencedMessageCache";
+import { sortSequencedMessages } from "./sequencedMessageCache";
 
 export interface DuetConversationCacheEntry {
   conversationId: string;
   participants: DuetConversationParticipant[];
   messages: ChatMessage[];
-  nextBeforeSentAtUtc: string | null;
-  nextBeforeMessageId: string | null;
+  nextBeforeSequenceNum: number | null;
   hasMore: boolean;
+  lastContiguousSequenceNum: number;
+  pendingMessagesBySequence: Record<number, ChatMessage>;
+  syncStatus: MessageSyncStatus;
 }
 
 export function createDuetMessage(
@@ -22,7 +26,7 @@ export function createDuetMessage(
 }
 
 export function sortDuetMessages(messages: ChatMessage[]): ChatMessage[] {
-  return [...messages].sort((a, b) => a.sentAtUtc.localeCompare(b.sentAtUtc));
+  return sortSequencedMessages(messages);
 }
 
 export function mapDuetConversationMessage(
@@ -37,6 +41,6 @@ export function mapDuetConversationMessage(
     message.id,
     message.conversationId,
     message.senderUserId,
-    null,
+    message.sequenceNum,
   );
 }

@@ -2,7 +2,10 @@ using AutoFixture;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -11,6 +14,7 @@ public sealed class RoutePresenceChangeCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RoutePresenceChangeCommandHandler _handler;
 
     public RoutePresenceChangeCommandHandlerTests()
@@ -19,7 +23,16 @@ public sealed class RoutePresenceChangeCommandHandlerTests
             .Setup(x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _handler = new RoutePresenceChangeCommandHandler(_routerMock.Object);
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
+                (operation, cancellationToken) => operation(cancellationToken));
+
+        _handler = new RoutePresenceChangeCommandHandler(
+            _routerMock.Object,
+            _unitOfWorkMock.Object);
     }
 
     [Fact]

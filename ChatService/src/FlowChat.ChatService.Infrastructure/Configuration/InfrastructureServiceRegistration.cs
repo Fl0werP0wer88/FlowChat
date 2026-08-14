@@ -27,11 +27,10 @@ internal static class CommonInfrastructureServiceRegistration
     {
         services.AddSettingsSections(configuration, typeof(CommonInfrastructureServiceRegistration).Assembly);
         services.AddFlowChatSilverbackEventPublisher(producer => producer
-            .AddProducerSettings<ChatMessageSentIntegrationEvent, ChatMessageSentProducerSettingsSection>()
-            .AddProducerSettings<GroupConversationChangedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
-            .AddProducerSettings<GroupConversationParticipantsAddedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
-            .AddProducerSettings<GroupConversationParticipantsRemovedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
-            .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationReadModel>, DuetConversationProjectionProducerSettingsSection>());
+            .AddProducerSettings<ProjectionIntegrationEvent<ConversationReadModelV2>, ConversationV2ProducerSettingsSection>()
+            .AddProducerSettings<DeltaProjectionIntegrationEventV2<ConversationMembershipReadModelV2>, ConversationMembershipV2ProjectionProducerSettingsSection>()
+            .AddProducerSettings<ProjectionIntegrationEvent<ConversationParticipantReadModelV2>, ConversationParticipantV2ProducerSettingsSection>()
+            .AddProducerSettings<ChatMessageSentIntegrationEventV2, ChatMessageV2ProducerSettingsSection>());
 
         return services;
     }

@@ -33,7 +33,7 @@ public sealed class UnhideConversationParticipantController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new UnhideConversationParticipantCommand(conversationId, userId),
+            new UnhideConversationParticipantCommandV2(conversationId, userId),
             cancellationToken);
 
         if (!result.IsSuccess)

@@ -5,6 +5,7 @@ using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.UserProfileService.OutboxPublisher.Configuration.Settings;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -35,9 +36,15 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
+        var retryKafkaOptions = configuration
+            .GetSection(new RetryOutboxKafkaSettingsSection().SectionName)
+            .Get<RetryOutboxKafkaSettingsSection>()
+            ?? new RetryOutboxKafkaSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(emailConfirmedProducerOptions.BootstrapServers)
             ? emailConfirmedProducerOptions.BootstrapServers
-            : projectionProducerOptions.BootstrapServers;
+            : !string.IsNullOrWhiteSpace(projectionProducerOptions.BootstrapServers)
+                ? projectionProducerOptions.BootstrapServers
+                : retryKafkaOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -48,11 +55,11 @@ public static class OutboxPublisherServiceRegistration
                 options.AddOutboxWorker(worker => worker
                     .ProcessOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())
                     .WithBatchSize(outboxOptions.BatchSize)
-                    .WithInterval(TimeSpan.FromSeconds(outboxOptions.PollIntervalSeconds))
+                    .WithInterval(outboxOptions.PollInterval)
                     .WithExponentialRetryDelay(
-                        TimeSpan.FromSeconds(outboxOptions.RetryBaseDelaySeconds),
+                        outboxOptions.InitialRetryDelay,
                         2,
-                        TimeSpan.FromSeconds(outboxOptions.MaxRetryDelaySeconds))
+                        outboxOptions.MaxRetryDelay)
                     .WithoutDistributedLock());
             })
             .AddKafkaClients(clients =>
@@ -71,7 +78,10 @@ public static class OutboxPublisherServiceRegistration
                         .Produce<ProjectionIntegrationEvent<UserProfileReadModel>>("user-profile-projection", endpoint => endpoint
                             .ProduceTo(projectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-            });
+            })
+            .AddFlowChatTieredRetryProducerPipeline(
+                retryKafkaOptions.BootstrapServers,
+                retryKafkaOptions.Topics);
 
         return services;
     }

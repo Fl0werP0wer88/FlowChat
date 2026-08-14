@@ -14,9 +14,9 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
         CancellationToken cancellationToken = default)
     {
         var rawRows = await (
-            from conversation in Active(dbContext.ConversationReads)
-            where conversation.Id == conversationId && conversation.Type == GroupConversationType
-            join participant in Active(dbContext.ParticipantUserReads)
+            from conversation in Active(dbContext.ConversationReadsV2)
+            where conversation.Id == conversationId && conversation.ConversationType == GroupConversationType
+            join participant in Active(dbContext.ConversationParticipantReadsV2)
                 on conversation.Id equals participant.ConversationId
             join profile in Active(dbContext.UserProfileProjections)
                 on participant.UserId equals profile.UserId into profileGroup
@@ -58,20 +58,30 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
         CancellationToken cancellationToken = default)
     {
         //ToDo: Rozważyć przerzucenie tego do oddzielnego ReadModelu zamiast robić joiny. Będzie też można pozbyć się wtedy części indeksów.
-        var activeParticipants = Active(dbContext.ParticipantUserReads);
+        var activeParticipants = Active(dbContext.ConversationParticipantReadsV2);
+        var currentSequences = dbContext.ConversationMessageSequenceReadsV2
+            .AsNoTracking()
+            .Select(sequence => new
+            {
+                sequence.ConversationId,
+                CurrentMsgSeqNum = (long?)sequence.LastAssignedSequenceNum
+            });
 
         return await (
-            from conversation in Active(dbContext.ConversationReads)
+            from conversation in Active(dbContext.ConversationReadsV2)
             join participant in activeParticipants
                 on conversation.Id equals participant.ConversationId
-            where conversation.Type == GroupConversationType
+            where conversation.ConversationType == GroupConversationType
                   && participant.UserId == participantUserId
+            join sequence in currentSequences
+                on conversation.Id equals sequence.ConversationId into sequenceGroup
+            from sequence in sequenceGroup.DefaultIfEmpty()
             select new GroupConversationSummaryDto(
                 conversation.Id,
                 conversation.Name!,
                 activeParticipants.Count(x => x.ConversationId == conversation.Id),
                 participant.LastReadMessageSequenceNum,
-                conversation.LastMsgSequenceNum))
+                sequence.CurrentMsgSeqNum ?? 0))
             .ToListAsync(cancellationToken);
     }
 

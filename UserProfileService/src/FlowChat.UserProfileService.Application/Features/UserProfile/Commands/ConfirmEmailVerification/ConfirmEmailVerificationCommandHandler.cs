@@ -37,7 +37,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
         IEmailVerificationTokenProtector emailVerificationTokenProtector,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<ConfirmEmailVerificationCommand, UserProfileAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ConfirmEmailVerificationCommand, UserProfileAggregate>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileWriteRepository = userProfileWriteRepository;
@@ -94,29 +94,30 @@ public sealed class ConfirmEmailVerificationCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override Task<FlowChatResult<IdempotentCommandResult<Unit>>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<IdempotentCommandResult<Unit>>>> ExecuteAsync(
         ConfirmEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
         var email = AggregateRoot!.Emails.FirstOrDefault(x => x.Id.Value == _payload!.EmailId);
         if (email is null)
         {
-            return Task.FromResult(FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
+            return Task.FromResult(Failure(
                 DomainError.NotFound($"Email '{_payload!.EmailId}' was not found for user profile '{_payload.UserProfileId}'.")));
         }
 
         if (_verificationRequest!.ConsumedAtUtc is not null)
         {
-            return Task.FromResult(email.IsConfirmed
-                ? Success(wasAlreadyProcessed: true)
-                : ValidationFailure());
+            var result = email.IsConfirmed
+                ? Unchanged(Success(wasAlreadyProcessed: true).Value)
+                : Failure(ValidationFailure().Error);
+
+            return Task.FromResult(result);
         }
 
         AggregateRoot.ConfirmEmail(email.Id);
         _process!.ConsumeRequest(_payload!.Nonce, _nowUtc!.Value);
-        SetUpdated();
 
-        return Task.FromResult(Success(wasAlreadyProcessed: false));
+        return Task.FromResult(Updated(Success(wasAlreadyProcessed: false).Value));
     }
 
     protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> HandleUnexpectedExceptionAsync(

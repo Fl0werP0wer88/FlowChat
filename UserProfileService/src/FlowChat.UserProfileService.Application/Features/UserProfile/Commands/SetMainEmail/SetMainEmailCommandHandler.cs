@@ -20,7 +20,7 @@ public sealed class SetMainEmailCommandHandler
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<SetMainEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<SetMainEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
@@ -39,30 +39,31 @@ public sealed class SetMainEmailCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         SetMainEmailCommand request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         var email = AggregateRoot!.Emails.FirstOrDefault(x => x.Id.Value == request.EmailId);
         if (email is null)
         {
-            return Task.FromResult(FlowChatResult<Guid>.Failure(
+            return Task.FromResult(Failure(
                 DomainError.NotFound($"Email '{request.EmailId}' was not found for user profile '{request.UserId}'.")));
         }
 
         if (!email.IsMain && !email.IsConfirmed)
         {
-            return Task.FromResult(FlowChatResult<Guid>.Failure(
+            return Task.FromResult(Failure(
                 DomainError.Validation(string.Format(EmailMustBeConfirmedMessageTemplate, email.Address.Value))));
         }
 
         if (!email.IsMain)
         {
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
         AggregateRoot.SetMainEmail(email.Id);
 
-        return Task.FromResult(FlowChatResult<Guid>.Success(email.Id.Value));
+        return Task.FromResult(Mutation(mutationType, email.Id.Value));
     }
 }

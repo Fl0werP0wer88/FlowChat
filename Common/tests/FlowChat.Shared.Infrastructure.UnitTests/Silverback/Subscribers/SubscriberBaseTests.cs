@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FluentAssertions;
 using Confluent.Kafka;
@@ -61,10 +62,15 @@ public sealed class SubscriberBaseTests
     }
 
     [Theory]
-    [InlineData("dev.flowchat.user-profile.user-profile.v1", "main")]
-    [InlineData("dev.flowchat.user-profile.user-profile.v1.retry", "retry")]
+    [InlineData("dev.flowchat.user-profile.user-profile.v1", null, "main")]
+    [InlineData("test.flowchat.harness.retry.events", null, "main")]
+    [InlineData("dev.flowchat.user-profile.user-profile.v1.retry.5s", "1", "retry")]
+    [InlineData("dev.flowchat.user-profile.user-profile.v1.retry.20s", "2", "retry")]
+    [InlineData("dev.flowchat.user-profile.user-profile.v1.retry.60s", "3", "retry")]
+    [InlineData("dev.flowchat.user-profile.user-profile.v1.retry.300s", "4", "retry")]
     public async Task HandleAsync_WhenExecuteStarts_SetsActivityTagsWithEventContext(
         string sourceTopic,
+        string? retryAttempt,
         string expectedDeliveryKind)
     {
         using var activity = new Activity("test").Start();
@@ -73,7 +79,9 @@ public sealed class SubscriberBaseTests
             loggerMock.Object,
             (_, _) => Task.CompletedTask);
 
-        await subscriber.HandleAsync(CreateEnvelope(new TestIntegrationEvent(), sourceTopic), CancellationToken.None);
+        await subscriber.HandleAsync(
+            CreateEnvelope(new TestIntegrationEvent(), sourceTopic, retryAttempt),
+            CancellationToken.None);
 
         activity.Tags.Should()
             .Contain(new KeyValuePair<string, string?>("flowchat.subscriber.event_type", "TestIntegrationEvent"))
@@ -85,11 +93,14 @@ public sealed class SubscriberBaseTests
 
     private static IInboundEnvelope<TestIntegrationEvent> CreateEnvelope(
         TestIntegrationEvent message,
-        string sourceTopic = "dev.flowchat.test.v1")
+        string sourceTopic = "dev.flowchat.test.v1",
+        string? retryAttempt = null)
     {
         var envelopeMock = new Mock<IInboundEnvelope<TestIntegrationEvent>>();
-        var headers = new MessageHeaderCollection(1);
+        var headers = new MessageHeaderCollection(2);
         headers.Add(IntegrationMessageHeaders.EventId, "test-message-id");
+        if (retryAttempt is not null)
+            headers.Add(RetryMessageHeaders.RetryAttempt, retryAttempt);
 
         envelopeMock.SetupGet(envelope => envelope.Message).Returns(message);
         envelopeMock.SetupGet(envelope => envelope.Headers).Returns(headers);

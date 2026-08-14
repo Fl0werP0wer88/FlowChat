@@ -1,0 +1,68 @@
+using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
+using FlowChat.Core.Messaging;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
+using FlowChat.Shared.Application.DomainEventHandlers.BatchAggregateRootDomainEventHandlers;
+using FlowChat.Shared.Domain;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
+
+namespace FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.ConversationParticipantAdded;
+
+public sealed class ConversationParticipantsAddedDomainEventHandlerV2
+    : BatchAggregateRootAddDomainEventHandlerBase<
+        ConversationParticipantsAddedDomainEventV2,
+        ConversationParticipant>
+{
+    private readonly IConversationParticipantWriteRepository _repository;
+
+    public ConversationParticipantsAddedDomainEventHandlerV2(
+        IConversationParticipantWriteRepository repository,
+        ILocalEventDispatcher dispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessorV2<
+            ConversationParticipantsAddedDomainEventV2,
+            ConversationParticipant>> processors,
+        IEnumerable<IAggregateBeforeSaveDeltaProcessorV2<
+            ConversationParticipantsAddedDomainEventV2,
+            ConversationParticipant>> deltaProcessors)
+        : base(dispatcher, processors, deltaProcessors)
+    {
+        _repository = repository;
+    }
+
+    protected override async Task<FlowChatResult<BatchAggregateDomainEventMutation<ConversationParticipant>>> ExecuteAsync(
+        ConversationParticipantsAddedDomainEventV2 notification,
+        CancellationToken cancellationToken)
+    {
+        var participants = notification.ParticipantUserIds
+            .Select(userId => ConversationParticipant.Create(
+                Id<ConversationParticipant>.New(),
+                notification.ConversationId,
+                notification.ConversationType,
+                userId,
+                ResolveDuetPartnerUserId(notification, userId),
+                lastReadMessageSequenceNum: notification.InitialReadCursor))
+            .ToArray();
+
+        foreach (var participant in participants)
+        {
+            await _repository.AddAsync(participant, cancellationToken);
+        }
+
+        AggregateRoots = participants.ToDictionary(participant => participant.Id);
+        return Success(
+            participants.Select(participant => participant.Id).ToArray(),
+            new DeltaProjectionMetadataV2(
+                notification.ConversationId.Value,
+                notification.Version));
+    }
+
+    private static Id<UserProfileMarker>? ResolveDuetPartnerUserId(
+        ConversationParticipantsAddedDomainEventV2 notification,
+        Id<UserProfileMarker> userId) =>
+        notification.ConversationType == ConversationType.Duet
+            ? notification.ParticipantUserIds.Single(participantUserId => participantUserId != userId)
+            : null;
+}

@@ -1,6 +1,5 @@
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
-using FlowChat.RealtimeService.Infrastructure.InternalApis.ChatService;
 using FlowChat.RealtimeService.Infrastructure.InternalApis.PresenceService;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
@@ -79,7 +78,6 @@ internal static class CommonInfrastructureServiceRegistration
         services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
 
-        services.AddFlowChatHttpClient<IChatServiceInternalApiClient, ChatServiceInternalApiClient, ChatServiceSettingsSection>();
         services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient, InternalApiSettingsSection>();
 
         return services;

@@ -40,6 +40,77 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
 
                     b.ToTable("RealtimeGroupMembershipReadModels", (string)null);
                 });
+
+            modelBuilder.Entity("FlowChat.RealtimeService.Persistence.Entities.RealtimeGroupMembershipRevisionTrackerReadModel", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ConversationId");
+
+                    b.ToTable("RealtimeGroupMembershipRevisionTrackerReadModels", (string)null);
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("GroupId", "Topic", "Partition");
+
+                    b.ToTable("SilverbackStoredOffsets");
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DynamicEndpoint")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("EndpointName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Headers")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SilverbackOutboxMessages");
+                });
 #pragma warning restore 612, 618
         }
     }

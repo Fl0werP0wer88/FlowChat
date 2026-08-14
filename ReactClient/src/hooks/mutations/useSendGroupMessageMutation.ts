@@ -3,8 +3,8 @@ import { sendGroupChatMessage } from "../../api/chatService";
 import {
   type GroupConversationCacheEntry,
   createGroupMessage,
-  sortGroupMessages,
 } from "../caches/groupConversationCache";
+import { mergeSequencedMessage } from "../caches/sequencedMessageCache";
 
 interface SendGroupMessageVariables {
   messageId: string;
@@ -17,6 +17,7 @@ interface UseSendGroupMessageMutationOptions {
   activeGroupConversationId: string | undefined;
   ownerUserId: string | null;
   onError: (message: string) => void;
+  onSequenceGap: () => void;
 }
 
 export function useSendGroupMessageMutation({
@@ -24,13 +25,33 @@ export function useSendGroupMessageMutation({
   activeGroupConversationId,
   ownerUserId,
   onError,
+  onSequenceGap,
 }: UseSendGroupMessageMutationOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ messageId, conversationId, text }: SendGroupMessageVariables) =>
       sendGroupChatMessage({ id: messageId, conversationId, text }, accessToken),
+    onMutate: (variables) => {
+      queryClient.setQueryData<GroupConversationCacheEntry>(
+        ["groupConversation", activeGroupConversationId],
+        (current) => current
+          ? mergeSequencedMessage(
+              current,
+              createGroupMessage(
+                "me",
+                variables.text,
+                new Date().toISOString(),
+                variables.messageId,
+                variables.conversationId,
+                ownerUserId,
+              ),
+            ).state
+          : current,
+      );
+    },
     onSuccess: (result, variables) => {
+      let requiresRefetch = false;
       queryClient.setQueryData<GroupConversationCacheEntry>(
         ["groupConversation", activeGroupConversationId],
         (current) => {
@@ -38,28 +59,41 @@ export function useSendGroupMessageMutation({
             return current;
           }
 
-          if (current.messages.some((m) => m.id === result.messageId)) {
-            return current;
-          }
-
-          return {
-            ...current,
-            messages: sortGroupMessages([
-              ...current.messages,
-              createGroupMessage(
+          const merged = mergeSequencedMessage(
+            current,
+            createGroupMessage(
                 "me",
                 variables.text,
                 result.sentAtUtc,
                 result.messageId,
                 variables.conversationId,
                 ownerUserId,
+                result.sequenceNum,
               ),
-            ]),
-          };
+          );
+          requiresRefetch = merged.requiresRefetch;
+          if (merged.needsCatchUp) onSequenceGap();
+          return merged.state;
         },
       );
+      if (requiresRefetch) {
+        void queryClient.invalidateQueries({
+          queryKey: ["groupConversation", activeGroupConversationId],
+        });
+      }
     },
-    onError: (error) => {
+    onError: (error, variables) => {
+      queryClient.setQueryData<GroupConversationCacheEntry>(
+        ["groupConversation", activeGroupConversationId],
+        (current) => current
+          ? {
+              ...current,
+              messages: current.messages.filter(
+                (message) => message.id !== variables.messageId,
+              ),
+            }
+          : current,
+      );
       onError(error instanceof Error ? error.message : "Nie udalo sie wyslac wiadomosci.");
     },
   });

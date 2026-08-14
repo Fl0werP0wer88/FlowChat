@@ -23,7 +23,7 @@ public sealed class ChangeAuthEmailCommandHandler
         IPasswordHashingService passwordHashingService,
         ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<ChangeAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ChangeAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;
@@ -45,23 +45,22 @@ public sealed class ChangeAuthEmailCommandHandler
         return FlowChatResult<DomainAccount?>.Success(account);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ChangeAuthEmailCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(ChangeAuthEmailCommand request, CancellationToken cancellationToken)
     {
         if (AggregateRoot!.Email == _emailAddress)
         {
-            return FlowChatResult<Unit>.Success(Unit.Value);
+            return Unchanged(Unit.Value);
         }
 
         var existingAccount = await _accountRepository.GetByEmailAsync(_emailAddress!, cancellationToken);
         if (existingAccount is not null && existingAccount.Id != AggregateRoot.Id)
         {
-            return FlowChatResult<Unit>.Failure(DomainError.Conflict("Email is already in use."));
+            return Failure(DomainError.Conflict("Email is already in use."));
         }
 
         AggregateRoot.ChangeAuthEmail(_emailAddress!, _passwordHashingService.GenerateSecurityStamp());
-        SetUpdated();
         await _accountRepository.UpdateAsync(AggregateRoot, cancellationToken);
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Updated(Unit.Value);
     }
 }

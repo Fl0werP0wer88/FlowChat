@@ -20,7 +20,7 @@ public sealed class SetMainPhoneCommandHandler
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<SetMainPhoneCommand, UserProfileAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<SetMainPhoneCommand, UserProfileAggregate>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
@@ -39,30 +39,31 @@ public sealed class SetMainPhoneCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         SetMainPhoneCommand request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         var phone = AggregateRoot!.Phones.FirstOrDefault(x => x.Id.Value == request.PhoneId);
         if (phone is null)
         {
-            return Task.FromResult(FlowChatResult<Guid>.Failure(
+            return Task.FromResult(Failure(
                 DomainError.NotFound($"Phone '{request.PhoneId}' was not found for user profile '{request.UserId}'.")));
         }
 
         if (!phone.IsMain && !phone.IsConfirmed)
         {
-            return Task.FromResult(FlowChatResult<Guid>.Failure(
+            return Task.FromResult(Failure(
                 DomainError.Validation(string.Format(PhoneMustBeConfirmedMessageTemplate, phone.Number.Value))));
         }
 
         if (!phone.IsMain)
         {
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
         AggregateRoot.SetMainPhone(phone.Id);
 
-        return Task.FromResult(FlowChatResult<Guid>.Success(phone.Id.Value));
+        return Task.FromResult(Mutation(mutationType, phone.Id.Value));
     }
 }

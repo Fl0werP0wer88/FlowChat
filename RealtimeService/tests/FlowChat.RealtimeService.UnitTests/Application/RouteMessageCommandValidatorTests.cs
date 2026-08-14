@@ -18,7 +18,8 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            42,
+            1);
 
         var result = _validator.Validate(command);
 
@@ -34,7 +35,8 @@ public sealed class RouteMessageCommandValidatorTests
             Guid.Empty,
             "Hello",
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            42,
+            1);
 
         var result = _validator.Validate(command);
 
@@ -55,7 +57,8 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             value,
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            42,
+            1);
 
         var result = _validator.Validate(command);
 
@@ -63,8 +66,10 @@ public sealed class RouteMessageCommandValidatorTests
         result.Errors.Should().Contain(e => e.PropertyName == "Text");
     }
 
-    [Fact]
-    public void Validate_RecipientUserIdsContainsOnlyEmptyGuids_ReturnsValidationError()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_SequenceNumNotPositive_ReturnsValidationError(long sequenceNum)
     {
         var command = new RouteMessageCommand(
             _fixture.Create<Guid>(),
@@ -72,16 +77,19 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            [Guid.Empty, Guid.Empty]);
+            sequenceNum,
+            1);
 
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
+        result.Errors.Should().Contain(e => e.PropertyName == "SequenceNum");
     }
 
-    [Fact]
-    public void Validate_EmptyRecipientUserIds_ReturnsValidationError()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_ConversationMembershipRevisionNotPositive_ReturnsValidationError(int conversationVersionAtSend)
     {
         var command = new RouteMessageCommand(
             _fixture.Create<Guid>(),
@@ -89,11 +97,12 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            []);
+            42,
+            conversationVersionAtSend);
 
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
+        result.Errors.Should().Contain(e => e.PropertyName == "ConversationMembershipRevision");
     }
 }

@@ -65,5 +65,16 @@ public abstract class DomainEventBase : IDomainEvent
         prefix ??= GetAggregateType(eventType);
         return $"{prefix}.{eventType.Name}";
     }
+
+    public static void StampVersions(IEnumerable<IDomainEvent> domainEvents, int version)
+    {
+        foreach (var domainEvent in domainEvents)
+        {
+            if (domainEvent is DomainEventBase mutableEvent)
+            {
+                mutableEvent.Version = version;
+            }
+        }
+    }
 }
 

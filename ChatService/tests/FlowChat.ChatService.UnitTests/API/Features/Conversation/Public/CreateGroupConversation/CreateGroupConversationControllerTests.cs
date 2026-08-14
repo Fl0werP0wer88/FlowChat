@@ -58,11 +58,11 @@ public sealed class CreateGroupConversationControllerTests
                 new ConversationParticipantDto(creatorId, "Creator", "creator.png", creatorId),
                 new ConversationParticipantDto(memberId, "Member", "member.png", memberId)
             ]);
-        CreateGroupConversationCommand? capturedCommand = null;
+        CreateGroupConversationCommandV2? capturedCommand = null;
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateGroupConversationCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (CreateGroupConversationCommand)cmd)
+            .Setup(x => x.Send(It.IsAny<CreateGroupConversationCommandV2>(), It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (CreateGroupConversationCommandV2)cmd)
             .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(dto));
 
         var controller = CreateController(creatorId);
@@ -85,7 +85,7 @@ public sealed class CreateGroupConversationControllerTests
     public async Task CreateGroupConversation_CommandFailure_ReturnsProblemDetails()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateGroupConversationCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<CreateGroupConversationCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Failure(
                 DomainError.BadRequest("Name is required.")));
 

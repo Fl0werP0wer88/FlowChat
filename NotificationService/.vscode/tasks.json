@@ -30,6 +30,21 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build: NotificationService OutboxPublisher",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/Workers/FlowChat.NotificationService.OutboxPublisher/FlowChat.NotificationService.OutboxPublisher.csproj",
+        "-c",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$msCompile"
     }
   ]
 }

@@ -59,6 +59,7 @@
   </Folder>
   <Folder Name="/NotificationService/src/Workers/">
     <Project Path="NotificationService/src/Workers/FlowChat.NotificationService.Consumers/FlowChat.NotificationService.Consumers.csproj" />
+    <Project Path="NotificationService/src/Workers/FlowChat.NotificationService.OutboxPublisher/FlowChat.NotificationService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/NotificationService/tests/">
     <Project Path="NotificationService/tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
@@ -115,6 +116,7 @@
   </Folder>
   <Folder Name="/RealtimeService/src/Workers/">
     <Project Path="RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj" />
+    <Project Path="RealtimeService/src/Workers/FlowChat.RealtimeService.OutboxPublisher/FlowChat.RealtimeService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/RealtimeService/tests/">
     <Project Path="RealtimeService/tests/FlowChat.RealtimeService.IntegrationTests/FlowChat.RealtimeService.IntegrationTests.csproj" />
@@ -123,6 +125,11 @@
   <Folder Name="/GatewayService/" />
   <Folder Name="/GatewayService/src/">
     <Project Path="GatewayService/src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
+    <Project Path="GatewayService/src/FlowChat.GatewayService.Infrastructure/FlowChat.GatewayService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/GatewayService/tests/">
+    <Project Path="GatewayService/tests/FlowChat.GatewayService.IntegrationTests/FlowChat.GatewayService.IntegrationTests.csproj" />
+    <Project Path="GatewayService/tests/FlowChat.GatewayService.UnitTests/FlowChat.GatewayService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/HarnessService/" />
   <Folder Name="/HarnessService/src/">
