@@ -79,34 +79,12 @@ persystencyjnych i DTO, dzięki czemu zapytania nie muszą odtwarzać całego ag
 1.2. Warstwy Clean Architecture
 -------------------------------
 
-Typowy serwis zawiera następujące projekty:
+Serwisy biznesowe są podzielone na projekty Domain, Application, Persistence,
+Infrastructure i API. Procesy Kafka działają jako osobne hosty Workers: Consumers
+odbiera zdarzenia, a OutboxPublisher publikuje zdarzenia zapisane w bazie serwisu.
 
-Domain
-  Czysta logika biznesowa: agregaty, encje, obiekty wartości, reguły, niezmienniki
-  oraz zdarzenia domenowe. Warstwa nie zależy od bazy danych, HTTP ani Kafka.
-
-Application
-  Przypadki użycia implementowane jako komendy i zapytania CQRS. Zawiera handlery
-  MediatR, walidację FluentValidation, kontrakty oraz mapowania modeli aplikacyjnych.
-
-Persistence
-  Dostęp do PostgreSQL przez Entity Framework Core, DbContext, mapowania encji,
-  repozytoria, Unit of Work, migracje, projekcje odczytowe i tabelę Outbox.
-
-Infrastructure
-  Integracje techniczne, między innymi Kafka, tokeny, haszowanie haseł, SMTP,
-  Redis oraz klienci HTTP do innych serwisów.
-
-API
-  Kontrolery ASP.NET Core, uwierzytelnianie, autoryzacja, kontrakty HTTP,
-  mapowanie odpowiedzi, OpenAPI i konfiguracja potoku żądań.
-
-Workers
-  Osobne procesy robocze. Projekt Consumers odbiera zdarzenia z Kafka, natomiast
-  OutboxPublisher publikuje do Kafka zdarzenia zapisane wcześniej w bazie serwisu.
-
-GatewayService jest świadomym wyjątkiem: jako warstwa proxy i agregacji zawiera tylko
-projekty API i Infrastructure. Nie posiada własnej domeny ani bazy danych.
+GatewayService jest świadomym wyjątkiem — jako warstwa proxy i agregacji zawiera tylko
+projekty API i Infrastructure oraz nie posiada własnej domeny ani bazy danych.
 
 
 1.3. CQRS, DDD i obsługa wyniku
@@ -451,38 +429,3 @@ i VITE_REALTIME_API_URL.
 Konfiguracja serwisów znajduje się w appsettings.json i appsettings.Development.json.
 Sekrety oraz wartości lokalne nie powinny trafiać do repozytorium; mogą być dostarczane
 przez zmienne środowiskowe, lokalne pliki konfiguracyjne albo Infisical.
-
-
-7. TESTOWANIE
-=============
-
-Pełne rozwiązanie backendowe:
-
-  dotnet test FlowChat.slnx
-
-Przykład uruchomienia testów jednego serwisu:
-
-  dotnet test ChatService/FlowChat.ChatService.slnx
-
-Frontend:
-
-  cd ReactClient
-  npm run test
-  npx tsc --noEmit
-  npm run build
-
-Testy jednostkowe sprawdzają logikę domenową, handlery i izolowane integracje. Testy
-integracyjne weryfikują współpracę warstw, bazę danych, rejestrację zależności i potok
-HTTP. Testy AAT oraz Testcontainers są używane tam, gdzie wymagane jest rzeczywiste
-zachowanie Kafka, PostgreSQL albo Redis.
-
-
-8. PODSUMOWANIE
-===============
-
-FlowChat rozdziela odpowiedzialności biznesowe między niezależne mikroserwisy i łączy
-spójność transakcyjną lokalnej bazy z asynchroniczną komunikacją Kafka. GatewayService
-zapewnia jedno wejście HTTP, PostgreSQL przechowuje trwały stan każdego serwisu, Redis
-obsługuje szybki stan obecności i połączeń, a RealtimeService dostarcza zmiany przez
-SignalR. Wspólne biblioteki ujednolicają mechanizmy techniczne, zachowując logikę
-biznesową we właściwych granicach domenowych.
