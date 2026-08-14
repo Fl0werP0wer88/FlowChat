@@ -37,7 +37,7 @@ public sealed class OutboxPublisherConfigurationTests
         await provider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
         var producers = provider.GetRequiredService<IProducerCollection>();
 
-        retryTopics.Should().HaveCount(5).And.OnlyHaveUniqueItems();
+        retryTopics.Should().HaveCount(3).And.OnlyHaveUniqueItems();
         retryTopics.Should().AllSatisfy(topic =>
             producers.GetProducerForEndpoint(topic).Should().NotBeNull());
         producers.GetProducerForEndpoint("auth-account-registered").Should().NotBeNull();

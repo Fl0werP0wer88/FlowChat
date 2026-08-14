@@ -52,7 +52,7 @@ public sealed class ConversationParticipantV2ConsumerConfigurationTests
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var offsetCommitter = scope.ServiceProvider.GetRequiredService<IConsumedOffsetCommitter>();
 
-        consumers.Should().HaveCount(5);
+        consumers.Should().HaveCount(3);
         topology.Streams.Should().ContainSingle();
         topology.Streams[0].RetryTiers
             .Select(tier => tier.Topic)
@@ -83,14 +83,10 @@ public sealed class ConversationParticipantV2ConsumerConfigurationTests
         settings.Topic.Should().Be("dev.flowchat.chat.conversation-participant-projection.v2");
         settings.RetryTiers.Select(tier => tier.Topic).Should().Equal(
             "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.5s",
-            "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.20s",
-            "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.60s",
-            "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.300s");
+            "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.60s");
         settings.RetryTiers.Select(tier => tier.Delay).Should().Equal(
             TimeSpan.FromSeconds(5),
-            TimeSpan.FromSeconds(20),
-            TimeSpan.FromSeconds(60),
-            TimeSpan.FromSeconds(300));
+            TimeSpan.FromSeconds(60));
         settings.DeadLetterTopic.Should().Be(
             "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.dlq");
     }
@@ -106,12 +102,8 @@ public sealed class ConversationParticipantV2ConsumerConfigurationTests
             ["Kafka:ConversationParticipantV2Consumer:DeadLetterTopic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.dlq",
             ["Kafka:ConversationParticipantV2Consumer:RetryTiers:0:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.5s",
             ["Kafka:ConversationParticipantV2Consumer:RetryTiers:0:Delay"] = "00:00:05",
-            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:1:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.20s",
-            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:1:Delay"] = "00:00:20",
-            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:2:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.60s",
-            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:2:Delay"] = "00:01:00",
-            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:3:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.300s",
-            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:3:Delay"] = "00:05:00",
+            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:1:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.60s",
+            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:1:Delay"] = "00:01:00",
             ["Kafka:ConversationParticipantV2Consumer:AutoOffsetReset"] = "Earliest"
         })
         .Build();

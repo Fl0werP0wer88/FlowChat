@@ -41,8 +41,8 @@ public sealed class NotificationConsumerConfigurationTests
         var topology = serviceProvider.GetRequiredService<TieredKafkaRetryTopology>();
         var subscriber = scope.ServiceProvider.GetRequiredService<UserEmailVerificationRequestedSubscriber>();
 
-        consumerCollection.Should().HaveCount(5);
-        producerCollection.Should().HaveCount(5);
+        consumerCollection.Should().HaveCount(3);
+        producerCollection.Should().HaveCount(3);
         topology.Streams.Should().ContainSingle();
         topology.Streams[0].RetryTiers
             .Select(tier => tier.Topic)
@@ -73,14 +73,10 @@ public sealed class NotificationConsumerConfigurationTests
         consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.notification.email.v1.notification-service.dlq");
         consumerOptions.RetryTiers.Select(tier => tier.Topic).Should().Equal(
             "dev.flowchat.notification.email.v1.notification-service.retry.5s",
-            "dev.flowchat.notification.email.v1.notification-service.retry.20s",
-            "dev.flowchat.notification.email.v1.notification-service.retry.60s",
-            "dev.flowchat.notification.email.v1.notification-service.retry.300s");
+            "dev.flowchat.notification.email.v1.notification-service.retry.60s");
         consumerOptions.RetryTiers.Select(tier => tier.Delay).Should().Equal(
             TimeSpan.FromSeconds(5),
-            TimeSpan.FromSeconds(20),
-            TimeSpan.FromSeconds(60),
-            TimeSpan.FromSeconds(300));
+            TimeSpan.FromSeconds(60));
         configuration.GetConnectionString("NotificationDb").Should().Be(
             "Host=localhost;Port=5432;Database=flowchat_notification_db;Username=flowchat_app;Password=flowchat_app_pw;");
     }
@@ -127,12 +123,8 @@ public sealed class NotificationConsumerConfigurationTests
                 ["Kafka:UserEmailVerificationRequestedConsumer:DeadLetterTopic"] = "dev.flowchat.notification.email.v1.notification-service.dlq",
                 ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:0:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry.5s",
                 ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:0:Delay"] = "00:00:05",
-                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:1:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry.20s",
-                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:1:Delay"] = "00:00:20",
-                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:2:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry.60s",
-                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:2:Delay"] = "00:01:00",
-                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:3:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry.300s",
-                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:3:Delay"] = "00:05:00",
+                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:1:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry.60s",
+                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:1:Delay"] = "00:01:00",
                 ["Kafka:UserEmailVerificationRequestedConsumer:AutoOffsetReset"] = "Earliest"
             })
             .Build();

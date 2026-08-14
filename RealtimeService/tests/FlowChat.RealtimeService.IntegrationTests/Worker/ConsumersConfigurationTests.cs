@@ -107,7 +107,7 @@ public sealed class ConsumersConfigurationTests
         var producerCollection = serviceProvider.GetRequiredService<IProducerCollection>();
         var topology = serviceProvider.GetRequiredService<TieredKafkaRetryTopology>();
 
-        consumerCollection.Should().HaveCount(20);
+        consumerCollection.Should().HaveCount(12);
         topology.Streams.SelectMany(stream => stream.RetryTiers.Select(tier => tier.Topic).Append(stream.DeadLetterTopic))
             .Should()
             .AllSatisfy(topic => producerCollection.GetProducerForEndpoint(topic).Should().NotBeNull());
@@ -188,14 +188,10 @@ public sealed class ConsumersConfigurationTests
     {
         settings.RetryTiers.Select(tier => tier.Topic).Should().Equal(
             $"{firstRetryTopic}.5s",
-            $"{firstRetryTopic}.20s",
-            $"{firstRetryTopic}.60s",
-            $"{firstRetryTopic}.300s");
+            $"{firstRetryTopic}.60s");
         settings.RetryTiers.Select(tier => tier.Delay).Should().Equal(
             TimeSpan.FromSeconds(5),
-            TimeSpan.FromSeconds(20),
-            TimeSpan.FromSeconds(60),
-            TimeSpan.FromSeconds(300));
+            TimeSpan.FromSeconds(60));
     }
 
     private static string GetRepositoryPath(string relativePath)
