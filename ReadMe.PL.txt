@@ -1,5 +1,7 @@
-FLOWCHAT
-========
+FLOWCHAT — WERSJA POLSKA
+========================
+
+Wersja angielska: ReadMe.EN.txt
 
 FlowChat jest rozwijaną w architekturze mikroserwisowej aplikacją komunikatora internetowego.
 System obsługuje rejestrację i uwierzytelnianie użytkowników, profile, rozmowy prywatne
