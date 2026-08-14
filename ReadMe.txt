@@ -122,37 +122,39 @@ Tematy projekcyjne mają przyrostek „-projection”, a tematy biznesowe pozost
 oddzielone. Ułatwia to obserwowanie przepływu i analizę problemów w Kafka.
 
 
-1.4.1. Przepływ projekcji między serwisami
-------------------------------------------
+1.4.1. Projekcje między serwisami
+---------------------------------
 
-Produkcyjny konsument przetwarza jedno zdarzenie projekcyjne jako jedną transakcyjną
-komendę ProjectionSingle. Przepływ wygląda następująco:
+- serwis źródłowy zapisuje zdarzenie projekcyjne w Outbox i publikuje je do Kafka,
+- konsument sprawdza poprawność zdarzenia i mapuje je na komendę ProjectionSingle,
+- dane projekcji oraz offset Kafka są zapisywane w jednej transakcji EF Core,
+- UPSERT uwzględnia wersję agregatu, więc starsze lub powtórzone zdarzenie nie nadpisze
+  nowszych danych,
+- projekcja jest lokalną kopią danych do odczytu i nie dodaje własnych reguł biznesowych.
 
-1. Serwis źródłowy publikuje ProjectionIntegrationEvent<TReadModel> przez swój
-   transakcyjny Outbox.
-2. Dedykowany subscriber serwisu docelowego sprawdza wersję agregatu i payload,
-   opcjonalnie odrzuca zdarzenia nieistotne dla lokalnej projekcji, mapuje transportowy
-   event na ProjectionSingleCommand i przekazuje komendę do MediatR.
-3. TransactionalCommandHandlerBase wykonuje UPSERT uwzględniający wersję danych oraz
-   zapisuje kliencki offset Kafka w tej samej transakcji EF Core.
-4. Starsze lub powtórzone zdarzenie nie może nadpisać nowszego wiersza projekcji.
-5. Tabele projekcyjne odzwierciedlają dane serwisu źródłowego bez wprowadzania przez
-   konsumenta dodatkowych reguł lub mutacji biznesowych.
 
-Subscriber odpowiada za walidację i mapowanie kontraktu transportowego, natomiast
-repozytorium Persistence jest właścicielem zależnej od bazy implementacji UPSERT.
-Repozytoria zapisu nadal operują na agregatach domenowych, a repozytoria odczytu na
-prostych encjach persystencyjnych.
+1.4.2. Retry i DLQ
+------------------
 
-Przeniesienie wiadomości pomiędzy poziomami retry zapisuje wiadomość wychodzącą i offset
-źródłowy atomowo przez Silverback EF Outbox. Każdy poziom korzysta z osobnego tematu oraz
-metadanych RetryAtUtc. Konsumenci nie używają retry „w miejscu”, ponieważ byłoby ono
-niezgodne z cyklem życia zakresu klienckiego magazynu offsetów Kafka.
+- błąd tymczasowy, na przykład chwilowa niedostępność bazy lub innego serwisu, przenosi
+  wiadomość z głównego tematu na pierwszy temat retry,
+- FlowChat używa czterech poziomów retry: po 5, 20, 60 i 300 sekundach; każdy poziom
+  posiada osobny temat Kafka,
+- wiadomość zawiera RetryAtUtc, numer próby, typ ostatniego błędu oraz dane oryginalnego
+  tematu, partycji i offsetu,
+- konsument tematu retry wstrzymuje daną partycję do czasu wskazanego w RetryAtUtc,
+  a następnie wznawia ją i ponawia przetwarzanie,
+- kolejny błąd tymczasowy przenosi wiadomość na następny poziom retry,
+- błąd trwały, nieznany, ponowny błąd wymagający izolacji albo wyczerpanie wszystkich
+  prób przenosi wiadomość do dedykowanego dead-letter topic (DLQ),
+- zapis wiadomości na temat retry lub DLQ oraz zatwierdzenie offsetu źródłowego odbywają
+  się atomowo przez Silverback EF Outbox; chroni to wiadomość przed utratą podczas
+  przenoszenia,
+- DLQ izoluje błędną wiadomość od głównego ruchu i zachowuje informacje potrzebne do
+  diagnozy oraz późniejszego, kontrolowanego ponowienia.
 
-Mechanizm ProjectionBulk pozostaje wyłącznie w HarnessService jako testowy, transakcyjny
-batch UPSERT. Deduplikuje wartości według klucza, nie posiada własnego konsumenta retry,
-producenta retry ani ścieżki DLQ. Nieudany batch wycofuje transakcję i pozostawia offset
-wiadomości źródłowej niezatwierdzony.
+Retry nie jest wykonywane bezpośrednio na głównym temacie. Osobne tematy zapobiegają
+blokowaniu podstawowego strumienia przez wiadomość, której chwilowo nie można obsłużyć.
 
 
 1.5. Komunikacja w czasie rzeczywistym
