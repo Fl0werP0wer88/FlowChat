@@ -20,3 +20,7 @@ npm run test:e2e
 ```
 
 Copy `.env.example` to `.env` only when the Gateway URL differs from the default.
+
+## Documentation
+
+Project-specific architecture and development guidance starts in [`docs/README.md`](docs/README.md). Active agent instructions are kept in [`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md).
