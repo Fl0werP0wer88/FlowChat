@@ -678,6 +678,101 @@
                                                                 }
                                                             ],
                                          "stopAll":  true
+                                     },
+                                     {
+                                         "name":  "All Backend + ReactClientV2",
+                                         "preLaunchTask":  "build-flowchat-backend",
+                                         "configurations":  [
+                                                                {
+                                                                    "folder":  "AuthService",
+                                                                    "name":  "AuthService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "ChatService",
+                                                                    "name":  "ChatService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "UserProfileService",
+                                                                    "name":  "UserProfileService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "PresenceService",
+                                                                    "name":  "PresenceService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "AuthService",
+                                                                    "name":  "AuthService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "AuthService",
+                                                                    "name":  "AuthService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "ChatService",
+                                                                    "name":  "ChatService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "ChatService",
+                                                                    "name":  "ChatService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "UserProfileService",
+                                                                    "name":  "UserProfileService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "UserProfileService",
+                                                                    "name":  "UserProfileService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "NotificationService",
+                                                                    "name":  "NotificationService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "NotificationService",
+                                                                    "name":  "NotificationService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "NotificationService",
+                                                                    "name":  "NotificationService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "ReactClientV2",
+                                                                    "name":  "ReactClientV2"
+                                                                },
+                                                                {
+                                                                    "folder":  "RealtimeService",
+                                                                    "name":  "RealtimeService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "RealtimeService",
+                                                                    "name":  "RealtimeService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "RealtimeService",
+                                                                    "name":  "RealtimeService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "PresenceService",
+                                                                    "name":  "PresenceService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "PresenceService",
+                                                                    "name":  "PresenceService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "GatewayService",
+                                                                    "name":  "GatewayService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService Consumers (No Build)"
+                                                                }
+                                                            ],
+                                         "stopAll":  true
                                      }
                                  ]
                }
