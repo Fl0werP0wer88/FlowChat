@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { GroupConversation } from "../types/chat";
@@ -17,6 +17,7 @@ import { useSendGroupMessageMutation } from "./mutations/useSendGroupMessageMuta
 import { useGroupConversationQuery } from "./queries/useGroupConversationQuery";
 import { mergeSequencedMessage } from "./caches/sequencedMessageCache";
 import { useConversationMessageSync } from "./useConversationMessageSync";
+import { resolveGroupConversationReadSequence } from "./groupConversationReadState";
 
 export function useGroupChatMessages(activeGroupConversation: GroupConversation | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
@@ -26,16 +27,19 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
 
   const isLoadingOlderMessagesRef = useRef(false);
+  const lastMarkedConversationIdRef = useRef<string | null>(null);
 
   const {
     data: conversationData,
     isLoading: isLoadingConversation,
     error: conversationQueryError,
   } = useGroupConversationQuery(activeGroupConversation, accessToken, ownerUserId);
+
   const conversationQueryKey = useMemo(
     () => ["groupConversation", activeGroupConversation?.conversationId] as const,
     [activeGroupConversation?.conversationId],
   );
+  
   const mapSynchronizedMessage = useCallback(
     (message: Parameters<typeof mapGroupConversationMessage>[0]) =>
       mapGroupConversationMessage(message, ownerUserId),
@@ -181,10 +185,11 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     if (!targetConversation || !accessToken) {
       return;
     }
-    const contiguousSequenceNum = sequenceNum
-      ?? queryClient.getQueryData<GroupConversationCacheEntry>(conversationQueryKey)
-        ?.lastContiguousSequenceNum
-      ?? 0;
+    const contiguousSequenceNum = resolveGroupConversationReadSequence(
+      queryClient,
+      targetConversation.conversationId,
+      sequenceNum,
+    );
 
     queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
       current.map((item) => {
@@ -213,7 +218,31 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
       toast.error(error instanceof Error ? error.message : "Nie udalo sie oznaczyc grupy jako przeczytanej.");
       void queryClient.invalidateQueries({ queryKey: ["groupConversations"] });
     }
-  }, [accessToken, activeGroupConversation, conversationQueryKey, queryClient]);
+  }, [accessToken, activeGroupConversation, queryClient]);
+
+  useEffect(() => {
+    if (!activeGroupConversation) {
+      lastMarkedConversationIdRef.current = null;
+      return;
+    }
+
+    if (
+      !conversationData
+      || conversationData.conversationId !== activeGroupConversation.conversationId
+    ) {
+      return;
+    }
+
+    if (conversationData.conversationId === lastMarkedConversationIdRef.current) {
+      return;
+    }
+
+    lastMarkedConversationIdRef.current = conversationData.conversationId;
+    void markActiveGroupConversationAsRead(
+      activeGroupConversation,
+      conversationData.lastContiguousSequenceNum,
+    );
+  }, [activeGroupConversation, conversationData, markActiveGroupConversationAsRead]);
 
   return {
     messages: conversationData?.messages ?? [],
