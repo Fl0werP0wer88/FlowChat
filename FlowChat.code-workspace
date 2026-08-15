@@ -37,6 +37,10 @@
                         "path":  "ReactClient"
                     },
                     {
+                        "name":  "ReactClientV2",
+                        "path":  "ReactClientV2"
+                    },
+                    {
                         "name":  "RealtimeService",
                         "path":  "RealtimeService"
                     },
@@ -281,6 +285,26 @@
                                                      }
                                 },
                                 {
+                                    "label":  "build-reactclientv2",
+                                    "type":  "process",
+                                    "command":  "npm.cmd",
+                                    "args":  [
+                                                 "run",
+                                                 "build"
+                                             ],
+                                    "options":  {
+                                                    "cwd":  "${workspaceFolder:ReactClientV2}"
+                                                },
+                                    "problemMatcher":  [
+
+                                                       ],
+                                    "presentation":  {
+                                                         "reveal":  "always",
+                                                         "panel":  "shared",
+                                                         "clear":  true
+                                                     }
+                                },
+                                {
                                     "label":  "build-flowchat",
                                     "dependsOn":  [
                                                       "build-flowchat-backend",
@@ -448,6 +472,16 @@
                                                                 {
                                                                     "folder":  "ReactClient",
                                                                     "name":  "ReactClient"
+                                                                }
+                                                            ],
+                                         "stopAll":  true
+                                     },
+                                     {
+                                         "name":  "ReactClientV2",
+                                         "configurations":  [
+                                                                {
+                                                                    "folder":  "ReactClientV2",
+                                                                    "name":  "ReactClientV2"
                                                                 }
                                                             ],
                                          "stopAll":  true
