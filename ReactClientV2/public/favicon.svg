@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <g fill="#1f5fd1">
-    <path d="M32 1L42 11L32 21L22 11Z" />
-    <path d="M32 1L42 11L32 21L22 11Z" transform="rotate(72 32 32)" />
-    <path d="M32 1L42 11L32 21L22 11Z" transform="rotate(144 32 32)" />
-    <path d="M32 1L42 11L32 21L22 11Z" transform="rotate(216 32 32)" />
-    <path d="M32 1L42 11L32 21L22 11Z" transform="rotate(288 32 32)" />
+    <path d="M24 3H44L40 17H20Z" />
+    <path d="M24 3H44L40 17H20Z" transform="rotate(72 32 32)" />
+    <path d="M24 3H44L40 17H20Z" transform="rotate(144 32 32)" />
+    <path d="M24 3H44L40 17H20Z" transform="rotate(216 32 32)" />
+    <path d="M24 3H44L40 17H20Z" transform="rotate(288 32 32)" />
   </g>
 </svg>
