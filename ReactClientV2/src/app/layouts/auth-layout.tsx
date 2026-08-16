@@ -22,10 +22,10 @@ export function AuthLayout({ eyebrow, title, description, children }: AuthLayout
       </div>
 
       <section className="brand-plane" aria-labelledby="flowchat-brand">
-        <div className="brand-lockup">
+        <header className="brand-lockup">
           <BrandMark />
           <span id="flowchat-brand">FlowChat</span>
-        </div>
+        </header>
         <AboutCarousel />
         <p className="brand-footnote">Designed and developed by Piotr Kwiatkowski.</p>
       </section>

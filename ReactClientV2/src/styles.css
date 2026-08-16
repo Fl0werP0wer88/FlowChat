@@ -438,12 +438,17 @@ input {
 }
 
 @media (max-width: 899px) {
+  .brand-plane {
+    align-content: start;
+    gap: clamp(1.5rem, 5vw, 2.25rem);
+  }
+
   .brand-copy {
-    padding-block: 3.5rem 1rem;
+    padding-block: 0 1rem;
   }
 
   .about-carousel__viewport {
-    min-height: 19rem;
+    min-height: 0;
   }
 
   .about-carousel__stage {
