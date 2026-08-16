@@ -427,6 +427,38 @@ input {
   }
 }
 
+.chat-shell {
+  animation: chat-shell-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chat-conversation-panel {
+  animation: chat-panel-enter 480ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chat-active-panel {
+  animation: chat-workspace-enter 520ms 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes chat-shell-enter {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes chat-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-0.75rem);
+  }
+}
+
+@keyframes chat-workspace-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
 @media (min-width: 900px) {
   .auth-stage {
     grid-template-columns: minmax(26rem, 1.1fr) minmax(30rem, 0.9fr);
