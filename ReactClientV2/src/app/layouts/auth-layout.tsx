@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
-import { AboutCarousel } from '@/components/about/about-carousel';
 import { BrandMark } from '@/components/brand/brand-mark';
+import { AboutCarousel } from '@/features/about/components/about-carousel';
 
 interface AuthLayoutProps {
   eyebrow: string;
