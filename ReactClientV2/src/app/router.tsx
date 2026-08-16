@@ -14,24 +14,24 @@ const appRouter = createBrowserRouter([
     children: [
       {
         path: paths.auth.login.path,
-        lazy: () => import('./routes/login-route'),
+        lazy: () => import('./routes/auth/login-route'),
       },
       {
         path: paths.auth.register.path,
-        lazy: () => import('./routes/register-route'),
+        lazy: () => import('./routes/auth/register-route'),
       },
     ],
   },
   {
     path: paths.auth.emailVerification.path,
-    lazy: () => import('./routes/email-verification-route'),
+    lazy: () => import('./routes/auth/email-verification-route'),
   },
   {
     element: <ProtectedRoute />,
     children: [
       {
         path: paths.chat.path,
-        lazy: () => import('./routes/chat-route'),
+        lazy: () => import('./routes/chat/chat-route'),
       },
     ],
   },

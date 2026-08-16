@@ -1,4 +1,4 @@
-import { AuthLayout } from '@/app/layouts/auth-layout';
+import { AuthLayout } from '@/app/routes/auth/components/auth-layout';
 import { LoginForm } from '@/features/auth/components/login-form';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 

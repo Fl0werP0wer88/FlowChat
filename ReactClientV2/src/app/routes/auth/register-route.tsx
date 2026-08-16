@@ -1,4 +1,4 @@
-import { AuthLayout } from '@/app/layouts/auth-layout';
+import { AuthLayout } from '@/app/routes/auth/components/auth-layout';
 import { RegisterForm } from '@/features/auth/components/register-form';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
