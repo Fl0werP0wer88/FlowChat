@@ -93,10 +93,7 @@ input {
   width: 100%;
   height: 100%;
   overflow: visible;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-width: 11;
+  fill: currentColor;
 }
 
 .brand-mark__segment {
