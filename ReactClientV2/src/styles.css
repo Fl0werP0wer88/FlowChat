@@ -267,10 +267,10 @@ input {
   max-width: 12ch;
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(2.35rem, 6vw, 5.5rem);
+  font-size: clamp(1.85rem, 3.25vw, 3.5rem);
   font-weight: 600;
-  line-height: 0.98;
-  letter-spacing: -0.055em;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
 }
 
 .brand-footnote {
