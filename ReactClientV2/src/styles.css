@@ -75,41 +75,55 @@ input {
 }
 
 .brand-mark {
-  position: relative;
-  display: inline-block;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
   width: 2.4rem;
   height: 2.4rem;
   color: #1f5fd1;
 }
 
-.brand-mark__ring,
-.brand-mark__core,
-.brand-mark__tail {
-  position: absolute;
+.brand-mark__symbol {
   display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 11;
 }
 
-.brand-mark__ring {
-  inset: 0;
-  border: 0.3rem solid currentColor;
-  border-radius: 50%;
+.brand-mark__segment {
+  transform: rotate(var(--segment-rotation));
+  transform-box: view-box;
+  transform-origin: 32px 32px;
+  animation: brand-segment-enter 620ms var(--segment-delay) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.brand-mark__core {
-  inset: 0.72rem;
-  border-radius: 50%;
-  background: currentColor;
+.brand-mark__segment--one {
+  --segment-rotation: 0deg;
+  --segment-delay: 80ms;
 }
 
-.brand-mark__tail {
-  right: 0.05rem;
-  bottom: 0.08rem;
-  width: 0.85rem;
-  height: 0.3rem;
-  border-radius: 999px;
-  background: currentColor;
-  transform: rotate(42deg);
-  transform-origin: right center;
+.brand-mark__segment--two {
+  --segment-rotation: 72deg;
+  --segment-delay: 120ms;
+}
+
+.brand-mark__segment--three {
+  --segment-rotation: 144deg;
+  --segment-delay: 160ms;
+}
+
+.brand-mark__segment--four {
+  --segment-rotation: 216deg;
+  --segment-delay: 200ms;
+}
+
+.brand-mark__segment--five {
+  --segment-rotation: 288deg;
+  --segment-delay: 240ms;
 }
 
 .brand-plane .brand-mark {
@@ -271,6 +285,18 @@ input {
   50% {
     box-shadow: 0 0 0 0.85rem rgba(95, 146, 242, 0.02);
     transform: scale(1.08);
+  }
+}
+
+@keyframes brand-segment-enter {
+  from {
+    opacity: 0;
+    transform: rotate(calc(var(--segment-rotation) - 14deg)) scale(0.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(var(--segment-rotation)) scale(1);
   }
 }
 
