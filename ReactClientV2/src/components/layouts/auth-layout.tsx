@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { BrandCarousel } from '@/components/brand/brand-carousel';
+import { AboutCarousel } from '@/components/about/about-carousel';
 import { BrandMark } from '@/components/brand/brand-mark';
 
 interface AuthLayoutProps {
@@ -26,7 +26,7 @@ export function AuthLayout({ eyebrow, title, description, children }: AuthLayout
           <BrandMark />
           <span id="flowchat-brand">FlowChat</span>
         </div>
-        <BrandCarousel />
+        <AboutCarousel />
         <p className="brand-footnote">Designed and developed by Piotr Kwiatkowski.</p>
       </section>
 

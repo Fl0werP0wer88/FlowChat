@@ -139,30 +139,30 @@ input {
   padding-block: 4rem 3rem;
 }
 
-.brand-carousel {
+.about-carousel {
   width: 100%;
 }
 
-.brand-carousel__viewport {
+.about-carousel__viewport {
   display: grid;
   min-height: 24rem;
   align-items: center;
 }
 
-.brand-carousel__slide {
+.about-carousel__slide {
   display: grid;
   gap: 0.9rem;
 }
 
-.brand-carousel__slide--next {
+.about-carousel__slide--next {
   animation: carousel-next-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.brand-carousel__slide--previous {
+.about-carousel__slide--previous {
   animation: carousel-previous-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.brand-carousel__description {
+.about-carousel__description {
   max-width: 34rem;
   margin: 0;
   color: #c3d3f1;
@@ -170,13 +170,13 @@ input {
   line-height: 1.65;
 }
 
-.brand-carousel__controls {
+.about-carousel__controls {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.brand-carousel__button {
+.about-carousel__button {
   display: inline-grid;
   width: 2.75rem;
   height: 2.75rem;
@@ -194,24 +194,24 @@ input {
     transform 160ms ease;
 }
 
-.brand-carousel__button:hover {
+.about-carousel__button:hover {
   color: #11285a;
   border-color: #a9c6ff;
   background: #a9c6ff;
   transform: translateY(-1px);
 }
 
-.brand-carousel__button:focus-visible {
+.about-carousel__button:focus-visible {
   outline: 2px solid #f8fbff;
   outline-offset: 3px;
 }
 
-.brand-carousel__button svg {
+.about-carousel__button svg {
   width: 1.1rem;
   height: 1.1rem;
 }
 
-.brand-carousel__counter {
+.about-carousel__counter {
   min-width: 3.6rem;
   color: #a9c6ff;
   font-size: 0.72rem;
@@ -413,7 +413,7 @@ input {
     padding-block: 3.5rem 1rem;
   }
 
-  .brand-carousel__viewport {
+  .about-carousel__viewport {
     min-height: 19rem;
   }
 

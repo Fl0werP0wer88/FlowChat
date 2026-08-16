@@ -1,11 +1,11 @@
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
-import { BrandCarousel } from '../brand-carousel';
+import { AboutCarousel } from '../about-carousel';
 
-describe('BrandCarousel', () => {
+describe('AboutCarousel', () => {
   it('moves between sections with the visible controls', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<BrandCarousel />);
+    renderWithProviders(<AboutCarousel />);
 
     expect(
       screen.getByRole('heading', { name: 'I turn complex ideas into clear digital experiences.' }),
@@ -26,7 +26,7 @@ describe('BrandCarousel', () => {
 
   it('supports left and right arrow keys', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<BrandCarousel />);
+    renderWithProviders(<AboutCarousel />);
     const nextButton = screen.getByRole('button', { name: 'Show next section' });
 
     nextButton.focus();

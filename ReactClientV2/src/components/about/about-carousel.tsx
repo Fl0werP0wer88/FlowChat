@@ -20,7 +20,7 @@ const slides = [
 
 type Direction = 'next' | 'previous';
 
-export function BrandCarousel() {
+export function AboutCarousel() {
   const [state, setState] = useState<{ direction: Direction; index: number }>({
     direction: 'next',
     index: 0,
@@ -51,27 +51,27 @@ export function BrandCarousel() {
 
   return (
     <section
-      className="brand-copy brand-carousel"
+      className="brand-copy about-carousel"
       aria-label="About FlowChat"
       aria-roledescription="carousel"
     >
-      <div className="brand-carousel__viewport" aria-live="polite" aria-atomic="true">
+      <div className="about-carousel__viewport" aria-live="polite" aria-atomic="true">
         <article
           key={`${slide.id}-${state.direction}`}
-          className={`brand-carousel__slide brand-carousel__slide--${state.direction}`}
+          className={`about-carousel__slide about-carousel__slide--${state.direction}`}
           role="group"
           aria-label={`${state.index + 1} of ${slides.length}`}
           aria-roledescription="slide"
         >
           <p className="brand-kicker">{slide.eyebrow}</p>
           <h2>{slide.title}</h2>
-          <p className="brand-carousel__description">{slide.description}</p>
+          <p className="about-carousel__description">{slide.description}</p>
         </article>
       </div>
 
-      <div className="brand-carousel__controls">
+      <div className="about-carousel__controls">
         <button
-          className="brand-carousel__button"
+          className="about-carousel__button"
           type="button"
           aria-label="Show previous section"
           onClick={() => move('previous')}
@@ -79,11 +79,11 @@ export function BrandCarousel() {
         >
           <ArrowLeft aria-hidden="true" />
         </button>
-        <span className="brand-carousel__counter" aria-hidden="true">
+        <span className="about-carousel__counter" aria-hidden="true">
           {String(state.index + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
         </span>
         <button
-          className="brand-carousel__button"
+          className="about-carousel__button"
           type="button"
           aria-label="Show next section"
           onClick={() => move('next')}
