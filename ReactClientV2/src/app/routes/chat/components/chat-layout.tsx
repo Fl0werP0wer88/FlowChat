@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { BrandMark } from '@/components/brand/brand-mark';
+import { Conversations } from '@/features/chat/conversations/components/conversations';
 
 interface ChatLayoutProps {
   conversationList: ReactNode;
@@ -35,23 +36,7 @@ export function ChatLayout({
         </header>
 
         <div className="grid min-h-0 lg:grid-cols-[21rem_minmax(0,1fr)]">
-          <aside className="chat-conversation-panel flex min-h-64 flex-col border-b border-slate-200 bg-slate-50/70 lg:min-h-0 lg:border-r lg:border-b-0">
-            <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
-              <p className="m-0 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-blue-700">
-                Inbox
-              </p>
-              <h1 className="mt-1 mb-0 font-display text-2xl font-semibold tracking-[-0.035em] text-slate-950">
-                Conversations
-              </h1>
-            </div>
-
-            <nav
-              className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"
-              aria-label="Conversation list"
-            >
-              {conversationList}
-            </nav>
-          </aside>
+          <Conversations>{conversationList}</Conversations>
 
           <section
             className="chat-active-panel min-h-[32rem] min-w-0 bg-white lg:min-h-0 lg:overflow-y-auto"
