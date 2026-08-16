@@ -171,7 +171,7 @@ input {
 }
 
 .about-carousel__description {
-  max-width: 34rem;
+  max-width: 40rem;
   margin: 0;
   color: #c3d3f1;
   font-size: clamp(0.95rem, 1.25vw, 1.1rem);
@@ -264,7 +264,7 @@ input {
 }
 
 .brand-copy h2 {
-  max-width: 12ch;
+  max-width: 18ch;
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.85rem, 3.25vw, 3.5rem);
@@ -459,10 +459,6 @@ input {
   .about-carousel__button {
     width: 2.5rem;
     height: 2.5rem;
-  }
-
-  .brand-copy h2 {
-    max-width: 15ch;
   }
 
   .brand-footnote {
