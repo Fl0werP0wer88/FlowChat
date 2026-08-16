@@ -37,6 +37,17 @@ export function AboutCarousel() {
     }));
   };
 
+  const select = (index: number) => {
+    setState((current) =>
+      index === current.index
+        ? current
+        : {
+            direction: index > current.index ? 'next' : 'previous',
+            index,
+          },
+    );
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
@@ -55,21 +66,7 @@ export function AboutCarousel() {
       aria-label="About FlowChat"
       aria-roledescription="carousel"
     >
-      <div className="about-carousel__viewport" aria-live="polite" aria-atomic="true">
-        <article
-          key={`${slide.id}-${state.direction}`}
-          className={`about-carousel__slide about-carousel__slide--${state.direction}`}
-          role="group"
-          aria-label={`${state.index + 1} of ${slides.length}`}
-          aria-roledescription="slide"
-        >
-          <p className="brand-kicker">{slide.eyebrow}</p>
-          <h2>{slide.title}</h2>
-          <p className="about-carousel__description">{slide.description}</p>
-        </article>
-      </div>
-
-      <div className="about-carousel__controls">
+      <div className="about-carousel__stage">
         <button
           className="about-carousel__button"
           type="button"
@@ -79,9 +76,21 @@ export function AboutCarousel() {
         >
           <ArrowLeft aria-hidden="true" />
         </button>
-        <span className="about-carousel__counter" aria-hidden="true">
-          {String(state.index + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
-        </span>
+
+        <div className="about-carousel__viewport" aria-live="polite" aria-atomic="true">
+          <article
+            key={`${slide.id}-${state.direction}`}
+            className={`about-carousel__slide about-carousel__slide--${state.direction}`}
+            role="group"
+            aria-label={`${state.index + 1} of ${slides.length}`}
+            aria-roledescription="slide"
+          >
+            <p className="brand-kicker">{slide.eyebrow}</p>
+            <h2>{slide.title}</h2>
+            <p className="about-carousel__description">{slide.description}</p>
+          </article>
+        </div>
+
         <button
           className="about-carousel__button"
           type="button"
@@ -92,6 +101,20 @@ export function AboutCarousel() {
           <ArrowRight aria-hidden="true" />
         </button>
       </div>
+
+      <nav className="about-carousel__indicators" aria-label="Choose an about section">
+        {slides.map((item, index) => (
+          <button
+            key={item.id}
+            className="about-carousel__indicator"
+            type="button"
+            aria-label={`Show ${item.eyebrow} section`}
+            aria-current={state.index === index ? 'true' : undefined}
+            onClick={() => select(index)}
+            onKeyDown={handleKeyDown}
+          />
+        ))}
+      </nav>
     </section>
   );
 }

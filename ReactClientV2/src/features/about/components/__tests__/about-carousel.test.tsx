@@ -36,4 +36,22 @@ describe('AboutCarousel', () => {
     await user.keyboard('{ArrowLeft}');
     expect(screen.getByText('About Me')).toBeInTheDocument();
   });
+
+  it('uses diamond indicators for direct section selection', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AboutCarousel />);
+    const aboutMeIndicator = screen.getByRole('button', { name: 'Show About Me section' });
+    const projectIndicator = screen.getByRole('button', {
+      name: 'Show About the Project section',
+    });
+
+    expect(aboutMeIndicator).toHaveAttribute('aria-current', 'true');
+    expect(projectIndicator).not.toHaveAttribute('aria-current');
+
+    await user.click(projectIndicator);
+
+    expect(projectIndicator).toHaveAttribute('aria-current', 'true');
+    expect(aboutMeIndicator).not.toHaveAttribute('aria-current');
+    expect(screen.getByText('About the Project')).toBeInTheDocument();
+  });
 });
