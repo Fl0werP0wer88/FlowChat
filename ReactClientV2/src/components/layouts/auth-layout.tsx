@@ -29,7 +29,7 @@ export function AuthLayout({ eyebrow, title, description, children }: AuthLayout
           <p className="brand-kicker">Conversation, without the noise.</p>
           <h2>Stay close to the people who move work forward.</h2>
         </div>
-        <p className="brand-footnote">Private by design. Clear by default.</p>
+        <p className="brand-footnote">Designed and developed by Piotr Kwiatkowski.</p>
       </section>
 
       <section className="auth-workspace" aria-labelledby="auth-title">
