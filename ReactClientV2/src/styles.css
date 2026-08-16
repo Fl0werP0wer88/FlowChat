@@ -141,7 +141,7 @@ input {
 
 .about-carousel {
   width: 100%;
-  max-width: 43rem;
+  max-width: none;
 }
 
 .about-carousel__stage {
