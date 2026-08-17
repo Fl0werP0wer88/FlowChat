@@ -10,8 +10,8 @@ test('protects chat, signs in, and signs out', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
 
   await expect(page).toHaveURL('/chat');
-  await expect(page.getByRole('heading', { name: 'Your chat workspace is next.' })).toBeVisible();
-  await expect(page.getByText('Signed in as alex.morgan')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose a conversation' })).toBeVisible();
+  await expect(page.getByText('alex@example.com')).toBeVisible();
 
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL('/login');
