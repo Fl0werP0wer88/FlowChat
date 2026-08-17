@@ -3,7 +3,6 @@ using System.Diagnostics;
 using FluentValidation;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Results;
-using FlowChat.Shared.Application.Contracts.Persistence;
 using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +10,7 @@ using DomainValidationException = FlowChat.Shared.Domain.Exceptions.ValidationEx
 
 namespace FlowChat.Shared.Application.Behaviors;
 
-public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>(
-    IEnumerable<IDbUpdateExceptionMapper>? dbUpdateExceptionMappers = null)
+public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull, IRequest<TResponse>
     where TResponse : notnull, IFlowChatResult, IFlowChatResultFactory<TResponse>
@@ -110,17 +108,6 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>(
         }
         catch (DbUpdateException exception)
         {
-            var mappedError = dbUpdateExceptionMappers?
-                .Select(mapper => mapper.Map(exception))
-                .FirstOrDefault(error => error is not null);
-            if (mappedError is not null)
-            {
-                Activity.Current?.SetStatus(ActivityStatusCode.Error, "db_update_mapped");
-                Activity.Current?.AddException(exception);
-                Activity.Current?.SetTag("error.type", "db_update_mapped");
-                return TResponse.Failure(mappedError);
-            }
-
             var dbException = exception.InnerException as DbException;
             var isTransient = dbException?.IsTransient == true;
 

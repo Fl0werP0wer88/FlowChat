@@ -1,5 +1,4 @@
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
@@ -70,8 +69,6 @@ internal static class CommonPersistenceServiceRegistration
         services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
-        services.AddScoped<IDbUpdateExceptionMapper, ConversationDbUpdateExceptionMapper>();
-
         return services;
     }
 }
