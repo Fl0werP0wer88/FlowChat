@@ -1,16 +1,22 @@
 import type { ReactNode } from 'react';
 
 import { BrandMark } from '@/components/brand/brand-mark';
-import { AboutCarousel } from '@/features/about/components/about-carousel';
 
 interface AuthLayoutProps {
   eyebrow: string;
   title: string;
   description: string;
+  brandContent: ReactNode;
   children: ReactNode;
 }
 
-export function AuthLayout({ eyebrow, title, description, children }: AuthLayoutProps) {
+export function AuthLayout({
+  eyebrow,
+  title,
+  description,
+  brandContent,
+  children,
+}: AuthLayoutProps) {
   return (
     <main className="auth-stage">
       <div className="signal-field" aria-hidden="true">
@@ -26,7 +32,7 @@ export function AuthLayout({ eyebrow, title, description, children }: AuthLayout
           <BrandMark />
           <span id="flowchat-brand">FlowChat</span>
         </header>
-        <AboutCarousel />
+        {brandContent}
         <p className="brand-footnote">Designed and developed by Piotr Kwiatkowski.</p>
       </section>
 
