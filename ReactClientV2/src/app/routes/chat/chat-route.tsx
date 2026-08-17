@@ -1,51 +1,17 @@
-import { LogOut, MessageCircleMore } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { MessageCircleMore } from 'lucide-react';
 
+import { AppHeader } from '@/components/layouts/app-header';
 import { AppLayout } from '@/components/layouts/app-layout';
-import { Button } from '@/components/ui/button';
-import { paths } from '@/config/paths';
-import { ChatHeader } from '@/features/chat/components/chat-header';
 import { Conversations } from '@/features/chat/conversations/components/conversations';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { logoutSession } from '@/lib/auth-session';
-import { useAuthStore } from '@/stores/auth-store';
 
 export function Component() {
   useDocumentTitle('Chat');
-  const navigate = useNavigate();
-  const user = useAuthStore((state) => state.session?.user);
-
-  const logout = async () => {
-    try {
-      await logoutSession();
-    } catch {
-      toast.error(
-        'The server could not clear the refresh cookie. You have been signed out locally.',
-      );
-    } finally {
-      navigate(paths.auth.login.getHref(), { replace: true });
-    }
-  };
 
   return (
     <AppLayout
       contentLabel="Active conversation"
-      header={
-        <ChatHeader
-          actions={
-            <>
-              <span className="hidden max-w-48 truncate text-sm font-semibold text-slate-500 sm:block">
-                {user?.email ?? 'FlowChat user'}
-              </span>
-              <Button type="button" variant="ghost" onClick={() => void logout()}>
-                <LogOut className="size-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Sign out</span>
-              </Button>
-            </>
-          }
-        />
-      }
+      header={<AppHeader />}
       sidebar={
         <Conversations>
           <div className="grid min-h-48 place-items-center px-4 py-8 text-center">
