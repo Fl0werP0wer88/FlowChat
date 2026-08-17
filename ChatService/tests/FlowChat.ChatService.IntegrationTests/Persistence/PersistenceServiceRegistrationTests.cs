@@ -1,5 +1,7 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Persistence;
+using FlowChat.ChatService.Persistence.Repositories;
+using FlowChat.Shared.Application.Contracts.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,10 +31,12 @@ public sealed class PersistenceServiceRegistrationTests
         var participantReadRepository = scope.ServiceProvider.GetService<IConversationParticipantReadRepository>();
         var conversationWriteRepository = scope.ServiceProvider.GetService<IConversationV2WriteRepository>();
         var sequenceRepository = scope.ServiceProvider.GetService<IConversationMessageSequenceRepositoryV2>();
+        var dbUpdateExceptionMapper = scope.ServiceProvider.GetService<IDbUpdateExceptionMapper>();
 
         duetReadRepository.Should().NotBeNull();
         conversationWriteRepository.Should().NotBeNull();
         participantReadRepository.Should().NotBeNull();
         sequenceRepository.Should().NotBeNull();
+        dbUpdateExceptionMapper.Should().BeOfType<ConversationDbUpdateExceptionMapper>();
     }
 }

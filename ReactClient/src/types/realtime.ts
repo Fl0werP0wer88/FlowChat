@@ -20,7 +20,6 @@ export interface GroupConversationChangedEvent {
   conversationId: string;
   type: number;
   name: string | null;
-  createdByUserId: string;
 }
 
 export interface ConversationParticipantsAddedEvent {

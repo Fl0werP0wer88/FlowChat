@@ -43,8 +43,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
         {
             ConversationId = notification.ConversationId,
             Type = notification.Type,
-            Name = notification.Name,
-            CreatedByUserId = notification.CreatedByUserId
+            Name = notification.Name
         });
 
     public Task ConversationParticipantsAddedAsync(ConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>

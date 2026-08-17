@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
+using FlowChat.ChatService.Domain.Entities.Conversation.ValueObjects;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
@@ -11,37 +12,37 @@ public sealed class ConversationV2Tests
     [Fact]
     public void CreateGroup_WhenValid_NormalizesMetadataAndEmitsCompleteInitialComposition()
     {
-        var createdByUserId = Id<UserProfileMarker>.New();
+        var requestingUserId = Id<UserProfileMarker>.New();
         var participantUserId = Id<UserProfileMarker>.New();
 
         var conversation = ConversationV2.CreateGroup(
             Id<ConversationV2>.New(),
-            createdByUserId,
+            requestingUserId,
             [participantUserId, participantUserId],
             "  Group name  ");
 
         conversation.ConversationType.Should().Be(ConversationType.Group);
         conversation.Name.Should().Be("Group name");
-        conversation.CreatedByUserId.Should().Be(createdByUserId);
+        conversation.DuetParticipants.Should().BeNull();
         var createdEvent = conversation.DomainEvents
             .OfType<ConversationCreatedDomainEventV2>()
             .Should()
             .ContainSingle()
             .Subject;
         createdEvent.ParticipantUserIds.Should().BeEquivalentTo(
-            [createdByUserId, participantUserId]);
+            [requestingUserId, participantUserId]);
         createdEvent.AggregateType.Should().Be("conversation-v2");
     }
 
     [Fact]
     public void CreateGroup_WhenCreatorWouldBeOnlyParticipant_Throws()
     {
-        var createdByUserId = Id<UserProfileMarker>.New();
+        var requestingUserId = Id<UserProfileMarker>.New();
 
         var act = () => ConversationV2.CreateGroup(
             Id<ConversationV2>.New(),
-            createdByUserId,
-            [createdByUserId],
+            requestingUserId,
+            [requestingUserId],
             "Group name");
 
         act.Should().Throw<InvalidOperationException>()
@@ -64,21 +65,23 @@ public sealed class ConversationV2Tests
     [Fact]
     public void CreateDuet_WhenUsersAreDistinct_EmitsCreatedEventWithTwoParticipants()
     {
-        var createdByUserId = Id<UserProfileMarker>.New();
+        var requestingUserId = Id<UserProfileMarker>.New();
         var partnerUserId = Id<UserProfileMarker>.New();
 
         var conversation = ConversationV2.CreateDuet(
-            createdByUserId,
+            requestingUserId,
             partnerUserId);
 
         conversation.ConversationType.Should().Be(ConversationType.Duet);
         conversation.Name.Should().BeNull();
+        conversation.DuetParticipants.Should().Be(
+            DuetParticipantPair.Create(requestingUserId, partnerUserId));
         conversation.DomainEvents
             .OfType<ConversationCreatedDomainEventV2>()
             .Should()
             .ContainSingle()
             .Which.ParticipantUserIds.Should()
-            .BeEquivalentTo([createdByUserId, partnerUserId]);
+            .BeEquivalentTo([requestingUserId, partnerUserId]);
     }
 
     [Fact]
@@ -88,8 +91,8 @@ public sealed class ConversationV2Tests
 
         var act = () => ConversationV2.CreateDuet(userId, userId);
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("One-on-one conversations must have exactly two distinct participants.");
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("One-on-one conversations require two distinct participants.*");
     }
 
     [Fact]
@@ -99,8 +102,21 @@ public sealed class ConversationV2Tests
             Id<ConversationV2>.New(),
             ConversationType.Group,
             "Group name",
-            Id<UserProfileMarker>.New());
+            duetParticipants: null);
 
         conversation.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Restore_WhenDuetHasNoParticipants_Throws()
+    {
+        var act = () => ConversationV2.Restore(
+            Id<ConversationV2>.New(),
+            ConversationType.Duet,
+            name: null,
+            duetParticipants: null);
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("One-on-one conversations must define their participants.*");
     }
 }

@@ -69,7 +69,6 @@ public sealed class SignalRRealtimeClientDispatcherTests
                 conversationId,
                 2,
                 "Dev Team",
-                Guid.NewGuid(),
                 [participantUserId]),
             CancellationToken.None);
 

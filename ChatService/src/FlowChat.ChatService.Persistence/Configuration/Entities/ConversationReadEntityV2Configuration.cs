@@ -15,6 +15,8 @@ public sealed class ConversationReadEntityV2Configuration
         builder.Property(x => x.Id);
         builder.Property(x => x.ConversationType);
         builder.Property(x => x.Name);
+        builder.Property(x => x.DuetFirstUserId);
+        builder.Property(x => x.DuetSecondUserId);
         builder.Property(x => x.Version);
         builder.Property(x => x.DeletedAt);
     }

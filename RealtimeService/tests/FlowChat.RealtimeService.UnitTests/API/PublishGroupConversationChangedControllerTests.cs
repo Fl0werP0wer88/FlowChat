@@ -33,8 +33,7 @@ public sealed class PublishGroupConversationChangedControllerTests
             {
                 ConversationId = _fixture.Create<Guid>(),
                 Type = 2,
-                Name = "Dev Team",
-                CreatedByUserId = _fixture.Create<Guid>()
+                Name = "Dev Team"
             },
             CancellationToken.None);
 
@@ -52,8 +51,7 @@ public sealed class PublishGroupConversationChangedControllerTests
             new PublishGroupConversationChangedRequest
             {
                 ConversationId = _fixture.Create<Guid>(),
-                Type = 2,
-                CreatedByUserId = _fixture.Create<Guid>()
+                Type = 2
             },
             CancellationToken.None);
 

@@ -23,10 +23,6 @@ public sealed class RouteConversationProjectionV2CommandValidator
             .Must(type => type is DuetConversationType or GroupConversationType)
             .WithMessage("ConversationType must be Duet or Group.");
 
-        RuleFor(command => command.CreatedByUserId)
-            .NotEmpty()
-            .WithMessage("CreatedByUserId is required.");
-
         RuleFor(command => command.Operation)
             .IsInEnum()
             .WithMessage("Operation is invalid.");

@@ -42,7 +42,6 @@ public sealed class RealtimeInstanceInternalApiClientTests
             conversationId,
             2,
             "Dev Team",
-            Guid.NewGuid(),
             [Guid.NewGuid()]);
         var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
         var client = new RealtimeInstanceInternalApiClient(new HttpClient(handler));

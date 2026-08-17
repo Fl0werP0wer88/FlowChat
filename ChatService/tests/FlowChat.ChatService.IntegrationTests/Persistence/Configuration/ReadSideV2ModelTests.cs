@@ -12,7 +12,6 @@ public sealed class ReadSideV2ModelTests
     [InlineData(typeof(ConversationReadEntityV2), "ConversationsV2")]
     [InlineData(typeof(ConversationMembershipReadEntityV2), "ConversationMembershipsV2")]
     [InlineData(typeof(ConversationParticipantReadEntityV2), "ConversationParticipantsV2")]
-    [InlineData(typeof(DuetConversationReadEntityV2), "DuetConversationsV2")]
     [InlineData(typeof(ChatMessageReadEntityV2), "ChatMessagesV2")]
     [InlineData(typeof(ConversationMessageSequenceReadEntityV2), "ConversationMessageSequencesV2")]
     public void Model_ReadEntityV2_MapsToExpectedV2View(Type entityType, string expectedView)
@@ -29,7 +28,6 @@ public sealed class ReadSideV2ModelTests
     [InlineData(typeof(ConversationReadEntityV2))]
     [InlineData(typeof(ConversationMembershipReadEntityV2))]
     [InlineData(typeof(ConversationParticipantReadEntityV2))]
-    [InlineData(typeof(DuetConversationReadEntityV2))]
     [InlineData(typeof(ChatMessageReadEntityV2))]
     [InlineData(typeof(ConversationMessageSequenceReadEntityV2))]
     public void ReadEntityV2_UsesOnlyPersistenceReadTypes(Type entityType)

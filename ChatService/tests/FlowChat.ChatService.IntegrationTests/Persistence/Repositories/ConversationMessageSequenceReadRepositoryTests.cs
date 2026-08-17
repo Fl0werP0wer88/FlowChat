@@ -63,12 +63,11 @@ public sealed class ConversationMessageSequenceReadRepositoryTests : IAsyncLifet
         long lastAssignedSequenceNum)
     {
         var conversationId = Id<ConversationV2>.New();
-        var creatorUserId = Id<UserProfile>.New();
         var conversation = ConversationV2.Restore(
             conversationId,
             ConversationType.Group,
             "Sequence read test",
-            creatorUserId);
+            duetParticipants: null);
         conversation.SetCreated("test");
         conversation.SetUpdated("test");
 

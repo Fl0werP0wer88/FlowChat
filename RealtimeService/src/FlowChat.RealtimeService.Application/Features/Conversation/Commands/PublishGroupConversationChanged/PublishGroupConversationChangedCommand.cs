@@ -6,5 +6,4 @@ namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.Pu
 public sealed record PublishGroupConversationChangedCommand(
     Guid ConversationId,
     int Type,
-    string? Name,
-    Guid CreatedByUserId) : ICommand<Unit>;
+    string? Name) : ICommand<Unit>;

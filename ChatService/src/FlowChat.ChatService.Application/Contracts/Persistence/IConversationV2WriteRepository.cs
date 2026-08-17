@@ -7,11 +7,6 @@ namespace FlowChat.ChatService.Application.Contracts.Persistence;
 
 public interface IConversationV2WriteRepository : IWriteRepository<ConversationV2>
 {
-    Task<ConversationV2> AddAsync(
-        ConversationV2 conversation,
-        IReadOnlyCollection<Id<UserProfileMarker>> initialParticipantUserIds,
-        CancellationToken cancellationToken = default);
-
     Task<ConversationV2?> GetDuetByUserIdsAsync(
         Id<UserProfileMarker> firstUserId,
         Id<UserProfileMarker> secondUserId,

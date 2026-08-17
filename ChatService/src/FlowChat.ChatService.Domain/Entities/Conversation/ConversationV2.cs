@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
+using FlowChat.ChatService.Domain.Entities.Conversation.ValueObjects;
 using FlowChat.Shared.Domain;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
@@ -6,39 +7,41 @@ namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
 public sealed class ConversationV2 : AggregateRootBase<ConversationV2>
 {
-    private const int DuetParticipantsCount = 2;
     private const int MinimumGroupParticipantsCount = 2;
 
     public ConversationType ConversationType { get; private set; }
     public string? Name { get; private set; }
-    public Id<UserProfileMarker> CreatedByUserId { get; private set; }
+    public DuetParticipantPair? DuetParticipants { get; private set; }
+
+    private ConversationV2(Id<ConversationV2> id) : base(id)
+    {
+    }
 
     private ConversationV2(
         Id<ConversationV2> id,
         ConversationType conversationType,
         string? name,
-        Id<UserProfileMarker> createdByUserId) : base(id)
+        DuetParticipantPair? duetParticipants) : base(id)
     {
-        ArgumentNullException.ThrowIfNull(createdByUserId);
-
         ValidateConversationType(conversationType);
         ValidateName(conversationType, name);
+        ValidateDuetParticipants(conversationType, duetParticipants);
 
         ConversationType = conversationType;
         Name = NormalizeName(name);
-        CreatedByUserId = createdByUserId;
+        DuetParticipants = duetParticipants;
     }
 
     public static ConversationV2 CreateGroup(
         Id<ConversationV2> id,
-        Id<UserProfileMarker> createdByUserId,
+        Id<UserProfileMarker> requestingUserId,
         IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string name)
     {
         ArgumentNullException.ThrowIfNull(participantUserIds);
 
         var normalizedParticipantUserIds = NormalizeParticipantUserIds(
-            participantUserIds.Prepend(createdByUserId));
+            participantUserIds.Prepend(requestingUserId));
 
         if (normalizedParticipantUserIds.Count < MinimumGroupParticipantsCount)
         {
@@ -50,41 +53,39 @@ public sealed class ConversationV2 : AggregateRootBase<ConversationV2>
             id,
             ConversationType.Group,
             name,
-            createdByUserId,
+            duetParticipants: null,
             normalizedParticipantUserIds);
     }
 
     public static ConversationV2 CreateDuet(
         Id<ConversationV2> id,
-        Id<UserProfileMarker> createdByUserId,
+        Id<UserProfileMarker> requestingUserId,
         Id<UserProfileMarker> partnerUserId)
     {
         ArgumentNullException.ThrowIfNull(partnerUserId);
 
-        var normalizedParticipantUserIds = NormalizeParticipantUserIds(
-            [createdByUserId, partnerUserId]);
-
-        if (normalizedParticipantUserIds.Count != DuetParticipantsCount)
+        var duetParticipants = DuetParticipantPair.Create(requestingUserId, partnerUserId);
+        var normalizedParticipantUserIds = new[]
         {
-            throw new InvalidOperationException(
-                "One-on-one conversations must have exactly two distinct participants.");
-        }
+            duetParticipants.FirstUserId,
+            duetParticipants.SecondUserId
+        };
 
         return Create(
             id,
             ConversationType.Duet,
             name: null,
-            createdByUserId,
+            duetParticipants,
             normalizedParticipantUserIds);
     }
 
     public static ConversationV2 CreateDuet(
-        Id<UserProfileMarker> createdByUserId,
+        Id<UserProfileMarker> requestingUserId,
         Id<UserProfileMarker> partnerUserId)
     {
         return CreateDuet(
             Id<ConversationV2>.New(),
-            createdByUserId,
+            requestingUserId,
             partnerUserId);
     }
 
@@ -92,34 +93,33 @@ public sealed class ConversationV2 : AggregateRootBase<ConversationV2>
         Id<ConversationV2> id,
         ConversationType conversationType,
         string? name,
-        Id<UserProfileMarker> createdByUserId)
+        DuetParticipantPair? duetParticipants)
     {
         return new ConversationV2(
             id,
             conversationType,
             name,
-            createdByUserId);
+            duetParticipants);
     }
 
     private static ConversationV2 Create(
         Id<ConversationV2> id,
         ConversationType conversationType,
         string? name,
-        Id<UserProfileMarker> createdByUserId,
+        DuetParticipantPair? duetParticipants,
         IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds)
     {
         var conversation = new ConversationV2(
             id,
             conversationType,
             name,
-            createdByUserId);
+            duetParticipants);
 
         conversation.AddDomainEvent(
             new ConversationCreatedDomainEventV2(
                 conversation.Id,
                 conversation.ConversationType,
                 conversation.Name,
-                conversation.CreatedByUserId,
                 participantUserIds));
 
         return conversation;
@@ -160,6 +160,25 @@ public sealed class ConversationV2 : AggregateRootBase<ConversationV2>
             throw new ArgumentException(
                 "One-on-one conversations cannot have a name.",
                 nameof(name));
+        }
+    }
+
+    private static void ValidateDuetParticipants(
+        ConversationType conversationType,
+        DuetParticipantPair? duetParticipants)
+    {
+        if (conversationType == ConversationType.Duet && duetParticipants is null)
+        {
+            throw new ArgumentException(
+                "One-on-one conversations must define their participants.",
+                nameof(duetParticipants));
+        }
+
+        if (conversationType == ConversationType.Group && duetParticipants is not null)
+        {
+            throw new ArgumentException(
+                "Group conversations cannot define duet participants.",
+                nameof(duetParticipants));
         }
     }
 

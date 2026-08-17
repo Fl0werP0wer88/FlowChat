@@ -17,10 +17,8 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
         var rawRows = await (
-            from duet in Active(dbContext.DuetConversationReadsV2)
-            where duet.FirstUserId == first && duet.SecondUserId == second
-            join conversation in Active(dbContext.ConversationReadsV2)
-                on duet.ConversationId equals conversation.Id
+            from conversation in Active(dbContext.ConversationReadsV2)
+            where conversation.DuetFirstUserId == first && conversation.DuetSecondUserId == second
             join participant in Active(dbContext.ConversationParticipantReadsV2)
                 on conversation.Id equals participant.ConversationId
             join profile in Active(dbContext.UserProfileProjections)

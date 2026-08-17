@@ -14,8 +14,5 @@ public sealed class PublishGroupConversationChangedCommandValidator : AbstractVa
             .Equal(2)
             .WithMessage("Type must be Group.");
 
-        RuleFor(command => command.CreatedByUserId)
-            .NotEmpty()
-            .WithMessage("CreatedByUserId is required.");
     }
 }

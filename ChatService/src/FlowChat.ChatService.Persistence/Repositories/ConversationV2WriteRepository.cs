@@ -19,42 +19,16 @@ public sealed class ConversationV2WriteRepository(AppDbContext dbContext)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
     }
 
-    public async Task<ConversationV2> AddAsync(
+    public override async Task<ConversationV2> AddAsync(
         ConversationV2 conversation,
-        IReadOnlyCollection<Id<UserProfileMarker>> initialParticipantUserIds,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(conversation);
-        ArgumentNullException.ThrowIfNull(initialParticipantUserIds);
 
         await dbContext.ConversationsV2.AddAsync(conversation, cancellationToken);
         await dbContext.ConversationMessageSequencesV2.AddAsync(
             new ConversationMessageSequenceEntityV2 { ConversationId = conversation.Id },
             cancellationToken);
-
-        if (conversation.ConversationType == ConversationType.Duet)
-        {
-            if (initialParticipantUserIds.Count != 2)
-            {
-                throw new ArgumentException(
-                    "A duet lookup requires exactly two participants.",
-                    nameof(initialParticipantUserIds));
-            }
-
-            var normalized = initialParticipantUserIds
-                .Select(x => x.Value)
-                .Order()
-                .ToArray();
-
-            await dbContext.DuetConversationsV2.AddAsync(
-                new DuetConversationLookupEntityV2
-                {
-                    ConversationId = conversation.Id,
-                    FirstUserId = normalized[0],
-                    SecondUserId = normalized[1]
-                },
-                cancellationToken);
-        }
 
         return conversation;
     }
@@ -64,19 +38,17 @@ public sealed class ConversationV2WriteRepository(AppDbContext dbContext)
         Id<UserProfileMarker> secondUserId,
         CancellationToken cancellationToken = default)
     {
-        var normalized = new[] { firstUserId.Value, secondUserId.Value }
-            .Order()
-            .ToArray();
+        var (first, second) = DuetConversationUserPair.Normalize(firstUserId.Value, secondUserId.Value);
+        var normalizedFirstUserId = Id<UserProfileMarker>.FromGuid(first);
+        var normalizedSecondUserId = Id<UserProfileMarker>.FromGuid(second);
 
-        return await (
-                from duet in dbContext.DuetConversationsV2
-                join conversation in dbContext.ConversationsV2
-                    on duet.ConversationId equals conversation.Id
-                where duet.FirstUserId == normalized[0] &&
-                      duet.SecondUserId == normalized[1] &&
-                      duet.DeletedAt == null &&
-                      conversation.DeletedAt == null
-                select conversation)
-            .SingleOrDefaultAsync(cancellationToken);
+        return await dbContext.ConversationsV2
+            .SingleOrDefaultAsync(
+                conversation =>
+                    conversation.DuetParticipants != null &&
+                    conversation.DuetParticipants.FirstUserId == normalizedFirstUserId &&
+                    conversation.DuetParticipants.SecondUserId == normalizedSecondUserId &&
+                    conversation.DeletedAt == null,
+                cancellationToken);
     }
 }

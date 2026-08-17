@@ -18,7 +18,6 @@ public sealed class PublishGroupConversationChangedCommandHandler(IRealtimeClien
             request.ConversationId,
             request.Type,
             request.Name,
-            request.CreatedByUserId,
             []);
 
         await _realtimeClientDispatcher.GroupConversationChangedAsync(notification, cancellationToken);

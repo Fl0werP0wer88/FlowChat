@@ -160,7 +160,6 @@ public sealed class WorkerRealtimeEventRouterTests
                 _fixture.Create<Guid>(),
                 2,
                 "Dev Team",
-                _fixture.Create<Guid>(),
                 [userId]),
             CancellationToken.None);
 

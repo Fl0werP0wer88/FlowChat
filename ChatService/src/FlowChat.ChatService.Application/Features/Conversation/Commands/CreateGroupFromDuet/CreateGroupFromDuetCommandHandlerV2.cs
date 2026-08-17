@@ -75,7 +75,7 @@ public sealed class CreateGroupFromDuetCommandHandlerV2
             expectedIds,
             $"{firstName}/{secondName}");
 
-        await _conversationRepository.AddAsync(_conversation, expectedIds, cancellationToken);
+        await _conversationRepository.AddAsync(_conversation, cancellationToken);
 
         var profiles = await _profileRepository.GetByIdsAsync(
             expectedIds.Select(x => x.Value).ToList(),

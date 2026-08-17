@@ -76,7 +76,7 @@ public sealed class CreateGroupConversationControllerTests
         response.Name.Should().Be("Dev Team");
         response.Participants.Should().HaveCount(2);
         capturedCommand!.ConversationId.Should().Be(conversationId);
-        capturedCommand.CreatedByUserId.Should().Be(creatorId);
+        capturedCommand.RequestingUserId.Should().Be(creatorId);
         capturedCommand.Name.Should().Be("Dev Team");
         capturedCommand.ParticipantUserIds.Should().BeEquivalentTo(new[] { creatorId, memberId });
     }

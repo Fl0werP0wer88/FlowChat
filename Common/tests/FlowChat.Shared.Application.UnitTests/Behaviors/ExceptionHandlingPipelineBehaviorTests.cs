@@ -4,6 +4,7 @@ using FluentAssertions;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.Behaviors;
+using FlowChat.Shared.Application.Contracts.Persistence;
 using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,28 @@ namespace FlowChat.Shared.Application.UnitTests.Behaviors;
 
 public sealed class ExceptionHandlingPipelineBehaviorTests
 {
+    [Fact]
+    public async Task Handle_WhenDbUpdateExceptionMapperRecognizesException_ReturnsMappedFailure()
+    {
+        var mappedError = DomainError.Conflict("Duet conversation already exists.");
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>(
+            [new TestDbUpdateExceptionMapper(mappedError)]);
+        var exception = new DbUpdateException("Duplicate duet conversation.");
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeSameAs(mappedError);
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("db_update_mapped");
+        activity.GetTagItem("error.type").Should().Be("db_update_mapped");
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
     [Fact]
     public async Task Handle_WhenDbUpdateConcurrencyExceptionIsThrown_ReturnsUnexpectedFailureAndMarksActivity()
     {
@@ -201,6 +224,11 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
     private sealed record TestRequest : IRequest<FlowChatResult<Guid>>;
 
     private sealed record NonGenericTestRequest : IRequest<FlowChatResult>;
+
+    private sealed class TestDbUpdateExceptionMapper(IDomainError mappedError) : IDbUpdateExceptionMapper
+    {
+        public IDomainError? Map(DbUpdateException exception) => mappedError;
+    }
 
     private sealed class TestDbException(bool isTransient, string? sqlState = null) : DbException("Database exception")
     {

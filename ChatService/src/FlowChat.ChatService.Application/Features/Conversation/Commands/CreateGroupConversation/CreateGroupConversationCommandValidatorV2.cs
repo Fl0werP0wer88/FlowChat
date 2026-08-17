@@ -8,7 +8,7 @@ public sealed class CreateGroupConversationCommandValidatorV2
     public CreateGroupConversationCommandValidatorV2()
     {
         RuleFor(x => x.ConversationId).NotEmpty();
-        RuleFor(x => x.CreatedByUserId).NotEmpty();
+        RuleFor(x => x.RequestingUserId).NotEmpty();
         RuleFor(x => x.ParticipantUserIds).NotNull();
         RuleForEach(x => x.ParticipantUserIds).NotEmpty();
         RuleFor(x => x.Name).NotEmpty();
