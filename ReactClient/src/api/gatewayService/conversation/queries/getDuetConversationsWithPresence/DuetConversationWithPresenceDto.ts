@@ -1,7 +1,7 @@
 import type { Contact } from "../../../../../types/contacts";
 
-export interface ContactDto {
-  contactUserId?: string;
+export interface DuetConversationWithPresenceDto {
+  partnerUserId?: string;
   displayName?: string;
   email?: string | null;
   conversationId?: string;

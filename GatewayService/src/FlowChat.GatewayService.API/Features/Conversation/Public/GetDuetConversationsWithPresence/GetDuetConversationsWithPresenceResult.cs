@@ -1,13 +1,12 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Domain;
 
-namespace FlowChat.GatewayService.Api.Features.Contact.Public.GetContactsWithConversations;
+namespace FlowChat.GatewayService.Api.Features.Conversation.Public.GetDuetConversationsWithPresence;
 
-public sealed record GetContactsWithConversationsResponse(
-    IReadOnlyCollection<ContactWithConversationResponse> Contacts) : IServiceOutput;
+public sealed record GetDuetConversationsWithPresenceResult(
+    IReadOnlyCollection<DuetConversationWithPresenceResult> Conversations);
 
-public sealed record ContactWithConversationResponse(
-    Guid ContactUserId,
+public sealed record DuetConversationWithPresenceResult(
+    Guid PartnerUserId,
     string? DisplayName,
     string? AvatarUrl,
     string? Email,

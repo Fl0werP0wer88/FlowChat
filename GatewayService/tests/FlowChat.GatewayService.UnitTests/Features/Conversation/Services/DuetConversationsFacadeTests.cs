@@ -1,20 +1,20 @@
 using FluentAssertions;
 using FlowChat.Core.Domain;
-using FlowChat.GatewayService.Api.Features.Contact.Services;
+using FlowChat.GatewayService.Api.Features.Conversation.Services;
 using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 using FlowChat.GatewayService.Infrastructure.Clients.PresenceService;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
-namespace FlowChat.GatewayService.UnitTests.Features.Contact.Services;
+namespace FlowChat.GatewayService.UnitTests.Features.Conversation.Services;
 
-public sealed class ContactsFacadeTests
+public sealed class DuetConversationsFacadeTests
 {
     private readonly Mock<IChatServiceClient> _chatClient = new();
     private readonly Mock<IPresenceServiceClient> _presenceClient = new();
 
     [Fact]
-    public async Task GetContactsWithConversationsAsync_ContactAndPresence_MapsAggregateFields()
+    public async Task GetDuetConversationsWithPresenceAsync_ConversationAndPresence_MapsAggregateFields()
     {
         var partnerId = Guid.NewGuid();
         var changedAt = DateTimeOffset.UtcNow;
@@ -30,17 +30,18 @@ public sealed class ContactsFacadeTests
                 [partnerId] = new(partnerId, PresenceStatus.Active, changedAt)
             });
 
-        var result = await Facade().GetContactsWithConversationsAsync(CancellationToken.None);
+        var result = await Facade().GetDuetConversationsWithPresenceAsync(CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        var contact = result.Value.Contacts.Should().ContainSingle().Which;
-        contact.UnreadCount.Should().Be(5);
-        contact.Status.Should().Be(PresenceStatus.Active);
-        contact.PresenceChangedAtUtc.Should().Be(changedAt);
+        var conversation = result.Value.Conversations.Should().ContainSingle().Which;
+        conversation.PartnerUserId.Should().Be(partnerId);
+        conversation.UnreadCount.Should().Be(5);
+        conversation.Status.Should().Be(PresenceStatus.Active);
+        conversation.PresenceChangedAtUtc.Should().Be(changedAt);
     }
 
     [Fact]
-    public async Task GetContactsWithConversationsAsync_PresenceFailure_UsesInvisibleFallback()
+    public async Task GetDuetConversationsWithPresenceAsync_PresenceFailure_UsesInvisibleFallback()
     {
         var partnerId = Guid.NewGuid();
         _chatClient
@@ -52,20 +53,20 @@ public sealed class ContactsFacadeTests
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("unavailable"));
 
-        var result = await Facade().GetContactsWithConversationsAsync(CancellationToken.None);
+        var result = await Facade().GetDuetConversationsWithPresenceAsync(CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        var contact = result.Value.Contacts.Should().ContainSingle().Which;
-        contact.UnreadCount.Should().Be(0);
-        contact.Status.Should().Be(PresenceStatus.Invisible);
-        contact.PresenceChangedAtUtc.Should().Be(DateTimeOffset.MinValue);
+        var conversation = result.Value.Conversations.Should().ContainSingle().Which;
+        conversation.UnreadCount.Should().Be(0);
+        conversation.Status.Should().Be(PresenceStatus.Invisible);
+        conversation.PresenceChangedAtUtc.Should().Be(DateTimeOffset.MinValue);
     }
 
-    private ContactsFacade Facade() =>
+    private DuetConversationsFacade Facade() =>
         new(
             _chatClient.Object,
             _presenceClient.Object,
-            NullLogger<ContactsFacade>.Instance);
+            NullLogger<DuetConversationsFacade>.Instance);
 
     private static DuetConversationListItemClientDto DuetConversation(
         Guid partnerId,

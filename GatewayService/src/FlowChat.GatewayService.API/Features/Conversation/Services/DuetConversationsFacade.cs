@@ -1,18 +1,18 @@
 using FlowChat.Core.Domain;
 using FlowChat.Core.Results;
-using FlowChat.GatewayService.Api.Features.Contact.Interfaces;
-using FlowChat.GatewayService.Api.Features.Contact.Public.GetContactsWithConversations;
+using FlowChat.GatewayService.Api.Features.Conversation.Interfaces;
+using FlowChat.GatewayService.Api.Features.Conversation.Public.GetDuetConversationsWithPresence;
 using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 using FlowChat.GatewayService.Infrastructure.Clients.PresenceService;
 
-namespace FlowChat.GatewayService.Api.Features.Contact.Services;
+namespace FlowChat.GatewayService.Api.Features.Conversation.Services;
 
-public sealed class ContactsFacade(
+public sealed class DuetConversationsFacade(
     IChatServiceClient chatClient,
     IPresenceServiceClient presenceClient,
-    ILogger<ContactsFacade> logger) : IContactsFacade
+    ILogger<DuetConversationsFacade> logger) : IDuetConversationsFacade
 {
-    public async Task<FlowChatResult<GetContactsWithConversationsResult>> GetContactsWithConversationsAsync(
+    public async Task<FlowChatResult<GetDuetConversationsWithPresenceResult>> GetDuetConversationsWithPresenceAsync(
         CancellationToken cancellationToken)
     {
         var conversations = await chatClient.GetDuetConversationsAsync(cancellationToken);
@@ -21,7 +21,7 @@ public sealed class ContactsFacade(
             partnerUserIds,
             cancellationToken);
         var items = conversations
-            .Select(conversation => new ContactWithConversationResult(
+            .Select(conversation => new DuetConversationWithPresenceResult(
                 conversation.PartnerUserId,
                 conversation.DisplayName,
                 conversation.AvatarUrl,
@@ -42,8 +42,8 @@ public sealed class ContactsFacade(
                     : DateTimeOffset.MinValue))
             .ToList();
 
-        return FlowChatResult<GetContactsWithConversationsResult>.Success(
-            new GetContactsWithConversationsResult(items));
+        return FlowChatResult<GetDuetConversationsWithPresenceResult>.Success(
+            new GetDuetConversationsWithPresenceResult(items));
     }
 
     private async Task<IReadOnlyDictionary<Guid, ContactPresenceStatusClientDto>>
@@ -70,7 +70,7 @@ public sealed class ContactsFacade(
         {
             logger.LogWarning(
                 exception,
-                "Failed to load contact presence statuses for aggregate contacts response.");
+                "Failed to load presence statuses for duet conversations response.");
             return new Dictionary<Guid, ContactPresenceStatusClientDto>();
         }
     }

@@ -1,11 +1,11 @@
 import { getJson, putJson } from "../httpClient";
 import {
-  mapContact,
+  mapDuetConversationWithPresenceToContact,
   mapGroupMessage,
   mapGroupParticipant,
   mapDuetMessage,
   mapDuetParticipant,
-  resolveContacts,
+  resolveDuetConversationsWithPresence,
 } from "./mappers";
 import type {
   OpenDuetConversationResult,
@@ -14,16 +14,18 @@ import type {
 import type { Contact } from "../../types/contacts";
 import type { OpenDuetConversationRequest } from "./conversation/commands/openDuetConversation/OpenDuetConversationRequest";
 import type { OpenGroupConversationRequest } from "./conversation/commands/openGroupConversation/OpenGroupConversationRequest";
-import type { GetContactsResponseDto } from "./contact/queries/getContacts/GetContactsResponseDto";
+import type { GetDuetConversationsWithPresenceResponseDto } from "./conversation/queries/getDuetConversationsWithPresence/GetDuetConversationsWithPresenceResponseDto";
 import type { OpenDuetConversationResponseDto } from "./conversation/queries/openDuetConversation/OpenDuetConversationResponseDto";
 import type { OpenGroupConversationResponseDto } from "./conversation/queries/openGroupConversation/OpenGroupConversationResponseDto";
 
 export async function fetchContacts(accessToken: string): Promise<Contact[]> {
-  const response = await getJson<GetContactsResponseDto>("/api/aggregate/contacts", {
-    accessToken,
-  });
+  const response = await getJson<GetDuetConversationsWithPresenceResponseDto>(
+    "/api/aggregate/conversations/duets",
+    { accessToken },
+  );
 
-  return resolveContacts(response).map(mapContact);
+  return resolveDuetConversationsWithPresence(response)
+    .map(mapDuetConversationWithPresenceToContact);
 }
 
 export async function openDuetConversation(
