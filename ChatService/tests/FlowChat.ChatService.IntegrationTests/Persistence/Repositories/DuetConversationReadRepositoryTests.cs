@@ -183,6 +183,29 @@ public sealed class DuetConversationReadRepositoryTests
     }
 
     [Fact]
+    public async Task GetContactsForUserAsync_WhenDuetLookupIsMissing_ReturnsContactFromConversationType()
+    {
+        await using var connection = await CreateOpenConnectionAsync();
+        var requestingUserId = Guid.NewGuid();
+        var partnerUserId = Guid.NewGuid();
+        var duet = CreateDuet(requestingUserId, partnerUserId);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.ConversationsV2.Add(duet.Conversation);
+            seedContext.ConversationParticipantsV2.AddRange(duet.Participants);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var result = await new DuetConversationReadRepository(readContext)
+            .GetContactsForUserAsync(requestingUserId);
+
+        result.Should().ContainSingle()
+            .Which.PartnerUserId.Should().Be(partnerUserId);
+    }
+
+    [Fact]
     public async Task GetByUserIdsAsync_WhenPartnerParticipantDeleted_ReturnsNull()
     {
         await using var connection = await CreateOpenConnectionAsync();

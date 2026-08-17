@@ -7,6 +7,8 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class DuetConversationReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IDuetConversationReadRepository
 {
+    private const int DuetConversationType = 1;
+
     public async Task<DuetConversationDetailDto?> GetByUserIdsAsync(
         Guid requestingUserId,
         Guid partnerUserId,
@@ -87,12 +89,11 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
             });
 
         var rawRows = await (
-            from duet in Active(dbContext.DuetConversationReadsV2)
-            join conversation in Active(dbContext.ConversationReadsV2)
-                on duet.ConversationId equals conversation.Id
+            from conversation in Active(dbContext.ConversationReadsV2)
             join myParticipant in Active(dbContext.ConversationParticipantReadsV2)
                 on conversation.Id equals myParticipant.ConversationId
-            where myParticipant.UserId == requestingUserId
+            where conversation.ConversationType == DuetConversationType
+                  && myParticipant.UserId == requestingUserId
                   && !myParticipant.IsHidden
                   && myParticipant.DuetPartnerUserId != null
             join partnerParticipant in Active(dbContext.ConversationParticipantReadsV2)
