@@ -15,29 +15,29 @@ public sealed class ContactsFacade(
     public async Task<FlowChatResult<GetContactsWithConversationsResult>> GetContactsWithConversationsAsync(
         CancellationToken cancellationToken)
     {
-        var contacts = await chatClient.GetContactsForUserAsync(cancellationToken);
-        var partnerUserIds = contacts.Select(contact => contact.PartnerUserId).ToList();
+        var conversations = await chatClient.GetDuetConversationsAsync(cancellationToken);
+        var partnerUserIds = conversations.Select(conversation => conversation.PartnerUserId).ToList();
         var presenceStatuses = await GetPresenceStatusesOrDefaultAsync(
             partnerUserIds,
             cancellationToken);
-        var items = contacts
-            .Select(contact => new ContactWithConversationResult(
-                contact.PartnerUserId,
-                contact.DisplayName,
-                contact.AvatarUrl,
-                contact.Email,
-                contact.IsBlocked,
-                contact.IsBlockedByPartner,
-                contact.IsMuted,
-                contact.IsHidden,
-                contact.ConversationId,
-                contact.LastReadMsgSeqNum,
-                contact.CurrentMsgSeqNum,
-                Math.Max(0, contact.CurrentMsgSeqNum - contact.LastReadMsgSeqNum),
-                presenceStatuses.TryGetValue(contact.PartnerUserId, out var presence)
+        var items = conversations
+            .Select(conversation => new ContactWithConversationResult(
+                conversation.PartnerUserId,
+                conversation.DisplayName,
+                conversation.AvatarUrl,
+                conversation.Email,
+                conversation.IsBlocked,
+                conversation.IsBlockedByPartner,
+                conversation.IsMuted,
+                conversation.IsHidden,
+                conversation.ConversationId,
+                conversation.LastReadMsgSeqNum,
+                conversation.CurrentMsgSeqNum,
+                Math.Max(0, conversation.CurrentMsgSeqNum - conversation.LastReadMsgSeqNum),
+                presenceStatuses.TryGetValue(conversation.PartnerUserId, out var presence)
                     ? presence.Status
                     : PresenceStatus.Invisible,
-                presenceStatuses.TryGetValue(contact.PartnerUserId, out presence)
+                presenceStatuses.TryGetValue(conversation.PartnerUserId, out presence)
                     ? presence.ChangedAtUtc
                     : DateTimeOffset.MinValue))
             .ToList();

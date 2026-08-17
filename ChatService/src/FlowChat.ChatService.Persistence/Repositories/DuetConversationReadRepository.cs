@@ -74,7 +74,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
             [requestingParticipant, partnerParticipant]);
     }
     //ToDo: Pomyśleć o uproszczeniu zapytania albo robic read model
-    public async Task<IReadOnlyCollection<ContactDto>> GetContactsForUserAsync(
+    public async Task<IReadOnlyCollection<DuetConversationListItemDto>> GetDuetConversationsAsync(
         Guid requestingUserId,
         CancellationToken cancellationToken = default)
     {
@@ -129,7 +129,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
             })
             .ToListAsync(cancellationToken);
 
-        return rawRows.Select(r => new ContactDto(
+        return rawRows.Select(r => new DuetConversationListItemDto(
                 r.PartnerUserId,
                 string.IsNullOrEmpty(r.PartnerDisplayName)
                     ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)

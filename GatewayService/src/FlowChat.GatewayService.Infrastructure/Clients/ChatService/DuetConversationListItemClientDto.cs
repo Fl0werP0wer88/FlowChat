@@ -1,6 +1,6 @@
 namespace FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 
-public sealed record ContactClientDto(
+public sealed record DuetConversationListItemClientDto(
     Guid PartnerUserId,
     string? DisplayName,
     string? AvatarUrl,

@@ -19,8 +19,8 @@ public sealed class ContactsFacadeTests
         var partnerId = Guid.NewGuid();
         var changedAt = DateTimeOffset.UtcNow;
         _chatClient
-            .Setup(x => x.GetContactsForUserAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([Contact(partnerId, current: 9, read: 4)]);
+            .Setup(x => x.GetDuetConversationsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([DuetConversation(partnerId, current: 9, read: 4)]);
         _presenceClient
             .Setup(x => x.GetPresenceStatusesAsync(
                 It.Is<IReadOnlyCollection<Guid>>(ids => ids.Contains(partnerId)),
@@ -44,8 +44,8 @@ public sealed class ContactsFacadeTests
     {
         var partnerId = Guid.NewGuid();
         _chatClient
-            .Setup(x => x.GetContactsForUserAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([Contact(partnerId, current: 2, read: 5)]);
+            .Setup(x => x.GetDuetConversationsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([DuetConversation(partnerId, current: 2, read: 5)]);
         _presenceClient
             .Setup(x => x.GetPresenceStatusesAsync(
                 It.IsAny<IReadOnlyCollection<Guid>>(),
@@ -67,7 +67,10 @@ public sealed class ContactsFacadeTests
             _presenceClient.Object,
             NullLogger<ContactsFacade>.Instance);
 
-    private static ContactClientDto Contact(Guid partnerId, long current, long read) =>
+    private static DuetConversationListItemClientDto DuetConversation(
+        Guid partnerId,
+        long current,
+        long read) =>
         new(
             partnerId,
             "name",

@@ -26,10 +26,10 @@ public sealed class AggregateRoutesTests(GatewayApiFactory factory)
         var userId = Guid.NewGuid();
         var partnerId = Guid.NewGuid();
         factory.ChatServiceClient
-            .Setup(x => x.GetContactsForUserAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetDuetConversationsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(
             [
-                new ContactClientDto(
+                new DuetConversationListItemClientDto(
                     partnerId,
                     "partner",
                     null,

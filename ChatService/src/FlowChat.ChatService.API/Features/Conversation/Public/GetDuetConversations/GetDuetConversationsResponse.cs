@@ -1,11 +1,11 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.ChatService.Api.Features.Conversation.Public.GetContactsForUser;
+namespace FlowChat.ChatService.Api.Features.Conversation.Public.GetDuetConversations;
 
-public sealed record GetContactsForUserResponse(
-    IReadOnlyCollection<ContactResponse> Contacts) : IServiceOutput;
+public sealed record GetDuetConversationsResponse(
+    IReadOnlyCollection<DuetConversationResponse> Conversations) : IServiceOutput;
 
-public sealed record ContactResponse(
+public sealed record DuetConversationResponse(
     Guid PartnerUserId,
     string? DisplayName,
     string? AvatarUrl,

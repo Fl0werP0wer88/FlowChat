@@ -84,7 +84,7 @@ public sealed class DuetConversationReadRepositoryTests
     }
 
     [Fact]
-    public async Task GetContactsForUserAsync_WhenPartnerBlockedRequester_ReturnsParticipantState()
+    public async Task GetDuetConversationsAsync_WhenPartnerBlockedRequester_ReturnsParticipantState()
     {
         await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
@@ -121,7 +121,7 @@ public sealed class DuetConversationReadRepositoryTests
 
         await using var readContext = CreateDbContext(connection);
         var result = await new DuetConversationReadRepository(readContext)
-            .GetContactsForUserAsync(requestingUserId);
+            .GetDuetConversationsAsync(requestingUserId);
 
         var contact = result.Should().ContainSingle().Subject;
         contact.PartnerUserId.Should().Be(partnerUserId);
@@ -138,7 +138,7 @@ public sealed class DuetConversationReadRepositoryTests
     }
 
     [Fact]
-    public async Task GetContactsForUserAsync_WhenRequesterHiddenContact_ReturnsNoContact()
+    public async Task GetDuetConversationsAsync_WhenRequesterHiddenConversation_ReturnsNoConversation()
     {
         await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
@@ -154,13 +154,13 @@ public sealed class DuetConversationReadRepositoryTests
 
         await using var readContext = CreateDbContext(connection);
         var result = await new DuetConversationReadRepository(readContext)
-            .GetContactsForUserAsync(requestingUserId);
+            .GetDuetConversationsAsync(requestingUserId);
 
         result.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task GetContactsForUserAsync_WhenDuetPairIsStoredOnConversation_ReturnsContact()
+    public async Task GetDuetConversationsAsync_WhenDuetPairIsStoredOnConversation_ReturnsConversation()
     {
         await using var connection = await CreateOpenConnectionAsync();
         var requestingUserId = Guid.NewGuid();
@@ -176,7 +176,7 @@ public sealed class DuetConversationReadRepositoryTests
 
         await using var readContext = CreateDbContext(connection);
         var result = await new DuetConversationReadRepository(readContext)
-            .GetContactsForUserAsync(requestingUserId);
+            .GetDuetConversationsAsync(requestingUserId);
 
         result.Should().ContainSingle()
             .Which.PartnerUserId.Should().Be(partnerUserId);
