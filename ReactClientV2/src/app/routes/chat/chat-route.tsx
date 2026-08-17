@@ -36,7 +36,7 @@ export function Component() {
           actions={
             <>
               <span className="hidden max-w-48 truncate text-sm font-semibold text-slate-500 sm:block">
-                {user?.friendlyUserId ?? 'FlowChat user'}
+                {user?.email ?? 'FlowChat user'}
               </span>
               <Button type="button" variant="ghost" onClick={() => void logout()}>
                 <LogOut className="size-4" aria-hidden="true" />
