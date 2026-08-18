@@ -1,4 +1,5 @@
 import { DuetConversationList } from '../duet/components/duet-conversation-list';
+import { GroupConversationList } from '../group/components/group-conversation-list';
 
 export function Conversations() {
   return (
@@ -20,6 +21,7 @@ export function Conversations() {
         aria-labelledby="conversations-heading"
       >
         <DuetConversationList />
+        <GroupConversationList />
       </section>
     </aside>
   );

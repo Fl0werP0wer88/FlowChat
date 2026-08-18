@@ -30,11 +30,25 @@ describe('Conversations', () => {
           ],
         }),
       ),
+      http.get('*/api/conversations/group', () =>
+        HttpResponse.json({
+          groupConversations: [
+            {
+              conversationId: 'b98ce73a-5d8c-450f-bd1a-b756b13de2e6',
+              name: 'Product team',
+              participantCount: 5,
+              lastReadMsgSeqNum: 3,
+              currentMsgSeqNum: 7,
+            },
+          ],
+        }),
+      ),
     );
 
     renderWithProviders(<Conversations />);
 
     expect(screen.getByRole('region', { name: 'Conversations' })).toBeInTheDocument();
     expect(await screen.findByText('Alex Morgan')).toBeInTheDocument();
+    expect(await screen.findByText('Product team')).toBeInTheDocument();
   });
 });
