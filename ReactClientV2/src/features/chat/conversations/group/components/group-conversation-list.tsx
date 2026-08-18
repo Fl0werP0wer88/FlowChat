@@ -86,7 +86,7 @@ export function GroupConversationList() {
   }
 
   return (
-    <ul className="m-0 list-none divide-y divide-slate-200 border-t border-slate-200 p-0">
+    <ul className="m-0 list-none divide-y divide-slate-200 p-0">
       {data.groupConversations.map((conversation) => (
         <li className="flex min-w-0 items-center gap-3 px-2 py-3" key={conversation.conversationId}>
           <span
