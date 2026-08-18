@@ -6,7 +6,7 @@ import { api } from '@/lib/api-client';
 export const presenceStatusSchema = z.enum(['Active', 'AFK', 'Busy', 'Invisible']);
 
 const duetConversationWithPresenceSchema = z.object({
-  partnerUserId: z.uuid(),
+  partnerUserId: z.guid(),
   displayName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
   email: z.string().nullable(),
@@ -14,7 +14,7 @@ const duetConversationWithPresenceSchema = z.object({
   isBlockedByPartner: z.boolean(),
   isMuted: z.boolean(),
   isHidden: z.boolean(),
-  conversationId: z.uuid(),
+  conversationId: z.guid(),
   lastReadMsgSeqNum: z.number().int().nonnegative(),
   currentMsgSeqNum: z.number().int().nonnegative(),
   unreadCount: z.number().int().nonnegative(),

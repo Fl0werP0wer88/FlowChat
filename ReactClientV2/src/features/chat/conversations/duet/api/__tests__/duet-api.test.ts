@@ -7,6 +7,7 @@ import { getDuetsWithPresence } from '../get-duets-with-presence';
 
 const conversationId = '40c3cd3b-69d8-4af3-b1a7-f9174537fb97';
 const partnerUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
+const seededPartnerUserId = '00000000-0000-0000-0000-000000000034';
 
 describe('duet conversation API', () => {
   it('gets duet conversations with presence and validates the response', async () => {
@@ -15,7 +16,7 @@ describe('duet conversation API', () => {
         HttpResponse.json({
           conversations: [
             {
-              partnerUserId,
+              partnerUserId: seededPartnerUserId,
               displayName: 'Alex Morgan',
               avatarUrl: null,
               email: 'alex@example.com',
@@ -38,7 +39,10 @@ describe('duet conversation API', () => {
     const result = await getDuetsWithPresence();
 
     expect(result.conversations).toHaveLength(1);
-    expect(result.conversations[0]).toMatchObject({ partnerUserId, status: 'Active' });
+    expect(result.conversations[0]).toMatchObject({
+      partnerUserId: seededPartnerUserId,
+      status: 'Active',
+    });
   });
 
   it('creates a duet using the backend request contract', async () => {
