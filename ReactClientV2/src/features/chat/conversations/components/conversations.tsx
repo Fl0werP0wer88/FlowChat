@@ -24,31 +24,29 @@ export function Conversations() {
         </h1>
       </div>
 
-      <div className="border-b border-slate-200">
-        <div
-          className="grid w-full grid-cols-2 overflow-hidden rounded-md border border-slate-200 bg-white"
-          role="group"
-          aria-label="Conversation type"
+      <div
+        className="grid w-full grid-cols-2 divide-x divide-slate-300 border-y border-slate-300 bg-white"
+        role="group"
+        aria-label="Conversation type"
+      >
+        <Button
+          className="min-h-12 w-full rounded-none px-3 text-base font-extrabold shadow-none hover:translate-y-0 focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0"
+          type="button"
+          variant={activeList === 'groups' ? 'primary' : 'ghost'}
+          aria-pressed={activeList === 'groups'}
+          onClick={() => setActiveList('groups')}
         >
-          <Button
-            className="min-h-12 w-full rounded-none border-r border-slate-200 px-3 text-base font-extrabold shadow-none hover:translate-y-0 focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0"
-            type="button"
-            variant={activeList === 'groups' ? 'primary' : 'ghost'}
-            aria-pressed={activeList === 'groups'}
-            onClick={() => setActiveList('groups')}
-          >
-            Groups
-          </Button>
-          <Button
-            className="min-h-12 w-full rounded-none px-3 text-base font-extrabold shadow-none hover:translate-y-0 focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0"
-            type="button"
-            variant={activeList === 'duets' ? 'primary' : 'ghost'}
-            aria-pressed={activeList === 'duets'}
-            onClick={() => setActiveList('duets')}
-          >
-            Duets
-          </Button>
-        </div>
+          Groups
+        </Button>
+        <Button
+          className="min-h-12 w-full rounded-none px-3 text-base font-extrabold shadow-none hover:translate-y-0 focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0"
+          type="button"
+          variant={activeList === 'duets' ? 'primary' : 'ghost'}
+          aria-pressed={activeList === 'duets'}
+          onClick={() => setActiveList('duets')}
+        >
+          Duets
+        </Button>
       </div>
 
       <section
