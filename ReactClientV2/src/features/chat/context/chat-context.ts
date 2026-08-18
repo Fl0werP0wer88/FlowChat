@@ -1,10 +1,17 @@
 import { createContext } from 'react';
 
-export type ChatSidebarView = 'conversations' | 'conversationCreator';
+export type ChatViewState =
+  | { view: 'conversations' }
+  | {
+      view: 'conversationCreator';
+      conversationType: 'duet' | 'group';
+    };
 
 export interface ChatContextValue {
-  activeSidebarView: ChatSidebarView;
-  showConversationCreator: () => void;
+  activeView: ChatViewState;
+  showConversationCreator: (
+    conversationType: Extract<ChatViewState, { view: 'conversationCreator' }>['conversationType'],
+  ) => void;
   showConversations: () => void;
 }
 

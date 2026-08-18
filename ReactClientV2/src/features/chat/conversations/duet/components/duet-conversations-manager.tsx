@@ -10,7 +10,7 @@ export function DuetConversationsManager() {
 
   return (
     <div className="grid gap-3">
-      <Button className="w-full" type="button" onClick={showConversationCreator}>
+      <Button className="w-full" type="button" onClick={() => showConversationCreator('duet')}>
         <UserPlus className="size-4" aria-hidden="true" />
         New duet
       </Button>

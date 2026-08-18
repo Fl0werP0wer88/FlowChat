@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { DuetConversationsManager } from '../duet/components/duet-conversations-manager';
-import { GroupConversationList } from '../group/components/group-conversation-list';
+import { GroupConversationsManager } from '../group/components/group-conversations-manager';
 
 type ConversationListType = 'groups' | 'duets';
 
@@ -53,7 +53,7 @@ export function Conversations() {
         className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"
         aria-labelledby="conversations-heading"
       >
-        {activeList === 'duets' ? <DuetConversationsManager /> : <GroupConversationList />}
+        {activeList === 'duets' ? <DuetConversationsManager /> : <GroupConversationsManager />}
       </section>
     </aside>
   );

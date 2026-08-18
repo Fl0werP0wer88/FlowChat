@@ -72,6 +72,8 @@ describe('Conversations', () => {
     expect(screen.queryByText('Alex Morgan')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Groups' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Duets' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'New group' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New duet' })).not.toBeInTheDocument();
     expect(groupRequestCount).toBe(1);
   });
 });

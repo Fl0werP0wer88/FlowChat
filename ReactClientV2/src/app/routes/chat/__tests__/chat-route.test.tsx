@@ -12,6 +12,7 @@ describe('ChatRoute', () => {
       http.get('*/api/aggregate/conversations/duets', () =>
         HttpResponse.json({ conversations: [] }),
       ),
+      http.get('*/api/conversations/group', () => HttpResponse.json({ groupConversations: [] })),
     );
     const router = createMemoryRouter([{ path: '/chat', element: <ChatRoute /> }], {
       initialEntries: ['/chat'],
@@ -33,5 +34,11 @@ describe('ChatRoute', () => {
 
     expect(screen.getByRole('heading', { name: 'Conversations' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Create a duet' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Groups' }));
+    await user.click(await screen.findByRole('button', { name: 'New group' }));
+
+    expect(screen.getByRole('heading', { name: 'Create a group' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Conversations' })).not.toBeInTheDocument();
   });
 });

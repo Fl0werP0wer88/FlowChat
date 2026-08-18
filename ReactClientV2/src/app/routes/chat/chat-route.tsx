@@ -19,13 +19,13 @@ export function Component() {
 }
 
 function ChatPage() {
-  const { activeSidebarView } = useChatContext();
+  const { activeView } = useChatContext();
 
   return (
     <AppLayout
       contentLabel="Active conversation"
       header={<AppHeader />}
-      sidebar={activeSidebarView === 'conversations' ? <Conversations /> : <ConversationCreator />}
+      sidebar={activeView.view === 'conversations' ? <Conversations /> : <ConversationCreator />}
     >
       <div className="grid h-full min-h-[32rem] place-items-center px-6 py-16 text-center">
         <div className="grid max-w-md justify-items-center gap-5">

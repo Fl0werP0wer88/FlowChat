@@ -1,10 +1,17 @@
-import { ArrowLeft, UserPlus } from 'lucide-react';
+import { ArrowLeft, UserPlus, UsersRound } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useChatContext } from '@/features/chat/context/use-chat-context';
 
 export function ConversationCreator() {
-  const { showConversations } = useChatContext();
+  const { activeView, showConversations } = useChatContext();
+
+  if (activeView.view !== 'conversationCreator') {
+    return null;
+  }
+
+  const isGroup = activeView.conversationType === 'group';
+  const CreatorIcon = isGroup ? UsersRound : UserPlus;
 
   return (
     <aside
@@ -28,17 +35,17 @@ export function ConversationCreator() {
           className="mt-1 mb-0 font-display text-2xl font-semibold tracking-[-0.035em] text-slate-950"
           id="conversation-creator-heading"
         >
-          Create a duet
+          {isGroup ? 'Create a group' : 'Create a duet'}
         </h1>
       </div>
 
       <div className="grid min-h-0 flex-1 place-items-center px-6 py-10 text-center">
         <div className="grid max-w-60 justify-items-center gap-4">
           <span className="grid size-12 place-items-center rounded-full bg-blue-50 text-blue-700">
-            <UserPlus className="size-5" aria-hidden="true" />
+            <CreatorIcon className="size-5" aria-hidden="true" />
           </span>
           <p className="m-0 text-sm leading-6 text-slate-600">
-            The duet conversation form will be available here soon.
+            The {isGroup ? 'group' : 'duet'} conversation form will be available here soon.
           </p>
         </div>
       </div>

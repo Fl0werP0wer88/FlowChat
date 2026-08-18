@@ -8,9 +8,15 @@ import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 import { DuetConversationsManager } from '../duet-conversations-manager';
 
 function SidebarViewProbe() {
-  const { activeSidebarView } = useChatContext();
+  const { activeView } = useChatContext();
 
-  return <output>{activeSidebarView}</output>;
+  return (
+    <output>
+      {activeView.view === 'conversationCreator'
+        ? `${activeView.view}:${activeView.conversationType}`
+        : activeView.view}
+    </output>
+  );
 }
 
 describe('DuetConversationsManager', () => {
@@ -53,6 +59,6 @@ describe('DuetConversationsManager', () => {
 
     await user.click(screen.getByRole('button', { name: 'New duet' }));
 
-    expect(screen.getByText('conversationCreator')).toBeInTheDocument();
+    expect(screen.getByText('conversationCreator:duet')).toBeInTheDocument();
   });
 });
