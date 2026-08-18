@@ -7,11 +7,7 @@ import { GroupConversationList } from '../group/components/group-conversation-li
 
 type ConversationListType = 'groups' | 'duets';
 
-interface ConversationsProps {
-  onCreateDuet: () => void;
-}
-
-export function Conversations({ onCreateDuet }: ConversationsProps) {
+export function Conversations() {
   const [activeList, setActiveList] = useState<ConversationListType>('duets');
 
   return (
@@ -57,11 +53,7 @@ export function Conversations({ onCreateDuet }: ConversationsProps) {
         className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"
         aria-labelledby="conversations-heading"
       >
-        {activeList === 'duets' ? (
-          <DuetConversationsManager onCreateConversation={onCreateDuet} />
-        ) : (
-          <GroupConversationList />
-        )}
+        {activeList === 'duets' ? <DuetConversationsManager /> : <GroupConversationList />}
       </section>
     </aside>
   );

@@ -1,12 +1,20 @@
 import { http, HttpResponse } from 'msw';
 
+import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
+import { useChatContext } from '@/features/chat/context/use-chat-context';
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
 import { DuetConversationsManager } from '../duet-conversations-manager';
 
+function SidebarViewProbe() {
+  const { activeSidebarView } = useChatContext();
+
+  return <output>{activeSidebarView}</output>;
+}
+
 describe('DuetConversationsManager', () => {
-  it('renders the duet action and list, then delegates creation', async () => {
+  it('renders the duet action and list, then opens the creator', async () => {
     server.use(
       http.get('*/api/aggregate/conversations/duets', () =>
         HttpResponse.json({
@@ -32,14 +40,19 @@ describe('DuetConversationsManager', () => {
       ),
     );
     const user = userEvent.setup();
-    const onCreateConversation = vi.fn();
 
-    renderWithProviders(<DuetConversationsManager onCreateConversation={onCreateConversation} />);
+    renderWithProviders(
+      <ChatContextProvider>
+        <DuetConversationsManager />
+        <SidebarViewProbe />
+      </ChatContextProvider>,
+    );
 
     expect(await screen.findByText('Alex Morgan')).toBeInTheDocument();
+    expect(screen.getByText('conversations')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'New duet' }));
 
-    expect(onCreateConversation).toHaveBeenCalledOnce();
+    expect(screen.getByText('conversationCreator')).toBeInTheDocument();
   });
 });

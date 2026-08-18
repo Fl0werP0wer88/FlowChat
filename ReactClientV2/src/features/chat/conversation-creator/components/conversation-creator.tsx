@@ -1,19 +1,23 @@
 import { ArrowLeft, UserPlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { useChatContext } from '@/features/chat/context/use-chat-context';
 
-interface ConversationCreatorProps {
-  onBack: () => void;
-}
+export function ConversationCreator() {
+  const { showConversations } = useChatContext();
 
-export function ConversationCreator({ onBack }: ConversationCreatorProps) {
   return (
     <aside
       className="flex min-h-64 flex-col border-b border-slate-200 bg-slate-50/70 lg:min-h-0 lg:border-r lg:border-b-0"
       aria-labelledby="conversation-creator-heading"
     >
       <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
-        <Button className="-ml-3 mb-4 px-3" type="button" variant="ghost" onClick={onBack}>
+        <Button
+          className="-ml-3 mb-4 px-3"
+          type="button"
+          variant="ghost"
+          onClick={showConversations}
+        >
           <ArrowLeft className="size-4" aria-hidden="true" />
           Back
         </Button>

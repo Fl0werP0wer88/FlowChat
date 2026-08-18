@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
+import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
@@ -49,9 +50,12 @@ describe('Conversations', () => {
       }),
     );
     const user = userEvent.setup();
-    const onCreateDuet = vi.fn();
 
-    renderWithProviders(<Conversations onCreateDuet={onCreateDuet} />);
+    renderWithProviders(
+      <ChatContextProvider>
+        <Conversations />
+      </ChatContextProvider>,
+    );
 
     expect(screen.getByRole('region', { name: 'Conversations' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Conversation type' })).toBeInTheDocument();
@@ -61,10 +65,6 @@ describe('Conversations', () => {
     expect(screen.queryByText('Product team')).not.toBeInTheDocument();
     expect(duetRequestCount).toBe(1);
     expect(groupRequestCount).toBe(0);
-
-    await user.click(screen.getByRole('button', { name: 'New duet' }));
-
-    expect(onCreateDuet).toHaveBeenCalledOnce();
 
     await user.click(screen.getByRole('button', { name: 'Groups' }));
 
