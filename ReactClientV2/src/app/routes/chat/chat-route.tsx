@@ -1,18 +1,30 @@
 import { MessageCircleMore } from 'lucide-react';
+import { useState } from 'react';
 
 import { AppHeader } from '@/components/layouts/app-header';
 import { AppLayout } from '@/components/layouts/app-layout';
+import { ConversationCreator } from '@/features/chat/conversation-creator/components/conversation-creator';
 import { Conversations } from '@/features/chat/conversations/components/conversations';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
+type SidebarView = 'conversations' | 'conversationCreator';
+
 export function Component() {
+  const [sidebarView, setSidebarView] = useState<SidebarView>('conversations');
+
   useDocumentTitle('Chat');
 
   return (
     <AppLayout
       contentLabel="Active conversation"
       header={<AppHeader />}
-      sidebar={<Conversations />}
+      sidebar={
+        sidebarView === 'conversations' ? (
+          <Conversations onCreateDuet={() => setSidebarView('conversationCreator')} />
+        ) : (
+          <ConversationCreator onBack={() => setSidebarView('conversations')} />
+        )
+      }
     >
       <div className="grid h-full min-h-[32rem] place-items-center px-6 py-16 text-center">
         <div className="grid max-w-md justify-items-center gap-5">

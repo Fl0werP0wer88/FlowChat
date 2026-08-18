@@ -2,12 +2,16 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-import { DuetConversationList } from '../duet/components/duet-conversation-list';
+import { DuetConversationsManager } from '../duet/components/duet-conversations-manager';
 import { GroupConversationList } from '../group/components/group-conversation-list';
 
 type ConversationListType = 'groups' | 'duets';
 
-export function Conversations() {
+interface ConversationsProps {
+  onCreateDuet: () => void;
+}
+
+export function Conversations({ onCreateDuet }: ConversationsProps) {
   const [activeList, setActiveList] = useState<ConversationListType>('duets');
 
   return (
@@ -53,7 +57,11 @@ export function Conversations() {
         className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"
         aria-labelledby="conversations-heading"
       >
-        {activeList === 'duets' ? <DuetConversationList /> : <GroupConversationList />}
+        {activeList === 'duets' ? (
+          <DuetConversationsManager onCreateConversation={onCreateDuet} />
+        ) : (
+          <GroupConversationList />
+        )}
       </section>
     </aside>
   );
