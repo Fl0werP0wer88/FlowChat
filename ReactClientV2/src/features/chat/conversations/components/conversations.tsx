@@ -24,14 +24,14 @@ export function Conversations() {
         </h1>
       </div>
 
-      <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+      <div className="border-b border-slate-200">
         <div
-          className="grid grid-cols-2 gap-1 rounded-full bg-slate-200/70 p-1"
+          className="grid w-full grid-cols-2 overflow-hidden rounded-md border border-slate-200 bg-white"
           role="group"
           aria-label="Conversation type"
         >
           <Button
-            className="min-h-9 w-full px-3 shadow-none hover:translate-y-0"
+            className="min-h-12 w-full rounded-none border-r border-slate-200 px-3 text-base font-extrabold shadow-none hover:translate-y-0 focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0"
             type="button"
             variant={activeList === 'groups' ? 'primary' : 'ghost'}
             aria-pressed={activeList === 'groups'}
@@ -40,7 +40,7 @@ export function Conversations() {
             Groups
           </Button>
           <Button
-            className="min-h-9 w-full px-3 shadow-none hover:translate-y-0"
+            className="min-h-12 w-full rounded-none px-3 text-base font-extrabold shadow-none hover:translate-y-0 focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0"
             type="button"
             variant={activeList === 'duets' ? 'primary' : 'ghost'}
             aria-pressed={activeList === 'duets'}
