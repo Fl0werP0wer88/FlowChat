@@ -25,7 +25,7 @@ export function Conversations() {
       </div>
 
       <div
-        className="grid w-full grid-cols-2 divide-x divide-slate-300 border-y border-slate-300 bg-white"
+        className="grid w-full grid-cols-2 divide-x divide-slate-200 border-b border-slate-200 bg-white"
         role="group"
         aria-label="Conversation type"
       >
