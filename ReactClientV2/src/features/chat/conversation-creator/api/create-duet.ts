@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { getDuetsWithPresenceQueryOptions } from '@/features/chat/conversations/duet/api/get-duets-with-presence';
 import { api } from '@/lib/api-client';
-
-import { getDuetsWithPresenceQueryOptions } from './get-duets-with-presence';
 
 const participantSchema = z.object({
   userId: z.uuid(),

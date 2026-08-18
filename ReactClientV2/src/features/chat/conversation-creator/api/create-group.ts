@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/get-groups';
 import { api } from '@/lib/api-client';
-
-import { getGroupsQueryOptions } from './get-groups';
 
 const participantSchema = z.object({
   userId: z.uuid(),
