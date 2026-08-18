@@ -1,7 +1,15 @@
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+
 import { DuetConversationList } from '../duet/components/duet-conversation-list';
 import { GroupConversationList } from '../group/components/group-conversation-list';
 
+type ConversationListType = 'groups' | 'duets';
+
 export function Conversations() {
+  const [activeList, setActiveList] = useState<ConversationListType>('duets');
+
   return (
     <aside className="chat-conversation-panel flex min-h-64 flex-col border-b border-slate-200 bg-slate-50/70 lg:min-h-0 lg:border-r lg:border-b-0">
       <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
@@ -16,12 +24,38 @@ export function Conversations() {
         </h1>
       </div>
 
+      <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+        <div
+          className="grid grid-cols-2 gap-1 rounded-full bg-slate-200/70 p-1"
+          role="group"
+          aria-label="Conversation type"
+        >
+          <Button
+            className="min-h-9 w-full px-3 shadow-none hover:translate-y-0"
+            type="button"
+            variant={activeList === 'groups' ? 'primary' : 'ghost'}
+            aria-pressed={activeList === 'groups'}
+            onClick={() => setActiveList('groups')}
+          >
+            Groups
+          </Button>
+          <Button
+            className="min-h-9 w-full px-3 shadow-none hover:translate-y-0"
+            type="button"
+            variant={activeList === 'duets' ? 'primary' : 'ghost'}
+            aria-pressed={activeList === 'duets'}
+            onClick={() => setActiveList('duets')}
+          >
+            Duets
+          </Button>
+        </div>
+      </div>
+
       <section
         className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"
         aria-labelledby="conversations-heading"
       >
-        <DuetConversationList />
-        <GroupConversationList />
+        {activeList === 'duets' ? <DuetConversationList /> : <GroupConversationList />}
       </section>
     </aside>
   );
