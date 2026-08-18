@@ -18,14 +18,17 @@ export function useDuetPresenceSubscription() {
 
   useEffect(() => {
     const queryKey = getDuetsWithPresenceQueryOptions().queryKey;
-    const unsubscribePresence = subscribeToRealtimeEvent('PresenceChanged', (payload) => {
+    const handlePresenceChanged = (payload: unknown) => {
       queryClient.setQueryData<GetDuetsWithPresenceResponse>(queryKey, (current) =>
         applyPresenceChanged(current, payload),
       );
-    });
-    const unsubscribeReconnected = subscribeToRealtimeReconnected(() => {
+    };
+    const handleReconnected = () => {
       void queryClient.invalidateQueries({ queryKey });
-    });
+    };
+
+    const unsubscribePresence = subscribeToRealtimeEvent('PresenceChanged', handlePresenceChanged);
+    const unsubscribeReconnected = subscribeToRealtimeReconnected(handleReconnected);
 
     return () => {
       unsubscribePresence();
