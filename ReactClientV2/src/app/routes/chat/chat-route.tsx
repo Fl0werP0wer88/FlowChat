@@ -12,25 +12,7 @@ export function Component() {
     <AppLayout
       contentLabel="Active conversation"
       header={<AppHeader />}
-      sidebar={
-        <Conversations>
-          <div className="grid min-h-48 place-items-center px-4 py-8 text-center">
-            <div className="grid max-w-56 justify-items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-full bg-blue-50 text-blue-700">
-                <MessageCircleMore className="size-5" aria-hidden="true" />
-              </span>
-              <div className="grid gap-3">
-                <h2 className="m-0 font-display text-base font-semibold text-slate-900">
-                  No conversations yet
-                </h2>
-                <p className="m-0 text-sm leading-6 text-slate-500">
-                  Your recent conversations will appear here.
-                </p>
-              </div>
-            </div>
-          </div>
-        </Conversations>
-      }
+      sidebar={<Conversations />}
     >
       <div className="grid h-full min-h-[32rem] place-items-center px-6 py-16 text-center">
         <div className="grid max-w-md justify-items-center gap-5">
