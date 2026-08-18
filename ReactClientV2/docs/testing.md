@@ -18,7 +18,8 @@ Vitest, Testing Library, and MSW cover:
 - scheduled refresh and refresh after `401`;
 - concurrent refresh deduplication;
 - logout and cache cleanup;
-- all email-verification states.
+- all email-verification states;
+- real-time connection lifecycle, reconnect recovery, subscription cleanup, and Duet presence cache synchronization.
 
 Prefer real user interactions through Testing Library. Query by role, label, accessible name, or visible text. Use MSW at the HTTP boundary instead of mocking Axios or fetch.
 
@@ -26,7 +27,9 @@ Shared setup belongs in `src/testing`. Feature tests remain colocated in `__test
 
 ## Strict Mode
 
-The test renderer uses the same relevant provider behavior as the application. Requests triggered by mounting must be designed to tolerate React Strict Mode. TanStack Query keys and the single-flight refresh promise provide deduplication; tests should assert externally visible request counts for these critical paths.
+The test renderer uses the same relevant provider behavior as the application. Requests and connections triggered by mounting must be designed to tolerate React Strict Mode. TanStack Query keys, the single-flight refresh promise, and the idempotent real-time client provide deduplication; tests should assert externally visible request and connection counts for these critical paths.
+
+Test feature event-to-cache transformations as pure behavior. Mock the shared SignalR boundary for subscription lifecycle tests because MSW covers HTTP, not the SignalR transport.
 
 ## E2E tests
 

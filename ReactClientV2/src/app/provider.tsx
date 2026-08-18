@@ -9,6 +9,8 @@ import { MainErrorFallback } from '@/components/errors/main-error-fallback';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { queryClient } from '@/lib/query-client';
 
+import { RealtimeBootstrap } from './realtime/realtime-bootstrap';
+
 interface AppProviderProps {
   children: ReactNode;
 }
@@ -23,7 +25,9 @@ export function AppProvider({ children }: AppProviderProps) {
         <QueryClientProvider client={queryClient}>
           {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
           <Toaster richColors position="top-right" closeButton />
-          <AuthBootstrap>{children}</AuthBootstrap>
+          <AuthBootstrap>
+            <RealtimeBootstrap>{children}</RealtimeBootstrap>
+          </AuthBootstrap>
         </QueryClientProvider>
       </ErrorBoundary>
     </Suspense>

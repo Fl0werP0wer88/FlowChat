@@ -25,6 +25,14 @@ ReactClientV2 consumes the existing contracts without backend changes:
 
 The API URL defaults to `https://localhost:7270` in development. Configure a different Gateway only through `VITE_GATEWAY_API_URL`.
 
+## Real-time Gateway connection
+
+The authenticated application maintains one SignalR connection to `/hubs/chat` on the configured Gateway origin. The connection starts after session bootstrap, stops after logout, and uses automatic reconnect plus retry for initial connection failures.
+
+SignalR's `accessTokenFactory` reads the current in-memory access token each time it is needed, including reconnect after a silent refresh. The token is never persisted or logged. Feature subscriptions validate untrusted notifications with Zod before updating TanStack Query cache.
+
+`PresenceChanged` carries `userId`, `status`, and `changedAtUtc`. Duet presence updates only the matching cached partner and ignores invalid, unknown, or older notifications. After reconnect, the Duet query is invalidated because notifications may have been missed while disconnected.
+
 ## Runtime validation
 
 TypeScript types disappear at runtime, so every untrusted response used by the application is parsed with Zod. Invalid success responses are failures; do not cast them into the expected type.
@@ -98,5 +106,6 @@ Logout calls `/api/users/logout`. Local cleanup runs even if the network request
 - Never use decoded client claims as authoritative access control.
 - Never render arbitrary HTML without an explicit sanitization boundary.
 - Never log credentials, tokens, authorization headers, or full authentication responses.
+- Never log the SignalR access-token query parameter used by transports that cannot send an authorization header.
 - Keep `redirectTo` values local to this application to prevent open redirects.
 - Prefer generic authentication errors where detailed messages could enable account enumeration.

@@ -4,11 +4,11 @@
 
 These instructions apply to `ReactClientV2`. The repository-root instructions also apply and take precedence when they are stricter.
 
-ReactClientV2 is the React 19, TypeScript, and Vite 7 client for FlowChat. The current migration scope includes authentication, registration, email verification, session lifecycle, and a protected chat placeholder.
+ReactClientV2 is the React 19, TypeScript, and Vite 7 client for FlowChat. The current migration scope includes authentication, registration, email verification, session lifecycle, the protected chat shell, conversation API declarations, and real-time Duet presence synchronization.
 
 - Keep all user-facing copy, validation messages, notifications, placeholders, document titles, and accessibility labels in English.
 - Do not modify the backend or `ReactClient` while working on ReactClientV2 unless the user explicitly expands the scope.
-- Do not add chat APIs, SignalR, contacts, conversations, or profile behavior until that migration stage is requested.
+- Do not expand beyond the current conversation APIs and `PresenceChanged` synchronization into chat messages, additional SignalR events, contacts UI, conversation UI, or profile behavior until that migration stage is requested.
 - Keep normal development on port `5173`; Gateway CORS and verification links depend on it.
 
 ## Architecture
@@ -36,6 +36,8 @@ ESLint enforces the dependency direction, cross-feature isolation, cycles, acces
 - Validate untrusted HTTP responses at runtime with Zod before using them.
 - Normalize server failures to `ApiError`; UI code should not depend on Axios error shapes.
 - Keep endpoint declarations inside the feature that owns them. Shared authentication/session infrastructure remains in `src/lib`.
+- Keep the shared SignalR connection in `src/lib/realtime`, feature event validation and cache synchronization in the owning feature, and connection lifecycle composition in `src/app`.
+- Validate untrusted SignalR payloads with Zod and update server state in TanStack Query rather than duplicating it in Zustand.
 
 The backend contracts are fixed unless a separately authorized backend change says otherwise:
 
@@ -97,6 +99,7 @@ Prefer behavior-focused integration tests over implementation-detail tests.
 - Keep E2E isolated from normal development. The current test harness uses app port `5174` and mock API port `18080`; production and development still use `5173` and the Gateway.
 - Add regression coverage for changed behavior, including error and retry paths where applicable.
 - Verify Strict Mode does not produce duplicate externally visible requests.
+- Verify Strict Mode does not create duplicate real-time connections, and cover reconnect recovery and subscription cleanup.
 
 Before completing a change, run:
 
