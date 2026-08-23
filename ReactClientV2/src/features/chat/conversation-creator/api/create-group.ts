@@ -5,20 +5,20 @@ import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/g
 import { api } from '@/lib/api-client';
 
 const participantSchema = z.object({
-  userId: z.uuid(),
+  userId: z.guid(),
   displayName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
-  participantUserId: z.uuid(),
+  participantUserId: z.guid(),
 });
 
 const createGroupResponseSchema = z.object({
-  conversationId: z.uuid(),
+  conversationId: z.guid(),
   name: z.string(),
   participants: z.array(participantSchema),
 });
 
 export const createGroupInputSchema = z.object({
-  participantUserIds: z.array(z.uuid()).min(1, 'Choose at least one participant.'),
+  participantUserIds: z.array(z.guid()).min(1, 'Choose at least one participant.'),
   name: z.string().trim().min(1, 'Enter a group name.'),
 });
 

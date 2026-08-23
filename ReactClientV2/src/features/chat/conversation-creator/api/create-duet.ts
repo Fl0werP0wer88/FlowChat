@@ -5,19 +5,19 @@ import { getDuetsWithPresenceQueryOptions } from '@/features/chat/conversations/
 import { api } from '@/lib/api-client';
 
 const participantSchema = z.object({
-  userId: z.uuid(),
+  userId: z.guid(),
   displayName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
-  participantUserId: z.uuid(),
+  participantUserId: z.guid(),
 });
 
 const createDuetResponseSchema = z.object({
-  conversationId: z.uuid(),
+  conversationId: z.guid(),
   participants: z.array(participantSchema),
 });
 
 export const createDuetInputSchema = z.object({
-  partnerUserId: z.uuid('Choose a valid conversation partner.'),
+  partnerUserId: z.guid('Choose a valid conversation partner.'),
 });
 
 export type CreateDuetInput = z.infer<typeof createDuetInputSchema>;

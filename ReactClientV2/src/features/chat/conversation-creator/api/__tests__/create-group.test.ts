@@ -4,8 +4,8 @@ import { server } from '@/testing/mocks/server';
 
 import { createGroup } from '../create-group';
 
-const conversationId = '40c3cd3b-69d8-4af3-b1a7-f9174537fb97';
-const participantUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
+const conversationId = '00000000-0000-0000-0000-000000000033';
+const participantUserId = '00000000-0000-0000-0000-000000000034';
 
 describe('create group API', () => {
   it('creates a group with a generated conversation ID and normalized name', async () => {
