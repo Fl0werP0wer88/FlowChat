@@ -1,5 +1,5 @@
 import { ArrowLeft, Search, UsersRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ function ActiveConversationCreator({
   const [debouncedCriteria, setDebouncedCriteria] = useState<SearchUserProfilesInput | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<UserProfile[]>([]);
   const [groupName, setGroupName] = useState('');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const duetMutation = useCreateDuet({
     mutationConfig: {
@@ -139,7 +140,7 @@ function ActiveConversationCreator({
         </h1>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollContainerRef}>
         <div className="grid gap-5 px-5 py-5 sm:px-6">
           {isGroup ? (
             <div className="grid gap-5">
@@ -220,6 +221,7 @@ function ActiveConversationCreator({
               conversationType={conversationType}
               disabled={isCreating}
               processingUserId={processingUserId}
+              scrollContainerRef={scrollContainerRef}
               onSelect={handleUserSelect}
             />
           )}

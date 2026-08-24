@@ -15,6 +15,55 @@ const currentUserId = '91f65d44-d175-45af-8839-d2d36e7d61f9';
 const partnerUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
 const secondPartnerUserId = '24c11faa-8bd7-4608-abcf-26985f3f62be';
 const conversationId = '40c3cd3b-69d8-4af3-b1a7-f9174537fb97';
+const intersectionObservers: TestIntersectionObserver[] = [];
+
+class TestIntersectionObserver implements IntersectionObserver {
+  readonly root: Element | Document | null;
+  readonly rootMargin: string;
+  readonly thresholds: ReadonlyArray<number>;
+  private target: Element | null = null;
+
+  constructor(
+    private readonly callback: IntersectionObserverCallback,
+    options?: IntersectionObserverInit,
+  ) {
+    this.root = options?.root ?? null;
+    this.rootMargin = options?.rootMargin ?? '0px';
+    this.thresholds = Array.isArray(options?.threshold)
+      ? options.threshold
+      : [options?.threshold ?? 0];
+    intersectionObservers.push(this);
+  }
+
+  disconnect() {
+    this.target = null;
+  }
+
+  observe(target: Element) {
+    this.target = target;
+  }
+
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+
+  unobserve(target: Element) {
+    if (this.target === target) this.target = null;
+  }
+
+  trigger() {
+    if (!this.target) return;
+
+    this.callback(
+      [{ isIntersecting: true, target: this.target } as IntersectionObserverEntry],
+      this,
+    );
+  }
+}
+
+function triggerIntersection() {
+  intersectionObservers.forEach((observer) => observer.trigger());
+}
 
 function createUserProfile({
   id = partnerUserId,
@@ -38,11 +87,6 @@ function createUserProfile({
     lastName,
     organization,
     avatarUrl,
-    bio: null,
-    isActive: true,
-    lastSeenAtUtc: null,
-    emails: [],
-    phones: [],
   };
 }
 
@@ -85,6 +129,13 @@ function setCurrentUser() {
 }
 
 describe('ConversationCreator', () => {
+  beforeEach(() => {
+    intersectionObservers.length = 0;
+    vi.stubGlobal('IntersectionObserver', TestIntersectionObserver);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
   it.each([
     { creatorType: 'duet' as const, heading: 'Create a duet' },
     { creatorType: 'group' as const, heading: 'Create a group' },
@@ -106,10 +157,10 @@ describe('ConversationCreator', () => {
     let searchUrl = '';
     let createPayload: Record<string, unknown> = {};
     server.use(
-      http.get('*/api/userprofiles/search', ({ request }) => {
+      http.get('*/api/userprofiles/search/range/ascending', ({ request }) => {
         searchUrl = request.url;
         return HttpResponse.json({
-          userProfiles: [
+          items: [
             createUserProfile({
               id: currentUserId,
               firstName: 'Current',
@@ -118,6 +169,8 @@ describe('ConversationCreator', () => {
             }),
             createUserProfile({ firstName: null, lastName: null, friendlyUserId: 'quiet.user' }),
           ],
+          nextCursor: null,
+          hasMore: false,
         });
       }),
       http.put('*/api/conversations/duet', async ({ request }) => {
@@ -157,9 +210,9 @@ describe('ConversationCreator', () => {
   it('selects, toggles, removes, and submits group members', async () => {
     let createPayload: Record<string, unknown> = {};
     server.use(
-      http.get('*/api/userprofiles/search', () =>
+      http.get('*/api/userprofiles/search/range/ascending', () =>
         HttpResponse.json({
-          userProfiles: [
+          items: [
             createUserProfile(),
             createUserProfile({
               id: secondPartnerUserId,
@@ -168,6 +221,8 @@ describe('ConversationCreator', () => {
               friendlyUserId: 'sam.lee',
             }),
           ],
+          nextCursor: null,
+          hasMore: false,
         }),
       ),
       http.post('*/api/conversations/group', async ({ request }) => {
@@ -219,7 +274,9 @@ describe('ConversationCreator', () => {
 
   it('shows an empty search result', async () => {
     server.use(
-      http.get('*/api/userprofiles/search', () => HttpResponse.json({ userProfiles: [] })),
+      http.get('*/api/userprofiles/search/range/ascending', () =>
+        HttpResponse.json({ items: [], nextCursor: null, hasMore: false }),
+      ),
     );
     const user = await renderCreator('duet');
 
@@ -231,11 +288,15 @@ describe('ConversationCreator', () => {
   it('shows a search error and retries the request', async () => {
     let requestCount = 0;
     server.use(
-      http.get('*/api/userprofiles/search', () => {
+      http.get('*/api/userprofiles/search/range/ascending', () => {
         requestCount += 1;
         return requestCount === 1
           ? HttpResponse.json({ detail: 'Search service is unavailable.' }, { status: 503 })
-          : HttpResponse.json({ userProfiles: [createUserProfile()] });
+          : HttpResponse.json({
+              items: [createUserProfile()],
+              nextCursor: null,
+              hasMore: false,
+            });
       }),
     );
     const user = await renderCreator('duet');
@@ -249,10 +310,204 @@ describe('ConversationCreator', () => {
     expect(requestCount).toBe(2);
   });
 
+  it('loads and appends another page when the sentinel becomes visible', async () => {
+    const requestUrls: string[] = [];
+    server.use(
+      http.get('*/api/userprofiles/search/range/ascending', ({ request }) => {
+        requestUrls.push(request.url);
+        const cursor = new URL(request.url).searchParams.get('cursor');
+
+        return cursor
+          ? HttpResponse.json({
+              items: [
+                createUserProfile({
+                  id: secondPartnerUserId,
+                  firstName: 'Sam',
+                  lastName: 'Lee',
+                  friendlyUserId: 'sam.lee',
+                }),
+              ],
+              nextCursor: null,
+              hasMore: false,
+            })
+          : HttpResponse.json({
+              items: [createUserProfile()],
+              nextCursor: 'alex.morgan',
+              hasMore: true,
+            });
+      }),
+    );
+    const user = await renderCreator('group');
+
+    await user.type(screen.getByLabelText('First name'), 'A');
+    expect(await screen.findByRole('button', { name: /Alex Morgan/i })).toBeInTheDocument();
+
+    triggerIntersection();
+
+    expect(await screen.findByRole('button', { name: /Sam Lee/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Alex Morgan/i })).toBeInTheDocument();
+    expect(new URL(requestUrls[1] ?? '').searchParams.get('cursor')).toBe('alex.morgan');
+
+    triggerIntersection();
+    await waitFor(() => expect(requestUrls).toHaveLength(2));
+  });
+
+  it('continues loading when a page only contains the current user', async () => {
+    setCurrentUser();
+    server.use(
+      http.get('*/api/userprofiles/search/range/ascending', ({ request }) => {
+        const cursor = new URL(request.url).searchParams.get('cursor');
+        return cursor
+          ? HttpResponse.json({
+              items: [createUserProfile()],
+              nextCursor: null,
+              hasMore: false,
+            })
+          : HttpResponse.json({
+              items: [
+                createUserProfile({
+                  id: currentUserId,
+                  firstName: 'Current',
+                  lastName: 'User',
+                  friendlyUserId: 'current.user',
+                }),
+              ],
+              nextCursor: 'current.user',
+              hasMore: true,
+            });
+      }),
+    );
+    const user = await renderCreator('duet');
+
+    await user.type(screen.getByLabelText('First name'), 'A');
+    await waitFor(() => expect(intersectionObservers.some((observer) => observer.root)).toBe(true));
+    triggerIntersection();
+
+    expect(await screen.findByRole('button', { name: /Alex Morgan/i })).toBeInTheDocument();
+    expect(screen.queryByText('Current User')).not.toBeInTheDocument();
+  });
+
+  it('keeps loaded users visible and retries after loading another page fails', async () => {
+    let nextPageRequestCount = 0;
+    server.use(
+      http.get('*/api/userprofiles/search/range/ascending', ({ request }) => {
+        const cursor = new URL(request.url).searchParams.get('cursor');
+        if (!cursor) {
+          return HttpResponse.json({
+            items: [createUserProfile()],
+            nextCursor: 'alex.morgan',
+            hasMore: true,
+          });
+        }
+
+        nextPageRequestCount += 1;
+        return nextPageRequestCount === 1
+          ? HttpResponse.json({ detail: 'Unable to load more users.' }, { status: 503 })
+          : HttpResponse.json({
+              items: [
+                createUserProfile({
+                  id: secondPartnerUserId,
+                  firstName: 'Sam',
+                  lastName: 'Lee',
+                  friendlyUserId: 'sam.lee',
+                }),
+              ],
+              nextCursor: null,
+              hasMore: false,
+            });
+      }),
+    );
+    const user = await renderCreator('group');
+
+    await user.type(screen.getByLabelText('First name'), 'A');
+    expect(await screen.findByRole('button', { name: /Alex Morgan/i })).toBeInTheDocument();
+    triggerIntersection();
+
+    expect(await screen.findByText('Unable to load more users.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Alex Morgan/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(await screen.findByRole('button', { name: /Sam Lee/i })).toBeInTheDocument();
+    expect(nextPageRequestCount).toBe(2);
+  });
+
+  it('resets pages and ignores a stale page when criteria change', async () => {
+    let markNextPageRequestStarted: (() => void) | undefined;
+    let releaseNextPageRequest: (() => void) | undefined;
+    const nextPageRequestStarted = new Promise<void>((resolve) => {
+      markNextPageRequestStarted = resolve;
+    });
+    server.use(
+      http.get('*/api/userprofiles/search/range/ascending', async ({ request }) => {
+        const searchParams = new URL(request.url).searchParams;
+        const cursor = searchParams.get('cursor');
+        const firstName = searchParams.get('firstName');
+
+        if (cursor) {
+          markNextPageRequestStarted?.();
+          await new Promise<void>((resolve) => {
+            releaseNextPageRequest = resolve;
+          });
+          return HttpResponse.json({
+            items: [
+              createUserProfile({
+                id: '34c11faa-8bd7-4608-abcf-26985f3f62be',
+                firstName: 'Stale',
+                lastName: 'Result',
+                friendlyUserId: 'stale.result',
+              }),
+            ],
+            nextCursor: null,
+            hasMore: false,
+          });
+        }
+
+        return firstName === 'Sam'
+          ? HttpResponse.json({
+              items: [
+                createUserProfile({
+                  id: secondPartnerUserId,
+                  firstName: 'Sam',
+                  lastName: 'Lee',
+                  friendlyUserId: 'sam.lee',
+                }),
+              ],
+              nextCursor: null,
+              hasMore: false,
+            })
+          : HttpResponse.json({
+              items: [createUserProfile()],
+              nextCursor: 'alex.morgan',
+              hasMore: true,
+            });
+      }),
+    );
+    const user = await renderCreator('group');
+    const firstNameInput = screen.getByLabelText('First name');
+
+    await user.type(firstNameInput, 'Alex');
+    expect(await screen.findByRole('button', { name: /Alex Morgan/i })).toBeInTheDocument();
+    triggerIntersection();
+    await nextPageRequestStarted;
+
+    await user.clear(firstNameInput);
+    await user.type(firstNameInput, 'Sam');
+
+    expect(await screen.findByRole('button', { name: /Sam Lee/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Alex Morgan/i })).not.toBeInTheDocument();
+    releaseNextPageRequest?.();
+    await new Promise((resolve) => window.setTimeout(resolve, 50));
+    expect(screen.queryByRole('button', { name: /Stale Result/i })).not.toBeInTheDocument();
+  });
+
   it('keeps the duet creator open when creation fails', async () => {
     server.use(
-      http.get('*/api/userprofiles/search', () =>
-        HttpResponse.json({ userProfiles: [createUserProfile()] }),
+      http.get('*/api/userprofiles/search/range/ascending', () =>
+        HttpResponse.json({
+          items: [createUserProfile()],
+          nextCursor: null,
+          hasMore: false,
+        }),
       ),
       http.put('*/api/conversations/duet', () =>
         HttpResponse.json({ detail: 'Unable to create this duet.' }, { status: 409 }),

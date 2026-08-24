@@ -1,4 +1,4 @@
-import { queryOptions, useQuery } from '@tanstack/react-query';
+import { infiniteQueryOptions, useInfiniteQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { api } from '@/lib/api-client';
@@ -24,23 +24,6 @@ export const searchUserProfilesInputSchema = z
     message: 'Enter at least one search criterion.',
   });
 
-const emailSchema = z.object({
-  id: z.guid(),
-  address: z.string(),
-  isMain: z.boolean(),
-  isAuth: z.boolean(),
-  isConfirmed: z.boolean(),
-  isVisible: z.boolean(),
-});
-
-const phoneSchema = z.object({
-  id: z.guid(),
-  number: z.string(),
-  isMain: z.boolean(),
-  isConfirmed: z.boolean(),
-  isVisible: z.boolean(),
-});
-
 const userProfileSchema = z.object({
   id: z.guid(),
   friendlyUserId: z.string(),
@@ -48,16 +31,20 @@ const userProfileSchema = z.object({
   lastName: z.string().nullable(),
   organization: z.string().nullable(),
   avatarUrl: z.string().nullable(),
-  bio: z.string().nullable(),
-  isActive: z.boolean(),
-  lastSeenAtUtc: z.iso.datetime({ offset: true }).nullable(),
-  emails: z.array(emailSchema),
-  phones: z.array(phoneSchema),
 });
 
 const searchUserProfilesResponseSchema = z.object({
-  userProfiles: z.array(userProfileSchema),
+  items: z.array(userProfileSchema),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
 });
+
+const searchUserProfilesPageParamsSchema = z.object({
+  cursor: z.string().nullable(),
+  limit: z.literal(20),
+});
+
+const searchUserProfilesPageSize = 20;
 
 export type SearchUserProfilesInput = z.input<typeof searchUserProfilesInputSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
@@ -65,10 +52,20 @@ export type SearchUserProfilesResponse = z.infer<typeof searchUserProfilesRespon
 
 export async function searchUserProfiles(
   input: SearchUserProfilesInput,
+  cursor: string | null = null,
   signal?: AbortSignal,
 ): Promise<SearchUserProfilesResponse> {
-  const params = searchUserProfilesInputSchema.parse(input);
-  const response = await api.get('/api/userprofiles/search', { params, signal });
+  const criteria = searchUserProfilesInputSchema.parse(input);
+  const pageParams = searchUserProfilesPageParamsSchema.parse({
+    cursor,
+    limit: searchUserProfilesPageSize,
+  });
+  const params = {
+    ...criteria,
+    ...(pageParams.cursor ? { cursor: pageParams.cursor } : {}),
+    limit: pageParams.limit,
+  };
+  const response = await api.get('/api/userprofiles/search/range/ascending', { params, signal });
 
   return searchUserProfilesResponseSchema.parse(response.data);
 }
@@ -76,9 +73,19 @@ export async function searchUserProfiles(
 export function searchUserProfilesQueryOptions(input: SearchUserProfilesInput) {
   const criteria = searchUserProfilesInputSchema.parse(input);
 
-  return queryOptions({
-    queryKey: ['user-profiles', 'search', criteria],
-    queryFn: ({ signal }) => searchUserProfiles(criteria, signal),
+  return infiniteQueryOptions({
+    queryKey: [
+      'user-profiles',
+      'search',
+      'range',
+      'ascending',
+      criteria,
+      searchUserProfilesPageSize,
+    ],
+    queryFn: ({ pageParam, signal }) => searchUserProfiles(criteria, pageParam, signal),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore && lastPage.nextCursor ? lastPage.nextCursor : undefined,
   });
 }
 
@@ -88,7 +95,7 @@ type UseSearchUserProfilesOptions = {
 };
 
 export function useSearchUserProfiles({ input, queryConfig }: UseSearchUserProfilesOptions) {
-  return useQuery({
+  return useInfiniteQuery({
     ...searchUserProfilesQueryOptions(input),
     ...queryConfig,
   });

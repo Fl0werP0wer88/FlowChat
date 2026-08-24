@@ -5,49 +5,29 @@ import { server } from '@/testing/mocks/server';
 import { searchUserProfiles, searchUserProfilesInputSchema } from '../search-user-profile';
 
 const userId = '00000000-0000-0000-0000-000000000034';
-const emailId = '30c3cd3b-69d8-4af3-b1a7-f9174537fb97';
-const phoneId = '50c3cd3b-69d8-4af3-b1a7-f9174537fb97';
+
+function createUserProfile() {
+  return {
+    id: userId,
+    friendlyUserId: 'alex.morgan',
+    firstName: 'Alex',
+    lastName: 'Morgan',
+    organization: null,
+    avatarUrl: null,
+  };
+}
 
 describe('search user profiles API', () => {
   it('normalizes criteria and validates the response', async () => {
     let requestUrl = '';
     server.use(
-      http.get('*/api/userprofiles/search', ({ request }) => {
+      http.get('*/api/userprofiles/search/range/ascending', ({ request }) => {
         requestUrl = request.url;
 
         return HttpResponse.json({
-          userProfiles: [
-            {
-              id: userId,
-              friendlyUserId: 'alex.morgan',
-              firstName: 'Alex',
-              lastName: 'Morgan',
-              organization: null,
-              avatarUrl: null,
-              bio: null,
-              isActive: true,
-              lastSeenAtUtc: '2026-08-23T18:30:00+00:00',
-              emails: [
-                {
-                  id: emailId,
-                  address: 'alex@example.com',
-                  isMain: true,
-                  isAuth: true,
-                  isConfirmed: true,
-                  isVisible: true,
-                },
-              ],
-              phones: [
-                {
-                  id: phoneId,
-                  number: '+48123456789',
-                  isMain: true,
-                  isConfirmed: true,
-                  isVisible: false,
-                },
-              ],
-            },
-          ],
+          items: [createUserProfile()],
+          nextCursor: 'alex.morgan',
+          hasMore: true,
         });
       }),
     );
@@ -60,10 +40,26 @@ describe('search user profiles API', () => {
     const searchParams = new URL(requestUrl).searchParams;
     expect(searchParams.get('firstName')).toBe('Alex');
     expect(searchParams.has('lastName')).toBe(false);
-    expect(result.userProfiles[0]).toMatchObject({
+    expect(searchParams.get('limit')).toBe('20');
+    expect(searchParams.has('cursor')).toBe(false);
+    expect(result.items[0]).toMatchObject({
       id: userId,
       friendlyUserId: 'alex.morgan',
     });
+  });
+
+  it('sends the cursor when loading another page', async () => {
+    let requestUrl = '';
+    server.use(
+      http.get('*/api/userprofiles/search/range/ascending', ({ request }) => {
+        requestUrl = request.url;
+        return HttpResponse.json({ items: [], nextCursor: null, hasMore: false });
+      }),
+    );
+
+    await searchUserProfiles({ organization: 'FlowChat' }, 'alex.morgan');
+
+    expect(new URL(requestUrl).searchParams.get('cursor')).toBe('alex.morgan');
   });
 
   it('requires at least one non-empty search criterion', () => {
@@ -72,10 +68,29 @@ describe('search user profiles API', () => {
     );
   });
 
+  it('cancels an in-flight request through AbortSignal', async () => {
+    server.use(
+      http.get('*/api/userprofiles/search/range/ascending', async () => {
+        await new Promise((resolve) => window.setTimeout(resolve, 1_000));
+        return HttpResponse.json({ items: [], nextCursor: null, hasMore: false });
+      }),
+    );
+    const abortController = new AbortController();
+
+    const request = searchUserProfiles({ organization: 'FlowChat' }, null, abortController.signal);
+    abortController.abort();
+
+    await expect(request).rejects.toBeDefined();
+  });
+
   it('rejects an invalid success response', async () => {
     server.use(
-      http.get('*/api/userprofiles/search', () =>
-        HttpResponse.json({ userProfiles: [{ id: 'not-a-guid' }] }),
+      http.get('*/api/userprofiles/search/range/ascending', () =>
+        HttpResponse.json({
+          items: [{ ...createUserProfile(), id: 'not-a-guid' }],
+          nextCursor: null,
+          hasMore: false,
+        }),
       ),
     );
 
