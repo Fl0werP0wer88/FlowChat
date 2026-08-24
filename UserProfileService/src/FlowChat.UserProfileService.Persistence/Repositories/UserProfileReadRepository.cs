@@ -59,25 +59,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : ReadRepo
         string? organization,
         CancellationToken cancellationToken = default)
     {
-        var query = Query();
-
-        if (!string.IsNullOrWhiteSpace(firstName))
-        {
-            var firstNamePattern = $"{firstName}%";
-            query = query.Where(entity => entity.FirstName != null && EF.Functions.Like(entity.FirstName, firstNamePattern));
-        }
-
-        if (!string.IsNullOrWhiteSpace(lastName))
-        {
-            var lastNamePattern = $"{lastName}%";
-            query = query.Where(entity => entity.LastName != null && EF.Functions.Like(entity.LastName, lastNamePattern));
-        }
-
-        if (!string.IsNullOrWhiteSpace(organization))
-        {
-            var organizationPattern = $"{organization}%";
-            query = query.Where(entity => entity.Organization != null && EF.Functions.Like(entity.Organization, organizationPattern));
-        }
+        var query = ApplySearchFilters(Query(), firstName, lastName, organization);
 
         var entities = await query
             .OrderBy(entity => entity.LastName ?? string.Empty)
@@ -86,6 +68,34 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : ReadRepo
             .ToListAsync(cancellationToken);
 
         return await MapToDtosAsync(entities, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<UserProfileSearchResultDto>> SearchRangeAscendingAsync(
+        string? firstName,
+        string? lastName,
+        string? organization,
+        string? cursor,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        var query = ApplySearchFilters(Query(), firstName, lastName, organization);
+
+        if (!string.IsNullOrWhiteSpace(cursor))
+        {
+            query = query.Where(entity => string.Compare(entity.UserName, cursor) > 0);
+        }
+
+        return await query
+            .OrderBy(entity => entity.UserName)
+            .Take(limit)
+            .Select(entity => new UserProfileSearchResultDto(
+                entity.Id,
+                entity.UserName,
+                entity.FirstName,
+                entity.LastName,
+                entity.Organization,
+                entity.AvatarUrl))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<UserProfileDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -144,6 +154,36 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : ReadRepo
     private IQueryable<UserProfileReadEntity> Query()
     {
         return Active(dbContext.UserProfileReads);
+    }
+
+    private static IQueryable<UserProfileReadEntity> ApplySearchFilters(
+        IQueryable<UserProfileReadEntity> query,
+        string? firstName,
+        string? lastName,
+        string? organization)
+    {
+        if (!string.IsNullOrWhiteSpace(firstName))
+        {
+            var firstNamePattern = $"{firstName}%";
+            query = query.Where(entity =>
+                entity.FirstName != null && EF.Functions.Like(entity.FirstName, firstNamePattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(lastName))
+        {
+            var lastNamePattern = $"{lastName}%";
+            query = query.Where(entity =>
+                entity.LastName != null && EF.Functions.Like(entity.LastName, lastNamePattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(organization))
+        {
+            var organizationPattern = $"{organization}%";
+            query = query.Where(entity =>
+                entity.Organization != null && EF.Functions.Like(entity.Organization, organizationPattern));
+        }
+
+        return query;
     }
 
     private async Task<IReadOnlyList<UserProfileDto>> MapToDtosAsync(

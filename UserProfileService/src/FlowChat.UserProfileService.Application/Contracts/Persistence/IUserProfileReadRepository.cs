@@ -13,6 +13,13 @@ public interface IUserProfileReadRepository : IReadRepository<UserProfileDto>
         string? lastName,
         string? organization,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UserProfileSearchResultDto>> SearchRangeAscendingAsync(
+        string? firstName,
+        string? lastName,
+        string? organization,
+        string? cursor,
+        int limit,
+        CancellationToken cancellationToken = default);
     Task<UserProfileDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<UserProfileDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default);
     Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default);
