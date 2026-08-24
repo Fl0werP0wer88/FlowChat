@@ -100,7 +100,7 @@ function ActiveConversationCreator({
       </div>
 
       {isGroup ? (
-        <div className="px-5 pt-5 sm:px-6">
+        <div className="border-b border-slate-200 px-5 pt-5 pb-3 sm:px-6">
           <div className="grid gap-1.5">
             <label className="text-sm font-semibold text-slate-800" htmlFor="group-name">
               Group name
