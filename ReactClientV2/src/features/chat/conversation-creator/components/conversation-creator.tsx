@@ -1,9 +1,10 @@
-import { ArrowLeft, UsersRound } from 'lucide-react';
+import { UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { useChatContext } from '@/features/chat/context/use-chat-context';
+import { ShowConversationsButton } from '@/features/chat/navigation/show-conversations-button';
 import { toApiError } from '@/lib/api-error';
 
 import { useCreateDuet } from '../api/create-duet';
@@ -78,16 +79,7 @@ function ActiveConversationCreator({
       aria-labelledby="conversation-creator-heading"
     >
       <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
-        <Button
-          className="-ml-3 mb-4 px-3"
-          type="button"
-          variant="ghost"
-          disabled={isCreating}
-          onClick={showConversations}
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          Back
-        </Button>
+        <ShowConversationsButton disabled={isCreating} />
         <p className="m-0 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-blue-700">
           New conversation
         </p>
