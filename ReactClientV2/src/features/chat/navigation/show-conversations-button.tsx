@@ -1,10 +1,10 @@
 import { ArrowLeft } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { useChatContext } from '@/features/chat/context/use-chat-context';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 
 export function ShowConversationsButton({ disabled }: { disabled?: boolean }) {
-  const { showConversations } = useChatContext();
+  const { showConversations } = useNavigationContext();
 
   return (
     <Button

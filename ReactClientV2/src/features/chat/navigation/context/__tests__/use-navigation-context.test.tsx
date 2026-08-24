@@ -1,10 +1,10 @@
 import { renderHook, renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
-import { ChatContextProvider } from '../chat-context-provider';
-import { useChatContext } from '../use-chat-context';
+import { NavigationContextProvider } from '../navigation-context-provider';
+import { useNavigationContext } from '../use-navigation-context';
 
-function ChatContextProbe() {
-  const { activeView, showConversationCreator, showConversations } = useChatContext();
+function NavigationContextProbe() {
+  const { activeView, showConversationCreator, showConversations } = useNavigationContext();
 
   return (
     <>
@@ -22,10 +22,10 @@ function ChatContextProbe() {
   );
 }
 
-describe('useChatContext', () => {
-  it('throws a clear error outside ChatContextProvider', () => {
-    expect(() => renderHook(() => useChatContext())).toThrow(
-      'useChatContext must be used within ChatContextProvider.',
+describe('useNavigationContext', () => {
+  it('throws a clear error outside NavigationContextProvider', () => {
+    expect(() => renderHook(() => useNavigationContext())).toThrow(
+      'useNavigationContext must be used within NavigationContextProvider.',
     );
   });
 
@@ -33,9 +33,9 @@ describe('useChatContext', () => {
     const user = userEvent.setup();
 
     renderWithProviders(
-      <ChatContextProvider>
-        <ChatContextProbe />
-      </ChatContextProvider>,
+      <NavigationContextProvider>
+        <NavigationContextProbe />
+      </NavigationContextProvider>,
     );
 
     expect(

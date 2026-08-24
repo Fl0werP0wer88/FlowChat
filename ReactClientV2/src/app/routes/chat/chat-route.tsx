@@ -2,25 +2,25 @@ import { MessageCircleMore } from 'lucide-react';
 
 import { AppHeader } from '@/components/layouts/app-header';
 import { AppLayout } from '@/components/layouts/app-layout';
-import type { ChatMainWindowState } from '@/features/chat/context/chat-context';
-import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
-import { useChatContext } from '@/features/chat/context/use-chat-context';
 import { ConversationCreator } from '@/features/chat/conversation-creator/components/conversation-creator';
 import { Conversations } from '@/features/chat/conversations/components/conversations';
+import type { NavigationMainWindowState } from '@/features/chat/navigation/context/navigation-context';
+import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
 export function Component() {
   useDocumentTitle('Chat');
 
   return (
-    <ChatContextProvider>
+    <NavigationContextProvider>
       <ChatPage />
-    </ChatContextProvider>
+    </NavigationContextProvider>
   );
 }
 
 function ChatPage() {
-  const { activeView } = useChatContext();
+  const { activeView } = useNavigationContext();
 
   return (
     <AppLayout
@@ -35,7 +35,7 @@ function ChatPage() {
   );
 }
 
-function ChatMainWindow({ state }: { state: ChatMainWindowState }) {
+function ChatMainWindow({ state }: { state: NavigationMainWindowState }) {
   switch (state.view) {
     case 'conversationSelection':
       return (

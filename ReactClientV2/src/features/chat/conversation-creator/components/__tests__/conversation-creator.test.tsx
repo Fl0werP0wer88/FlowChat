@@ -1,14 +1,17 @@
 import { http, HttpResponse } from 'msw';
 
-import type { ChatSidebarState } from '@/features/chat/context/chat-context';
-import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
-import { useChatContext } from '@/features/chat/context/use-chat-context';
+import type { NavigationSidebarState } from '@/features/chat/navigation/context/navigation-context';
+import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent, waitFor } from '@/testing/test-utils';
 
 import { ConversationCreator } from '../conversation-creator';
 
-type CreatorType = Extract<ChatSidebarState, { view: 'conversationCreator' }>['conversationType'];
+type CreatorType = Extract<
+  NavigationSidebarState,
+  { view: 'conversationCreator' }
+>['conversationType'];
 
 const partnerUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
 const secondPartnerUserId = '24c11faa-8bd7-4608-abcf-26985f3f62be';
@@ -36,7 +39,7 @@ function createUserProfile({
 }
 
 function ConversationCreatorHarness({ creatorType }: { creatorType: CreatorType }) {
-  const { activeView, showConversationCreator } = useChatContext();
+  const { activeView, showConversationCreator } = useNavigationContext();
 
   return activeView.sidebar.view === 'conversationCreator' ? (
     <ConversationCreator />
@@ -51,9 +54,9 @@ async function renderCreator(creatorType: CreatorType) {
   const user = userEvent.setup();
 
   renderWithProviders(
-    <ChatContextProvider>
+    <NavigationContextProvider>
       <ConversationCreatorHarness creatorType={creatorType} />
-    </ChatContextProvider>,
+    </NavigationContextProvider>,
   );
 
   await user.click(screen.getByRole('button', { name: 'Open creator' }));

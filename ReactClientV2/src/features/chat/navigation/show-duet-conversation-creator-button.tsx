@@ -1,10 +1,10 @@
 import { UserPlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { useChatContext } from '@/features/chat/context/use-chat-context';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 
 export function ShowDuetConversationCreatorButton() {
-  const { showConversationCreator } = useChatContext();
+  const { showConversationCreator } = useNavigationContext();
 
   return (
     <Button className="w-full" type="button" onClick={() => showConversationCreator('duet')}>

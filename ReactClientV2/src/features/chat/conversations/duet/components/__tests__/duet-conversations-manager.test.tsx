@@ -1,14 +1,14 @@
 import { http, HttpResponse } from 'msw';
 
-import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
-import { useChatContext } from '@/features/chat/context/use-chat-context';
+import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
 import { DuetConversationsManager } from '../duet-conversations-manager';
 
 function SidebarViewProbe() {
-  const { activeView } = useChatContext();
+  const { activeView } = useNavigationContext();
 
   return (
     <output>
@@ -48,10 +48,10 @@ describe('DuetConversationsManager', () => {
     const user = userEvent.setup();
 
     renderWithProviders(
-      <ChatContextProvider>
+      <NavigationContextProvider>
         <DuetConversationsManager />
         <SidebarViewProbe />
-      </ChatContextProvider>,
+      </NavigationContextProvider>,
     );
 
     expect(await screen.findByText('Alex Morgan')).toBeInTheDocument();

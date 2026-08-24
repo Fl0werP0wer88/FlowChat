@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { useChatContext } from '@/features/chat/context/use-chat-context';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { ShowConversationsButton } from '@/features/chat/navigation/show-conversations-button';
 import { toApiError } from '@/lib/api-error';
 
@@ -142,7 +142,7 @@ function ActiveConversationCreator({
 }
 
 export function ConversationCreator() {
-  const { activeView, showConversations } = useChatContext();
+  const { activeView, showConversations } = useNavigationContext();
 
   if (activeView.sidebar.view !== 'conversationCreator') return null;
 

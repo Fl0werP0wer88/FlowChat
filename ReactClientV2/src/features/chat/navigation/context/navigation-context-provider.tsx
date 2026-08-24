@@ -1,32 +1,32 @@
 import { useMemo, useReducer, type ReactNode } from 'react';
 
 import {
-  ChatContext,
-  type ChatContextValue,
-  type ChatSidebarState,
-  type ChatViewState,
-} from './chat-context';
+  NavigationContext,
+  type NavigationContextValue,
+  type NavigationSidebarState,
+  type NavigationState,
+} from './navigation-context';
 
-interface ChatContextProviderProps {
+interface NavigationContextProviderProps {
   children: ReactNode;
 }
 
-type ChatViewAction =
+type NavigationAction =
   | {
       type: 'showConversationCreator';
       conversationType: Extract<
-        ChatSidebarState,
+        NavigationSidebarState,
         { view: 'conversationCreator' }
       >['conversationType'];
     }
   | { type: 'showConversations' };
 
-const initialChatViewState: ChatViewState = {
+const initialNavigationState: NavigationState = {
   sidebar: { view: 'conversations' },
   mainWindow: { view: 'conversationSelection' },
 };
 
-function chatViewReducer(state: ChatViewState, action: ChatViewAction): ChatViewState {
+function navigationReducer(state: NavigationState, action: NavigationAction): NavigationState {
   switch (action.type) {
     case 'showConversationCreator':
       return {
@@ -41,9 +41,9 @@ function chatViewReducer(state: ChatViewState, action: ChatViewAction): ChatView
   }
 }
 
-export function ChatContextProvider({ children }: ChatContextProviderProps) {
-  const [activeView, dispatch] = useReducer(chatViewReducer, initialChatViewState);
-  const value = useMemo<ChatContextValue>(
+export function NavigationContextProvider({ children }: NavigationContextProviderProps) {
+  const [activeView, dispatch] = useReducer(navigationReducer, initialNavigationState);
+  const value = useMemo<NavigationContextValue>(
     () => ({
       activeView,
       showConversationCreator: (conversationType) =>
@@ -53,5 +53,5 @@ export function ChatContextProvider({ children }: ChatContextProviderProps) {
     [activeView],
   );
 
-  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+  return <NavigationContext.Provider value={value}>{children}</NavigationContext.Provider>;
 }

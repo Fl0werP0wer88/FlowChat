@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
+import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
@@ -52,9 +52,9 @@ describe('Conversations', () => {
     const user = userEvent.setup();
 
     renderWithProviders(
-      <ChatContextProvider>
+      <NavigationContextProvider>
         <Conversations />
-      </ChatContextProvider>,
+      </NavigationContextProvider>,
     );
 
     expect(screen.getByRole('region', { name: 'Conversations' })).toBeInTheDocument();

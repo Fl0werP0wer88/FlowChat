@@ -1,14 +1,14 @@
 import { http, HttpResponse } from 'msw';
 
-import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
-import { useChatContext } from '@/features/chat/context/use-chat-context';
+import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
 import { GroupConversationsManager } from '../group-conversations-manager';
 
 function CreatorStateProbe() {
-  const { activeView } = useChatContext();
+  const { activeView } = useNavigationContext();
 
   return (
     <output>
@@ -39,10 +39,10 @@ describe('GroupConversationsManager', () => {
     const user = userEvent.setup();
 
     renderWithProviders(
-      <ChatContextProvider>
+      <NavigationContextProvider>
         <GroupConversationsManager />
         <CreatorStateProbe />
-      </ChatContextProvider>,
+      </NavigationContextProvider>,
     );
 
     expect(await screen.findByText('Product team')).toBeInTheDocument();
