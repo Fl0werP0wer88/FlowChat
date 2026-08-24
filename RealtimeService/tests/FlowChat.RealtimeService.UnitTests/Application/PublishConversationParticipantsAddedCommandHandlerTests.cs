@@ -30,6 +30,8 @@ public sealed class PublishConversationParticipantsAddedCommandHandlerTests
         var participantUserId = _fixture.Create<Guid>();
         var connectionId = _fixture.Create<string>();
         const int conversationType = 2;
+        const int participantCount = 4;
+        const int membershipRevision = 7;
         var callOrder = new List<string>();
 
         _connectionRegistryMock
@@ -46,13 +48,20 @@ public sealed class PublishConversationParticipantsAddedCommandHandlerTests
                 It.Is<ConversationParticipantsAddedParam>(notification =>
                     notification.ConversationId == conversationId &&
                     notification.ConversationType == conversationType &&
+                    notification.ParticipantCount == participantCount &&
+                    notification.MembershipRevision == membershipRevision &&
                     notification.ParticipantUserIds.SequenceEqual(new[] { participantUserId })),
                 It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("dispatch"))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
-            new PublishConversationParticipantsAddedCommand(conversationId, conversationType, [participantUserId]),
+            new PublishConversationParticipantsAddedCommand(
+                conversationId,
+                conversationType,
+                [participantUserId],
+                participantCount,
+                membershipRevision),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();

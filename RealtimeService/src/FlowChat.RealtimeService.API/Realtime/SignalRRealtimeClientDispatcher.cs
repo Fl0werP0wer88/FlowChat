@@ -51,7 +51,9 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
         {
             ConversationId = notification.ConversationId,
             ConversationType = notification.ConversationType,
-            ParticipantUserIds = notification.ParticipantUserIds
+            ParticipantUserIds = notification.ParticipantUserIds,
+            ParticipantCount = notification.ParticipantCount,
+            MembershipRevision = notification.MembershipRevision
         });
 
     public Task ConversationParticipantsRemovedAsync(ConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
@@ -59,7 +61,9 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
         {
             ConversationId = notification.ConversationId,
             ConversationType = notification.ConversationType,
-            ParticipantUserIds = notification.ParticipantUserIds
+            ParticipantUserIds = notification.ParticipantUserIds,
+            ParticipantCount = notification.ParticipantCount,
+            MembershipRevision = notification.MembershipRevision
         });
 
     private static string[] GetRecipientGroups(IReadOnlyCollection<Guid> recipientUserIds) =>

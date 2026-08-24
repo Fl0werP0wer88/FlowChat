@@ -64,6 +64,8 @@ public sealed class RealtimeInstanceInternalApiClientTests
             conversationId,
             2,
             [participantUserId],
+            4,
+            7,
             [participantUserId, Guid.NewGuid()]);
         var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
         var client = new RealtimeInstanceInternalApiClient(new HttpClient(handler));
@@ -80,6 +82,8 @@ public sealed class RealtimeInstanceInternalApiClientTests
         document.RootElement.GetProperty("conversationType").GetInt32().Should().Be(2);
         document.RootElement.GetProperty("participantUserIds").EnumerateArray()
             .Select(element => element.GetGuid()).Should().Equal(participantUserId);
+        document.RootElement.GetProperty("participantCount").GetInt32().Should().Be(4);
+        document.RootElement.GetProperty("membershipRevision").GetInt32().Should().Be(7);
         document.RootElement.TryGetProperty("recipientUserIds", out _).Should().BeFalse();
     }
 
@@ -92,6 +96,8 @@ public sealed class RealtimeInstanceInternalApiClientTests
             conversationId,
             1,
             [participantUserId],
+            1,
+            8,
             [participantUserId]);
         var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
         var client = new RealtimeInstanceInternalApiClient(new HttpClient(handler));
@@ -108,5 +114,7 @@ public sealed class RealtimeInstanceInternalApiClientTests
         document.RootElement.GetProperty("conversationType").GetInt32().Should().Be(1);
         document.RootElement.GetProperty("participantUserIds").EnumerateArray()
             .Select(element => element.GetGuid()).Should().Equal(participantUserId);
+        document.RootElement.GetProperty("participantCount").GetInt32().Should().Be(1);
+        document.RootElement.GetProperty("membershipRevision").GetInt32().Should().Be(8);
     }
 }

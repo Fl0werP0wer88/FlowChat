@@ -29,6 +29,8 @@ public sealed class PublishConversationParticipantsRemovedCommandHandler(
                 request.ConversationId,
                 request.ConversationType,
                 participantUserIds,
+                request.ParticipantCount,
+                request.MembershipRevision,
                 participantUserIds),
             cancellationToken);
 

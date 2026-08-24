@@ -33,7 +33,9 @@ public sealed class PublishConversationParticipantsAddedController : ApiControll
             new PublishConversationParticipantsAddedCommand(
                 request.ConversationId,
                 request.ConversationType,
-                request.ParticipantUserIds),
+                request.ParticipantUserIds,
+                request.ParticipantCount,
+                request.MembershipRevision),
             cancellationToken);
 
         return result.IsSuccess

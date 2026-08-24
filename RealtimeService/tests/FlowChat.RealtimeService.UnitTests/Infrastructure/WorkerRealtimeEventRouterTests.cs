@@ -196,12 +196,16 @@ public sealed class WorkerRealtimeEventRouterTests
                 _fixture.Create<Guid>(),
                 2,
                 [changedUserId],
+                3,
+                7,
                 [changedUserId, existingUserId]),
             CancellationToken.None);
 
         routingUserIds.Should().BeEquivalentTo([changedUserId, existingUserId]);
         publishedParam.Should().NotBeNull();
         publishedParam!.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(changedUserId);
+        publishedParam.ParticipantCount.Should().Be(3);
+        publishedParam.MembershipRevision.Should().Be(7);
     }
 
     [Fact]
@@ -210,21 +214,39 @@ public sealed class WorkerRealtimeEventRouterTests
         var removedUserId = _fixture.Create<Guid>();
         var remainingUserId = _fixture.Create<Guid>();
         IReadOnlyCollection<Guid>? routingUserIds = null;
+        ConversationParticipantsRemovedParam? publishedParam = null;
 
         _userInstanceRoutingReaderMock
             .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .Callback<IReadOnlyCollection<Guid>, CancellationToken>((userIds, _) => routingUserIds = userIds)
-            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>());
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>
+            {
+                [remainingUserId] = ["instance-a"]
+            });
+        _addressResolverMock.Setup(x => x.Resolve("instance-a")).Returns(new Uri("http://instance-a"));
+        _internalApiClientMock
+            .Setup(x => x.PublishConversationParticipantsRemovedAsync(
+                It.IsAny<Uri>(),
+                It.IsAny<ConversationParticipantsRemovedParam>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<Uri, ConversationParticipantsRemovedParam, CancellationToken>(
+                (_, param, _) => publishedParam = param)
+            .Returns(Task.CompletedTask);
 
         await CreateRouter().RouteConversationParticipantsRemovedAsync(
             new ConversationParticipantsRemovedParam(
                 _fixture.Create<Guid>(),
                 1,
                 [removedUserId],
+                1,
+                8,
                 [removedUserId, remainingUserId]),
             CancellationToken.None);
 
         routingUserIds.Should().BeEquivalentTo([removedUserId, remainingUserId]);
+        publishedParam.Should().NotBeNull();
+        publishedParam!.ParticipantCount.Should().Be(1);
+        publishedParam.MembershipRevision.Should().Be(8);
     }
 
     private WorkerRealtimeEventRouter CreateRouter() =>

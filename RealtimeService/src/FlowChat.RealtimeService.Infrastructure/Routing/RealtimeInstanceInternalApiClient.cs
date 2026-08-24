@@ -71,7 +71,9 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
             new PublishConversationParticipantsAddedRequest(
                 notification.ConversationId,
                 notification.ConversationType,
-                notification.ParticipantUserIds),
+                notification.ParticipantUserIds,
+                notification.ParticipantCount,
+                notification.MembershipRevision),
             cancellationToken);
 
     public Task PublishConversationParticipantsRemovedAsync(
@@ -84,7 +86,9 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
             new PublishConversationParticipantsRemovedRequest(
                 notification.ConversationId,
                 notification.ConversationType,
-                notification.ParticipantUserIds),
+                notification.ParticipantUserIds,
+                notification.ParticipantCount,
+                notification.MembershipRevision),
             cancellationToken);
 
     private async Task PostAsync<TRequest>(Uri baseAddress, string path, TRequest request, CancellationToken cancellationToken)
@@ -122,10 +126,14 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
     private sealed record PublishConversationParticipantsAddedRequest(
         Guid ConversationId,
         int ConversationType,
-        IReadOnlyCollection<Guid> ParticipantUserIds);
+        IReadOnlyCollection<Guid> ParticipantUserIds,
+        int ParticipantCount,
+        int MembershipRevision);
 
     private sealed record PublishConversationParticipantsRemovedRequest(
         Guid ConversationId,
         int ConversationType,
-        IReadOnlyCollection<Guid> ParticipantUserIds);
+        IReadOnlyCollection<Guid> ParticipantUserIds,
+        int ParticipantCount,
+        int MembershipRevision);
 }

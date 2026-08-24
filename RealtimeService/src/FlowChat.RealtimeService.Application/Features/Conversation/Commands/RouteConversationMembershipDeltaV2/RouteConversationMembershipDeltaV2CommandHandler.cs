@@ -61,6 +61,10 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandler(
             .Where(item => item.Operation == OperationType.Deleted)
             .Select(item => item.ParticipantUserId)
             .ToArray();
+        var finalParticipantUserIds = currentParticipantUserIds.ToHashSet();
+        finalParticipantUserIds.UnionWith(addedParticipantUserIds);
+        finalParticipantUserIds.ExceptWith(removedParticipantUserIds);
+        var participantCount = finalParticipantUserIds.Count;
         var recipientUserIds = currentParticipantUserIds
             .Concat(addedParticipantUserIds)
             .Concat(removedParticipantUserIds)
@@ -92,6 +96,8 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandler(
                     request.ConversationId,
                     request.ConversationType,
                     addedParticipantUserIds,
+                    participantCount,
+                    request.ProjectionRevision,
                     recipientUserIds),
                 cancellationToken);
         }
@@ -103,6 +109,8 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandler(
                     request.ConversationId,
                     request.ConversationType,
                     removedParticipantUserIds,
+                    participantCount,
+                    request.ProjectionRevision,
                     recipientUserIds),
                 cancellationToken);
         }
