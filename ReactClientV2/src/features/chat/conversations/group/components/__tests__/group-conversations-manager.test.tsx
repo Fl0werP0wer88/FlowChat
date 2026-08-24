@@ -12,9 +12,9 @@ function CreatorStateProbe() {
 
   return (
     <output>
-      {activeView.view === 'conversationCreator'
-        ? `${activeView.view}:${activeView.conversationType}`
-        : activeView.view}
+      {activeView.sidebar.view === 'conversationCreator'
+        ? `${activeView.sidebar.view}:${activeView.sidebar.conversationType}`
+        : activeView.sidebar.view}
     </output>
   );
 }

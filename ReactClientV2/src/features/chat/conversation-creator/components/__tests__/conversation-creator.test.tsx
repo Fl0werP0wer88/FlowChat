@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-import type { ChatViewState } from '@/features/chat/context/chat-context';
+import type { ChatSidebarState } from '@/features/chat/context/chat-context';
 import { ChatContextProvider } from '@/features/chat/context/chat-context-provider';
 import { useChatContext } from '@/features/chat/context/use-chat-context';
 import { server } from '@/testing/mocks/server';
@@ -8,7 +8,7 @@ import { renderWithProviders, screen, userEvent, waitFor } from '@/testing/test-
 
 import { ConversationCreator } from '../conversation-creator';
 
-type CreatorType = Extract<ChatViewState, { view: 'conversationCreator' }>['conversationType'];
+type CreatorType = Extract<ChatSidebarState, { view: 'conversationCreator' }>['conversationType'];
 
 const partnerUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
 const secondPartnerUserId = '24c11faa-8bd7-4608-abcf-26985f3f62be';
@@ -38,7 +38,7 @@ function createUserProfile({
 function ConversationCreatorHarness({ creatorType }: { creatorType: CreatorType }) {
   const { activeView, showConversationCreator } = useChatContext();
 
-  return activeView.view === 'conversationCreator' ? (
+  return activeView.sidebar.view === 'conversationCreator' ? (
     <ConversationCreator />
   ) : (
     <button type="button" onClick={() => showConversationCreator(creatorType)}>

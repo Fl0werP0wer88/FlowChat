@@ -152,11 +152,11 @@ function ActiveConversationCreator({
 export function ConversationCreator() {
   const { activeView, showConversations } = useChatContext();
 
-  if (activeView.view !== 'conversationCreator') return null;
+  if (activeView.sidebar.view !== 'conversationCreator') return null;
 
   return (
     <ActiveConversationCreator
-      conversationType={activeView.conversationType}
+      conversationType={activeView.sidebar.conversationType}
       showConversations={showConversations}
     />
   );
