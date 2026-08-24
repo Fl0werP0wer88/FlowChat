@@ -9,9 +9,9 @@ import {
   type SearchUserProfilesInput,
   type UserProfile,
   useSearchUserProfiles,
-} from '../api/search-user-profile';
+} from '../../api/search-user-profile';
 
-import { ConversationSearchLoading, ConversationSearchStatus } from './conversation-search-status';
+import { UserPickerLoading, UserPickerStatus } from './user-picker-status';
 import { UserProfileAvatar } from './user-profile-avatar';
 import { getUserProfileDisplayName } from './user-profile-display';
 
@@ -19,7 +19,7 @@ interface UserSearchResultsProps {
   criteria: SearchUserProfilesInput;
   currentUserId?: string;
   selectedUserIds: ReadonlySet<string>;
-  conversationType: 'duet' | 'group';
+  mode: 'single' | 'multiple';
   disabled: boolean;
   processingUserId?: string;
   scrollContainerRef: RefObject<HTMLDivElement | null>;
@@ -30,7 +30,7 @@ export function UserSearchResults({
   criteria,
   currentUserId,
   selectedUserIds,
-  conversationType,
+  mode,
   disabled,
   processingUserId,
   scrollContainerRef,
@@ -79,7 +79,7 @@ export function UserSearchResults({
   }, [scrollContainerRef, fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage]);
 
   if (isPending) {
-    return <ConversationSearchLoading />;
+    return <UserPickerLoading />;
   }
 
   if (isError && !data) {
@@ -111,9 +111,7 @@ export function UserSearchResults({
     .filter((userProfile) => userProfile.id !== currentUserId);
 
   if (!userProfiles.length && !hasNextPage) {
-    return (
-      <ConversationSearchStatus>No users match these search criteria.</ConversationSearchStatus>
-    );
+    return <UserPickerStatus>No users match these search criteria.</UserPickerStatus>;
   }
 
   return (
@@ -137,7 +135,7 @@ export function UserSearchResults({
                   )}
                   type="button"
                   disabled={disabled}
-                  aria-pressed={conversationType === 'group' ? isSelected : undefined}
+                  aria-pressed={mode === 'multiple' ? isSelected : undefined}
                   onClick={() => onSelect(userProfile)}
                 >
                   <UserProfileAvatar userProfile={userProfile} />

@@ -1,6 +1,6 @@
 import { cn } from '@/utils/cn';
 
-import type { UserProfile } from '../api/search-user-profile';
+import type { UserProfile } from '../../api/search-user-profile';
 
 import { getUserProfileInitials } from './user-profile-display';
 

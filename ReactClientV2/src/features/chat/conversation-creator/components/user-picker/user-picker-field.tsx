@@ -1,4 +1,4 @@
-interface ConversationSearchFieldProps {
+interface UserPickerFieldProps {
   id: string;
   label: string;
   value: string;
@@ -7,14 +7,14 @@ interface ConversationSearchFieldProps {
   onChange: (value: string) => void;
 }
 
-export function ConversationSearchField({
+export function UserPickerField({
   id,
   label,
   value,
   maximumLength,
   disabled,
   onChange,
-}: ConversationSearchFieldProps) {
+}: UserPickerFieldProps) {
   return (
     <div className="grid gap-1.5">
       <label className="text-xs font-bold text-slate-700" htmlFor={id}>
