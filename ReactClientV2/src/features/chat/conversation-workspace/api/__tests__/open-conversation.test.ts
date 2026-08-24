@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { server } from '@/testing/mocks/server';
+import { createTestQueryClient } from '@/testing/test-utils';
 
 import { openDuetConversation, openDuetConversationQueryOptions } from '../open-duet-conversation';
 import {
@@ -51,9 +52,18 @@ describe('open conversation API', () => {
     );
 
     const result = await openDuetConversation({ partnerUserId });
+    const cachedResult = await createTestQueryClient().fetchQuery(
+      openDuetConversationQueryOptions({ partnerUserId }),
+    );
 
     expect(requestPayload).toEqual({ partnerUserId, knownConversationId: null });
     expect(result.messages.map((message) => message.sequenceNum)).toEqual([2, 1]);
+    expect(cachedResult.messages.map((message) => message.sequenceNum)).toEqual([1, 2]);
+    expect(cachedResult).toMatchObject({
+      lastContiguousSequenceNum: 2,
+      pendingMessagesBySequence: {},
+      syncStatus: 'idle',
+    });
     expect(openDuetConversationQueryOptions({ partnerUserId }).queryKey).toEqual([
       'conversation-workspace',
       'duet',
@@ -101,9 +111,18 @@ describe('open conversation API', () => {
     );
 
     const result = await openGroupConversation({ conversationId });
+    const cachedResult = await createTestQueryClient().fetchQuery(
+      openGroupConversationQueryOptions({ conversationId }),
+    );
 
     expect(requestPayload).toEqual({ conversationId });
     expect(result.name).toBe('Product team');
+    expect(cachedResult).toMatchObject({
+      name: 'Product team',
+      lastContiguousSequenceNum: 1,
+      pendingMessagesBySequence: {},
+      syncStatus: 'idle',
+    });
     expect(openGroupConversationQueryOptions({ conversationId }).queryKey).toEqual([
       'conversation-workspace',
       'group',

@@ -4,6 +4,11 @@ import { z } from 'zod';
 import { api } from '@/lib/api-client';
 
 import {
+  createConversationMessageBuffer,
+  type BufferedConversationSnapshot,
+} from '../cache/conversation-message-buffer';
+
+import {
   conversationMessageSchema,
   conversationParticipantSchema,
   conversationSequenceNumberSchema,
@@ -25,6 +30,8 @@ const openGroupConversationResponseSchema = z.object({
 
 export type OpenGroupConversationInput = z.infer<typeof openGroupConversationInputSchema>;
 export type OpenGroupConversationResponse = z.infer<typeof openGroupConversationResponseSchema>;
+export type OpenGroupConversationCacheEntry =
+  BufferedConversationSnapshot<OpenGroupConversationResponse>;
 
 export async function openGroupConversation(
   input: OpenGroupConversationInput,
@@ -41,7 +48,8 @@ export function openGroupConversationQueryOptions(input: OpenGroupConversationIn
 
   return queryOptions({
     queryKey: ['conversation-workspace', 'group', data.conversationId],
-    queryFn: ({ signal }) => openGroupConversation(data, signal),
+    queryFn: async ({ signal }) =>
+      createConversationMessageBuffer(await openGroupConversation(data, signal)),
   });
 }
 

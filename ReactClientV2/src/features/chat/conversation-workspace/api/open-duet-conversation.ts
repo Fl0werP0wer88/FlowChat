@@ -4,6 +4,11 @@ import { z } from 'zod';
 import { api } from '@/lib/api-client';
 
 import {
+  createConversationMessageBuffer,
+  type BufferedConversationSnapshot,
+} from '../cache/conversation-message-buffer';
+
+import {
   conversationMessageSchema,
   conversationParticipantSchema,
   conversationSequenceNumberSchema,
@@ -25,6 +30,8 @@ const openDuetConversationResponseSchema = z.object({
 
 export type OpenDuetConversationInput = z.input<typeof openDuetConversationInputSchema>;
 export type OpenDuetConversationResponse = z.infer<typeof openDuetConversationResponseSchema>;
+export type OpenDuetConversationCacheEntry =
+  BufferedConversationSnapshot<OpenDuetConversationResponse>;
 
 export async function openDuetConversation(
   input: OpenDuetConversationInput,
@@ -41,7 +48,8 @@ export function openDuetConversationQueryOptions(input: OpenDuetConversationInpu
 
   return queryOptions({
     queryKey: ['conversation-workspace', 'duet', data.partnerUserId, data.knownConversationId],
-    queryFn: ({ signal }) => openDuetConversation(data, signal),
+    queryFn: async ({ signal }) =>
+      createConversationMessageBuffer(await openDuetConversation(data, signal)),
   });
 }
 
