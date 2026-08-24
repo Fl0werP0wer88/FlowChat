@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -31,7 +31,6 @@ interface UserPickerProps {
   selectedUsers: UserProfile[];
   disabled: boolean;
   processingUserId?: string;
-  scrollContainerRef: RefObject<HTMLDivElement | null>;
   onSelect: (userProfile: UserProfile) => void;
   onRemove: (userProfileId: string) => void;
 }
@@ -41,11 +40,11 @@ export function UserPicker({
   selectedUsers,
   disabled,
   processingUserId,
-  scrollContainerRef,
   onSelect,
   onRemove,
 }: UserPickerProps) {
   const currentUserId = useAuthStore((state) => state.session?.user.id);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [criteria, setCriteria] = useState<SearchCriteria>(initialSearchCriteria);
   const [debouncedCriteria, setDebouncedCriteria] = useState<SearchUserProfilesInput | null>(null);
 
@@ -68,7 +67,7 @@ export function UserPicker({
   const selectedUserIds = new Set(selectedUsers.map((userProfile) => userProfile.id));
 
   return (
-    <>
+    <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollContainerRef}>
       <div className="grid gap-5 px-5 py-5 sm:px-6">
         {mode === 'multiple' ? (
           <SelectedUsers users={selectedUsers} disabled={disabled} onRemove={onRemove} />
@@ -130,6 +129,6 @@ export function UserPicker({
           />
         )}
       </div>
-    </>
+    </div>
   );
 }

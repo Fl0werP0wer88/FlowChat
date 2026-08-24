@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { useAuthStore } from '@/stores/auth-store';
 import { server } from '@/testing/mocks/server';
@@ -83,7 +83,6 @@ function createUserProfile({
 }
 
 function UserPickerHarness({ mode = 'single' }: { mode?: 'single' | 'multiple' }) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedUsers, setSelectedUsers] = useState<UserProfile[]>([]);
 
   const handleSelect = (userProfile: UserProfile) => {
@@ -100,20 +99,17 @@ function UserPickerHarness({ mode = 'single' }: { mode?: 'single' | 'multiple' }
   };
 
   return (
-    <div ref={scrollContainerRef}>
-      <UserPicker
-        mode={mode}
-        selectedUsers={selectedUsers}
-        disabled={false}
-        scrollContainerRef={scrollContainerRef}
-        onSelect={handleSelect}
-        onRemove={(userProfileId) =>
-          setSelectedUsers((current) =>
-            current.filter((userProfile) => userProfile.id !== userProfileId),
-          )
-        }
-      />
-    </div>
+    <UserPicker
+      mode={mode}
+      selectedUsers={selectedUsers}
+      disabled={false}
+      onSelect={handleSelect}
+      onRemove={(userProfileId) =>
+        setSelectedUsers((current) =>
+          current.filter((userProfile) => userProfile.id !== userProfileId),
+        )
+      }
+    />
   );
 }
 

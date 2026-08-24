@@ -1,5 +1,5 @@
 import { ArrowLeft, UsersRound } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,6 @@ function ActiveConversationCreator({
   const isGroup = conversationType === 'group';
   const [selectedUsers, setSelectedUsers] = useState<UserProfile[]>([]);
   const [groupName, setGroupName] = useState('');
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const duetMutation = useCreateDuet({
     mutationConfig: {
@@ -100,40 +99,37 @@ function ActiveConversationCreator({
         </h1>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollContainerRef}>
-        {isGroup ? (
-          <div className="px-5 pt-5 sm:px-6">
-            <div className="grid gap-1.5">
-              <label className="text-sm font-semibold text-slate-800" htmlFor="group-name">
-                Group name
-              </label>
-              <input
-                className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-                id="group-name"
-                disabled={isCreating}
-                onChange={(event) => setGroupName(event.target.value)}
-                placeholder="e.g. Product team"
-                type="text"
-                value={groupName}
-              />
-            </div>
+      {isGroup ? (
+        <div className="px-5 pt-5 sm:px-6">
+          <div className="grid gap-1.5">
+            <label className="text-sm font-semibold text-slate-800" htmlFor="group-name">
+              Group name
+            </label>
+            <input
+              className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
+              id="group-name"
+              disabled={isCreating}
+              onChange={(event) => setGroupName(event.target.value)}
+              placeholder="e.g. Product team"
+              type="text"
+              value={groupName}
+            />
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        <UserPicker
-          mode={isGroup ? 'multiple' : 'single'}
-          selectedUsers={selectedUsers}
-          disabled={isCreating}
-          processingUserId={processingUserId}
-          scrollContainerRef={scrollContainerRef}
-          onSelect={handleUserSelect}
-          onRemove={(userProfileId) =>
-            setSelectedUsers((current) =>
-              current.filter((userProfile) => userProfile.id !== userProfileId),
-            )
-          }
-        />
-      </div>
+      <UserPicker
+        mode={isGroup ? 'multiple' : 'single'}
+        selectedUsers={selectedUsers}
+        disabled={isCreating}
+        processingUserId={processingUserId}
+        onSelect={handleUserSelect}
+        onRemove={(userProfileId) =>
+          setSelectedUsers((current) =>
+            current.filter((userProfile) => userProfile.id !== userProfileId),
+          )
+        }
+      />
 
       {isGroup ? (
         <div className="border-t border-slate-200 bg-white/80 px-5 py-4 sm:px-6">

@@ -83,6 +83,15 @@ describe('ConversationCreator', () => {
     expect(screen.getByRole('button', { name: 'Open creator' })).toBeInTheDocument();
   });
 
+  it('keeps the group name outside the scrollable user picker', async () => {
+    await renderCreator('group');
+
+    const scrollContainer = screen.getByLabelText('First name').closest('.overflow-y-auto');
+
+    expect(scrollContainer).not.toBeNull();
+    expect(scrollContainer).not.toContainElement(screen.getByLabelText('Group name'));
+  });
+
   it('creates a duet immediately and blocks the creator while the request is pending', async () => {
     let createPayload: Record<string, unknown> = {};
     let releaseRequest: (() => void) | undefined;
