@@ -2,12 +2,12 @@ import { MessageCircleMore } from 'lucide-react';
 
 import { AppHeader } from '@/components/layouts/app-header';
 import { AppLayout } from '@/components/layouts/app-layout';
-import { ConversationCreator } from '@/features/chat/conversation-creator/components/conversation-creator';
 import type { NavigationMainWindowState } from '@/features/chat/navigation/context/navigation-context';
 import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
+import { ConversationCreator } from './components/conversation-creator/conversation-creator';
 import { ConversationsSidebar } from './components/conversations-sidebar/conversations-sidebar';
 
 export function Component() {

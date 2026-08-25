@@ -1,9 +1,8 @@
 import { X } from 'lucide-react';
 
-import type { UserProfile } from '../../api/search-user-profiles';
-
-import { UserProfileAvatar } from './user-profile-avatar';
-import { getUserProfileDisplayName } from './user-profile-display';
+import type { UserProfile } from '@/features/chat/user-profiles/api/search-user-profiles';
+import { UserProfileAvatar } from '@/features/chat/user-profiles/components/user-search-results/user-profile-avatar';
+import { getUserProfileDisplayName } from '@/features/chat/user-profiles/components/user-search-results/user-profile-display';
 
 interface SelectedUsersProps {
   users: UserProfile[];

@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { useCreateGroup } from '@/features/chat/conversations/group/api/create-group';
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import type { UserProfile } from '@/features/chat/user-profiles/api/search-user-profiles';
-import { UserPicker } from '@/features/chat/user-profiles/components/user-picker/user-picker';
 import { toApiError } from '@/lib/api-error';
 
 import { ConversationCreatorLayout } from './conversation-creator-layout';
+import { UserPicker } from './user-picker/user-picker';
 
 export function GroupConversationCreator() {
   const { showConversations } = useNavigationContext();

@@ -1,11 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { useState } from 'react';
 
+import type { UserProfile } from '@/features/chat/user-profiles/api/search-user-profiles';
 import { useAuthStore } from '@/stores/auth-store';
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent, waitFor } from '@/testing/test-utils';
 
-import type { UserProfile } from '../../../api/search-user-profiles';
 import { UserPicker } from '../user-picker';
 
 const currentUserId = '91f65d44-d175-45af-8839-d2d36e7d61f9';

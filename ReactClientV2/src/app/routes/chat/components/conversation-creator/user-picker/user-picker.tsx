@@ -1,18 +1,20 @@
 import { Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { useAuthStore } from '@/stores/auth-store';
-
 import {
   searchUserProfilesInputSchema,
   type SearchUserProfilesInput,
   type UserProfile,
-} from '../../api/search-user-profiles';
+} from '@/features/chat/user-profiles/api/search-user-profiles';
+import { UserSearchResults } from '@/features/chat/user-profiles/components/user-search-results/user-search-results';
+import {
+  UserSearchLoading,
+  UserSearchStatus,
+} from '@/features/chat/user-profiles/components/user-search-results/user-search-status';
+import { useAuthStore } from '@/stores/auth-store';
 
 import { SelectedUsers } from './selected-users';
 import { UserPickerField } from './user-picker-field';
-import { UserPickerLoading, UserPickerStatus } from './user-picker-status';
-import { UserSearchResults } from './user-search-results';
 
 type SearchCriteria = {
   firstName: string;
@@ -111,11 +113,11 @@ export function UserPicker({
 
       <div className="border-t border-slate-200 px-5 sm:px-6">
         {!hasSearchCriteria ? (
-          <UserPickerStatus>
+          <UserSearchStatus>
             Enter a first name, last name, or organization to find users.
-          </UserPickerStatus>
+          </UserSearchStatus>
         ) : !debouncedCriteria ? (
-          <UserPickerLoading />
+          <UserSearchLoading />
         ) : (
           <UserSearchResults
             criteria={debouncedCriteria}

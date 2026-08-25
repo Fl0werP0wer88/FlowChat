@@ -11,9 +11,9 @@ import {
   useSearchUserProfiles,
 } from '../../api/search-user-profiles';
 
-import { UserPickerLoading, UserPickerStatus } from './user-picker-status';
 import { UserProfileAvatar } from './user-profile-avatar';
 import { getUserProfileDisplayName } from './user-profile-display';
+import { UserSearchLoading, UserSearchStatus } from './user-search-status';
 
 interface UserSearchResultsProps {
   criteria: SearchUserProfilesInput;
@@ -79,7 +79,7 @@ export function UserSearchResults({
   }, [scrollContainerRef, fetchNextPage, hasNextPage, isFetchNextPageError, isFetchingNextPage]);
 
   if (isPending) {
-    return <UserPickerLoading />;
+    return <UserSearchLoading />;
   }
 
   if (isError && !data) {
@@ -111,7 +111,7 @@ export function UserSearchResults({
     .filter((userProfile) => userProfile.id !== currentUserId);
 
   if (!userProfiles.length && !hasNextPage) {
-    return <UserPickerStatus>No users match these search criteria.</UserPickerStatus>;
+    return <UserSearchStatus>No users match these search criteria.</UserSearchStatus>;
   }
 
   return (
