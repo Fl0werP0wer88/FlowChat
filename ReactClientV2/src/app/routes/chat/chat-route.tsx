@@ -7,7 +7,7 @@ import { NavigationContextProvider } from '@/features/chat/navigation/context/na
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
-import { ConversationCreator } from './components/conversation-creator/conversation-creator';
+import { ConversationCreatorSidebar } from './components/conversation-creator-sidebar/conversation-creator-sidebar';
 import { ConversationsSidebar } from './components/conversations-sidebar/conversations-sidebar';
 
 export function Component() {
@@ -31,7 +31,7 @@ function ChatPage() {
         activeView.sidebar.view === 'conversations' ? (
           <ConversationsSidebar />
         ) : (
-          <ConversationCreator />
+          <ConversationCreatorSidebar />
         )
       }
     >

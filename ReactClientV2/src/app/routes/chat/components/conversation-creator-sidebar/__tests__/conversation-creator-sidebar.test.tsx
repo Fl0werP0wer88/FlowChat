@@ -6,7 +6,7 @@ import { useNavigationContext } from '@/features/chat/navigation/context/use-nav
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent, waitFor } from '@/testing/test-utils';
 
-import { ConversationCreator } from '../conversation-creator';
+import { ConversationCreatorSidebar } from '../conversation-creator-sidebar';
 
 type CreatorType = Extract<
   NavigationSidebarState,
@@ -38,11 +38,11 @@ function createUserProfile({
   };
 }
 
-function ConversationCreatorHarness({ creatorType }: { creatorType: CreatorType }) {
+function ConversationCreatorSidebarHarness({ creatorType }: { creatorType: CreatorType }) {
   const { activeView, showConversationCreator } = useNavigationContext();
 
   return activeView.sidebar.view === 'conversationCreator' ? (
-    <ConversationCreator />
+    <ConversationCreatorSidebar />
   ) : (
     <button type="button" onClick={() => showConversationCreator(creatorType)}>
       Open creator
@@ -55,7 +55,7 @@ async function renderCreator(creatorType: CreatorType) {
 
   renderWithProviders(
     <NavigationContextProvider>
-      <ConversationCreatorHarness creatorType={creatorType} />
+      <ConversationCreatorSidebarHarness creatorType={creatorType} />
     </NavigationContextProvider>,
   );
 
@@ -71,7 +71,7 @@ function useSearchResults(...users: ReturnType<typeof createUserProfile>[]) {
   );
 }
 
-describe('ConversationCreator', () => {
+describe('ConversationCreatorSidebar', () => {
   it.each([
     { creatorType: 'duet' as const, heading: 'Create a duet' },
     { creatorType: 'group' as const, heading: 'Create a group' },

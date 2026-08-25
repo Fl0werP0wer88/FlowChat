@@ -3,7 +3,7 @@ import { useNavigationContext } from '@/features/chat/navigation/context/use-nav
 import { DuetConversationCreator } from './duet-conversation-creator';
 import { GroupConversationCreator } from './group-conversation-creator';
 
-export function ConversationCreator() {
+export function ConversationCreatorSidebar() {
   const { activeView } = useNavigationContext();
 
   if (activeView.sidebar.view !== 'conversationCreator') return null;
