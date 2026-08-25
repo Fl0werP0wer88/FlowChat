@@ -8,7 +8,7 @@ import { NavigationContextProvider } from '@/features/chat/navigation/context/na
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
-import { ConversationsSidebar } from './components/conversations-sidebar';
+import { ConversationsSidebar } from './components/conversations-sidebar/conversations-sidebar';
 
 export function Component() {
   useDocumentTitle('Chat');
