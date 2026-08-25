@@ -4,9 +4,9 @@ import { NavigationContextProvider } from '@/features/chat/navigation/context/na
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
-import { Conversations } from '../conversations';
+import { ConversationsSidebar } from '../conversations-sidebar';
 
-describe('Conversations', () => {
+describe('ConversationsSidebar', () => {
   it('renders duets by default and loads groups only after they are selected', async () => {
     let duetRequestCount = 0;
     let groupRequestCount = 0;
@@ -53,7 +53,7 @@ describe('Conversations', () => {
 
     renderWithProviders(
       <NavigationContextProvider>
-        <Conversations />
+        <ConversationsSidebar />
       </NavigationContextProvider>,
     );
 

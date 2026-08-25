@@ -3,11 +3,12 @@ import { MessageCircleMore } from 'lucide-react';
 import { AppHeader } from '@/components/layouts/app-header';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { ConversationCreator } from '@/features/chat/conversation-creator/components/conversation-creator';
-import { Conversations } from '@/features/chat/conversations/components/conversations';
 import type { NavigationMainWindowState } from '@/features/chat/navigation/context/navigation-context';
 import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+
+import { ConversationsSidebar } from './components/conversations-sidebar';
 
 export function Component() {
   useDocumentTitle('Chat');
@@ -27,7 +28,11 @@ function ChatPage() {
       contentLabel="Active conversation"
       header={<AppHeader />}
       sidebar={
-        activeView.sidebar.view === 'conversations' ? <Conversations /> : <ConversationCreator />
+        activeView.sidebar.view === 'conversations' ? (
+          <ConversationsSidebar />
+        ) : (
+          <ConversationCreator />
+        )
       }
     >
       <ChatMainWindow state={activeView.mainWindow} />

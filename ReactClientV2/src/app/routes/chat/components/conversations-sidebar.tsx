@@ -1,13 +1,12 @@
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-
-import { DuetConversationsManager } from '../duet/components/duet-conversations-manager';
-import { GroupConversationsManager } from '../group/components/group-conversations-manager';
+import { DuetConversationsManager } from '@/features/chat/conversations/duet/components/duet-conversations-manager';
+import { GroupConversationsManager } from '@/features/chat/conversations/group/components/group-conversations-manager';
 
 type ConversationListType = 'groups' | 'duets';
 
-export function Conversations() {
+export function ConversationsSidebar() {
   const [activeList, setActiveList] = useState<ConversationListType>('duets');
 
   return (
