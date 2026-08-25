@@ -7,7 +7,7 @@ import {
   searchUserProfilesInputSchema,
   type SearchUserProfilesInput,
   type UserProfile,
-} from '../../api/search-user-profile';
+} from '../../api/search-user-profiles';
 
 import { SelectedUsers } from './selected-users';
 import { UserPickerField } from './user-picker-field';

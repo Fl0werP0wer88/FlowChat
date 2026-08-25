@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 
-import type { UserProfile } from '../../api/search-user-profile';
+import type { UserProfile } from '../../api/search-user-profiles';
 
 import { UserProfileAvatar } from './user-profile-avatar';
 import { getUserProfileDisplayName } from './user-profile-display';

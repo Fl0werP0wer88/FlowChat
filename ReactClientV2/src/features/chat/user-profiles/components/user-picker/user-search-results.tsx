@@ -9,7 +9,7 @@ import {
   type SearchUserProfilesInput,
   type UserProfile,
   useSearchUserProfiles,
-} from '../../api/search-user-profile';
+} from '../../api/search-user-profiles';
 
 import { UserPickerLoading, UserPickerStatus } from './user-picker-status';
 import { UserProfileAvatar } from './user-profile-avatar';

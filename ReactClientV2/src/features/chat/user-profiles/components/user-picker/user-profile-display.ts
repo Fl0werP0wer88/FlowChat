@@ -1,4 +1,4 @@
-import type { UserProfile } from '../../api/search-user-profile';
+import type { UserProfile } from '../../api/search-user-profiles';
 
 export function getUserProfileDisplayName(userProfile: UserProfile) {
   const name = [userProfile.firstName, userProfile.lastName]

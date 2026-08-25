@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 import { server } from '@/testing/mocks/server';
 
-import { searchUserProfiles, searchUserProfilesInputSchema } from '../search-user-profile';
+import { searchUserProfiles, searchUserProfilesInputSchema } from '../search-user-profiles';
 
 const userId = '00000000-0000-0000-0000-000000000034';
 
