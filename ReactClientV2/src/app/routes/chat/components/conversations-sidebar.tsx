@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { DuetConversationsManager } from '@/features/chat/conversations/duet/components/duet-conversations-manager';
-import { GroupConversationsManager } from '@/features/chat/conversations/group/components/group-conversations-manager';
+
+import { DuetConversationsPanel } from './duet-conversations-panel';
+import { GroupConversationsPanel } from './group-conversations-panel';
 
 type ConversationListType = 'groups' | 'duets';
 
@@ -52,7 +53,7 @@ export function ConversationsSidebar() {
         className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"
         aria-labelledby="conversations-heading"
       >
-        {activeList === 'duets' ? <DuetConversationsManager /> : <GroupConversationsManager />}
+        {activeList === 'duets' ? <DuetConversationsPanel /> : <GroupConversationsPanel />}
       </section>
     </aside>
   );

@@ -5,7 +5,7 @@ import { useNavigationContext } from '@/features/chat/navigation/context/use-nav
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
-import { DuetConversationsManager } from '../duet-conversations-manager';
+import { DuetConversationsPanel } from '../duet-conversations-panel';
 
 function SidebarViewProbe() {
   const { activeView } = useNavigationContext();
@@ -19,7 +19,7 @@ function SidebarViewProbe() {
   );
 }
 
-describe('DuetConversationsManager', () => {
+describe('DuetConversationsPanel', () => {
   it('renders the duet action and list, then opens the creator', async () => {
     server.use(
       http.get('*/api/aggregate/conversations/duets', () =>
@@ -49,7 +49,7 @@ describe('DuetConversationsManager', () => {
 
     renderWithProviders(
       <NavigationContextProvider>
-        <DuetConversationsManager />
+        <DuetConversationsPanel />
         <SidebarViewProbe />
       </NavigationContextProvider>,
     );

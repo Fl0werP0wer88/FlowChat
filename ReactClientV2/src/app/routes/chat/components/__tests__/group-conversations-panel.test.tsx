@@ -5,7 +5,7 @@ import { useNavigationContext } from '@/features/chat/navigation/context/use-nav
 import { server } from '@/testing/mocks/server';
 import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
 
-import { GroupConversationsManager } from '../group-conversations-manager';
+import { GroupConversationsPanel } from '../group-conversations-panel';
 
 function CreatorStateProbe() {
   const { activeView } = useNavigationContext();
@@ -19,7 +19,7 @@ function CreatorStateProbe() {
   );
 }
 
-describe('GroupConversationsManager', () => {
+describe('GroupConversationsPanel', () => {
   it('renders the group action and list, then opens the group creator', async () => {
     server.use(
       http.get('*/api/conversations/group', () =>
@@ -40,7 +40,7 @@ describe('GroupConversationsManager', () => {
 
     renderWithProviders(
       <NavigationContextProvider>
-        <GroupConversationsManager />
+        <GroupConversationsPanel />
         <CreatorStateProbe />
       </NavigationContextProvider>,
     );
