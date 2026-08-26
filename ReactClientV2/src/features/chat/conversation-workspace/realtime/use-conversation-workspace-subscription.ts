@@ -12,36 +12,39 @@ import { useMessageReceivedSubscription } from './message-received/use-message-r
 import { useConversationWorkspaceReconnectedSubscription } from './reconnected/use-conversation-workspace-reconnected-subscription';
 
 export interface UseConversationWorkspaceSubscriptionOptions {
-  activeConversationId: string | null;
+  conversationId: string | null;
   queryKey: QueryKey;
   enabled: boolean;
-  synchronizeMessages: () => Promise<number | null>;
   onGroupConversationChanged?: (event: GroupConversationChangedEvent) => void;
   onParticipantsAdded?: (event: ConversationParticipantsAddedEvent) => void;
   onParticipantsRemoved?: (event: ConversationParticipantsRemovedEvent) => void;
-  onReconnected?: (conversationId: string) => void;
 }
 
 export function useConversationWorkspaceSubscription<
   TState extends ConversationMessageBufferState = ConversationMessageBufferState,
 >({
-  activeConversationId,
+  conversationId,
   queryKey,
   enabled,
-  synchronizeMessages,
   onGroupConversationChanged,
   onParticipantsAdded,
   onParticipantsRemoved,
-  onReconnected,
 }: UseConversationWorkspaceSubscriptionOptions) {
-  useMessageReceivedSubscription<TState>({
-    activeConversationId,
+  const activeConversationId = enabled ? conversationId : null;
+  const synchronizeMessages = useMessageReceivedSubscription<TState>({
+    conversationId,
     queryKey,
     enabled,
-    synchronizeMessages,
   });
   useGroupConversationChangedSubscription({ activeConversationId, onGroupConversationChanged });
   useConversationParticipantsAddedSubscription({ activeConversationId, onParticipantsAdded });
   useConversationParticipantsRemovedSubscription({ activeConversationId, onParticipantsRemoved });
-  useConversationWorkspaceReconnectedSubscription({ activeConversationId, onReconnected });
+  useConversationWorkspaceReconnectedSubscription({
+    activeConversationId,
+    onReconnected: () => {
+      void synchronizeMessages();
+    },
+  });
+
+  return synchronizeMessages;
 }

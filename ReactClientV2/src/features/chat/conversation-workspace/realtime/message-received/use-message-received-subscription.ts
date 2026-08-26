@@ -4,32 +4,35 @@ import { useEffect, useRef } from 'react';
 import { subscribeToRealtimeEvent } from '@/lib/realtime/realtime-client';
 
 import type { ConversationMessageBufferState } from '../../cache/conversation-message-buffer';
+import { useConversationMessageSync } from '../../cache/use-conversation-message-sync';
 
 import { applyMessageReceived } from './apply-message-received';
 import { parseMessageReceived } from './message-received-event';
 
 export interface UseMessageReceivedSubscriptionOptions {
-  activeConversationId: string | null;
+  conversationId: string | null;
   queryKey: QueryKey;
   enabled: boolean;
-  synchronizeMessages: () => Promise<number | null>;
 }
 
 export function useMessageReceivedSubscription<
   TState extends ConversationMessageBufferState = ConversationMessageBufferState,
 >(options: UseMessageReceivedSubscriptionOptions) {
   const queryClient = useQueryClient();
+  const synchronizeMessages = useConversationMessageSync<TState>(options);
   const optionsRef = useRef(options);
+  const synchronizeMessagesRef = useRef(synchronizeMessages);
 
   useEffect(() => {
     optionsRef.current = options;
-  }, [options]);
+    synchronizeMessagesRef.current = synchronizeMessages;
+  }, [options, synchronizeMessages]);
 
   useEffect(() => {
     const handleMessageReceived = (payload: unknown) => {
       const message = parseMessageReceived(payload);
-      const { activeConversationId, queryKey, enabled, synchronizeMessages } = optionsRef.current;
-      if (!enabled || !message || activeConversationId !== message.conversationId) return;
+      const { conversationId, queryKey, enabled } = optionsRef.current;
+      if (!enabled || !message || conversationId !== message.conversationId) return;
 
       let needsCatchUp = false;
       let requiresRefetch = false;
@@ -45,10 +48,12 @@ export function useMessageReceivedSubscription<
       if (requiresRefetch) {
         void queryClient.invalidateQueries({ queryKey, exact: true });
       } else if (needsCatchUp) {
-        void synchronizeMessages();
+        void synchronizeMessagesRef.current();
       }
     };
 
     return subscribeToRealtimeEvent('MessageReceived', handleMessageReceived);
   }, [queryClient]);
+
+  return synchronizeMessages;
 }

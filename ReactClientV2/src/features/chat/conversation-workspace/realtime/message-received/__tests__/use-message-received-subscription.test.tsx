@@ -15,8 +15,11 @@ import {
 
 const realtime = vi.hoisted(() => ({
   handler: undefined as ((payload: unknown) => void) | undefined,
+  messageSyncOptions: undefined as UseMessageReceivedSubscriptionOptions | undefined,
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
+  synchronizeMessages: vi.fn(() => Promise.resolve<number | null>(null)),
+  useMessageSync: vi.fn(),
 }));
 
 vi.mock('@/lib/realtime/realtime-client', () => ({
@@ -24,6 +27,15 @@ vi.mock('@/lib/realtime/realtime-client', () => ({
     (_eventName: string, handler: (payload: unknown) => void) => {
       realtime.handler = handler;
       return realtime.unsubscribe;
+    },
+  ),
+}));
+
+vi.mock('../../../cache/use-conversation-message-sync', () => ({
+  useConversationMessageSync: realtime.useMessageSync.mockImplementation(
+    (options: UseMessageReceivedSubscriptionOptions) => {
+      realtime.messageSyncOptions = options;
+      return realtime.synchronizeMessages;
     },
   ),
 }));
@@ -50,29 +62,18 @@ function createPayload(
 }
 
 function createState(targetConversationId = conversationId) {
-  const first = createPayload(1, targetConversationId);
-  const second = createPayload(2, targetConversationId);
-  return createConversationMessageBuffer({
-    messages: [
-      {
-        id: first.messageId,
-        conversationId: first.conversationId,
-        senderUserId: first.senderUserId,
-        text: first.text,
-        sequenceNum: first.sequenceNum,
-        sentAtUtc: first.sentAtUtc,
-      },
-      {
-        id: second.messageId,
-        conversationId: second.conversationId,
-        senderUserId: second.senderUserId,
-        text: second.text,
-        sequenceNum: second.sequenceNum,
-        sentAtUtc: second.sentAtUtc,
-      },
-    ],
-    currentSequenceNum: 2,
+  const messages = [1, 2].map((sequenceNum) => {
+    const payload = createPayload(sequenceNum, targetConversationId);
+    return {
+      id: payload.messageId,
+      conversationId: payload.conversationId,
+      senderUserId: payload.senderUserId,
+      text: payload.text,
+      sequenceNum: payload.sequenceNum,
+      sentAtUtc: payload.sentAtUtc,
+    };
   });
+  return createConversationMessageBuffer({ messages, currentSequenceNum: 2 });
 }
 
 function createWrapper(queryClient: ReturnType<typeof createTestQueryClient>) {
@@ -84,22 +85,18 @@ function createWrapper(queryClient: ReturnType<typeof createTestQueryClient>) {
 describe('useMessageReceivedSubscription', () => {
   beforeEach(() => {
     realtime.handler = undefined;
+    realtime.messageSyncOptions = undefined;
     realtime.subscribe.mockClear();
     realtime.unsubscribe.mockClear();
+    realtime.synchronizeMessages.mockClear();
+    realtime.useMessageSync.mockClear();
   });
 
-  it('updates the active cache for a valid event and unsubscribes', () => {
+  it('owns message synchronization and updates the active cache', () => {
     const queryClient = createTestQueryClient();
-    const synchronizeMessages = vi.fn(() => Promise.resolve<number | null>(null));
     queryClient.setQueryData(queryKey, createState());
-    const { unmount } = renderHook(
-      () =>
-        useMessageReceivedSubscription({
-          activeConversationId: conversationId,
-          queryKey,
-          enabled: true,
-          synchronizeMessages,
-        }),
+    const { result, unmount } = renderHook(
+      () => useMessageReceivedSubscription({ conversationId, queryKey, enabled: true }),
       { wrapper: createWrapper(queryClient) },
     );
 
@@ -109,77 +106,62 @@ describe('useMessageReceivedSubscription', () => {
       realtime.handler?.({ ...createPayload(4), sequenceNum: -1 });
     });
 
+    expect(result.current).toBe(realtime.synchronizeMessages);
+    expect(realtime.messageSyncOptions).toEqual({ conversationId, queryKey, enabled: true });
     expect(realtime.subscribe).toHaveBeenCalledWith('MessageReceived', expect.any(Function));
     expect(
       queryClient.getQueryData<ConversationMessageBufferState>(queryKey)?.lastContiguousSequenceNum,
     ).toBe(3);
-    expect(synchronizeMessages).not.toHaveBeenCalled();
+    expect(realtime.synchronizeMessages).not.toHaveBeenCalled();
     unmount();
     expect(realtime.unsubscribe).toHaveBeenCalledOnce();
   });
 
-  it('starts catch-up for a gap and invalidates the query for a conflict', () => {
+  it('starts its synchronizer for a gap and invalidates the query for a conflict', () => {
     const queryClient = createTestQueryClient();
-    const synchronizeMessages = vi.fn(() => Promise.resolve<number | null>(null));
     const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
     queryClient.setQueryData(queryKey, createState());
-    renderHook(
-      () =>
-        useMessageReceivedSubscription({
-          activeConversationId: conversationId,
-          queryKey,
-          enabled: true,
-          synchronizeMessages,
-        }),
-      { wrapper: createWrapper(queryClient) },
-    );
+    renderHook(() => useMessageReceivedSubscription({ conversationId, queryKey, enabled: true }), {
+      wrapper: createWrapper(queryClient),
+    });
 
     act(() => realtime.handler?.(createPayload(4)));
-    expect(synchronizeMessages).toHaveBeenCalledOnce();
+    expect(realtime.synchronizeMessages).toHaveBeenCalledOnce();
 
     act(() => realtime.handler?.(createPayload(2, conversationId, 99)));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey, exact: true });
   });
 
-  it('uses the latest query configuration without subscribing again', () => {
+  it('uses the latest conversation and query without subscribing again', () => {
     const queryClient = createTestQueryClient();
-    const firstSynchronize = vi.fn(() => Promise.resolve<number | null>(null));
-    const nextSynchronize = vi.fn(() => Promise.resolve<number | null>(null));
     queryClient.setQueryData(queryKey, createState());
     queryClient.setQueryData(otherQueryKey, createState(otherConversationId));
     const initialProps: UseMessageReceivedSubscriptionOptions = {
-      activeConversationId: conversationId,
+      conversationId,
       queryKey,
       enabled: true,
-      synchronizeMessages: firstSynchronize,
     };
     const { rerender } = renderHook(
       (options: UseMessageReceivedSubscriptionOptions) => useMessageReceivedSubscription(options),
       { initialProps, wrapper: createWrapper(queryClient) },
     );
 
-    rerender({
-      activeConversationId: otherConversationId,
-      queryKey: otherQueryKey,
-      enabled: true,
-      synchronizeMessages: nextSynchronize,
-    });
+    rerender({ conversationId: otherConversationId, queryKey: otherQueryKey, enabled: true });
     act(() => realtime.handler?.(createPayload(4, otherConversationId)));
 
     expect(realtime.subscribe).toHaveBeenCalledOnce();
-    expect(firstSynchronize).not.toHaveBeenCalled();
-    expect(nextSynchronize).toHaveBeenCalledOnce();
+    expect(realtime.synchronizeMessages).toHaveBeenCalledOnce();
+    expect(realtime.messageSyncOptions).toEqual({
+      conversationId: otherConversationId,
+      queryKey: otherQueryKey,
+      enabled: true,
+    });
     expect(
       queryClient.getQueryData<ConversationMessageBufferState>(otherQueryKey)
         ?.pendingMessagesBySequence,
     ).toHaveProperty('4');
 
-    rerender({
-      activeConversationId: otherConversationId,
-      queryKey: otherQueryKey,
-      enabled: false,
-      synchronizeMessages: nextSynchronize,
-    });
+    rerender({ conversationId: otherConversationId, queryKey: otherQueryKey, enabled: false });
     act(() => realtime.handler?.(createPayload(3, otherConversationId)));
     expect(
       queryClient.getQueryData<ConversationMessageBufferState>(otherQueryKey)

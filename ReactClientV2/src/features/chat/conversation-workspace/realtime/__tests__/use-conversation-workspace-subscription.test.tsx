@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import {
   useConversationWorkspaceSubscription,
@@ -6,6 +6,7 @@ import {
 } from '../use-conversation-workspace-subscription';
 
 const subscriptions = vi.hoisted(() => ({
+  synchronizeMessages: vi.fn(() => Promise.resolve<number | null>(null)),
   messageReceived: vi.fn(),
   groupConversationChanged: vi.fn(),
   participantsAdded: vi.fn(),
@@ -14,7 +15,9 @@ const subscriptions = vi.hoisted(() => ({
 }));
 
 vi.mock('../message-received/use-message-received-subscription', () => ({
-  useMessageReceivedSubscription: subscriptions.messageReceived,
+  useMessageReceivedSubscription: subscriptions.messageReceived.mockImplementation(
+    () => subscriptions.synchronizeMessages,
+  ),
 }));
 vi.mock('../group-conversation-changed/use-group-conversation-changed-subscription', () => ({
   useGroupConversationChangedSubscription: subscriptions.groupConversationChanged,
@@ -40,41 +43,62 @@ describe('useConversationWorkspaceSubscription', () => {
     for (const subscription of Object.values(subscriptions)) subscription.mockClear();
   });
 
-  it('composes all workspace subscriptions with their matching options', () => {
+  it('composes subscriptions and connects message synchronization to reconnect', () => {
     const options: UseConversationWorkspaceSubscriptionOptions = {
-      activeConversationId: '40c3cd3b-69d8-4af3-b1a7-f9174537fb97',
+      conversationId: '40c3cd3b-69d8-4af3-b1a7-f9174537fb97',
       queryKey: ['conversation-workspace'],
       enabled: true,
-      synchronizeMessages: vi.fn(() => Promise.resolve<number | null>(null)),
       onGroupConversationChanged: vi.fn(),
       onParticipantsAdded: vi.fn(),
       onParticipantsRemoved: vi.fn(),
-      onReconnected: vi.fn(),
     };
 
-    renderHook(() => useConversationWorkspaceSubscription(options));
+    const { result } = renderHook(() => useConversationWorkspaceSubscription(options));
 
+    expect(result.current).toBe(subscriptions.synchronizeMessages);
     expect(subscriptions.messageReceived).toHaveBeenCalledWith({
-      activeConversationId: options.activeConversationId,
+      conversationId: options.conversationId,
       queryKey: options.queryKey,
       enabled: options.enabled,
-      synchronizeMessages: options.synchronizeMessages,
     });
     expect(subscriptions.groupConversationChanged).toHaveBeenCalledWith({
-      activeConversationId: options.activeConversationId,
+      activeConversationId: options.conversationId,
       onGroupConversationChanged: options.onGroupConversationChanged,
     });
     expect(subscriptions.participantsAdded).toHaveBeenCalledWith({
-      activeConversationId: options.activeConversationId,
+      activeConversationId: options.conversationId,
       onParticipantsAdded: options.onParticipantsAdded,
     });
     expect(subscriptions.participantsRemoved).toHaveBeenCalledWith({
-      activeConversationId: options.activeConversationId,
+      activeConversationId: options.conversationId,
       onParticipantsRemoved: options.onParticipantsRemoved,
     });
     expect(subscriptions.reconnected).toHaveBeenCalledWith({
-      activeConversationId: options.activeConversationId,
-      onReconnected: options.onReconnected,
+      activeConversationId: options.conversationId,
+      onReconnected: expect.any(Function),
+    });
+
+    const reconnectOptions = subscriptions.reconnected.mock.calls[0]?.[0];
+    act(() => reconnectOptions?.onReconnected?.(options.conversationId!));
+    expect(subscriptions.synchronizeMessages).toHaveBeenCalledOnce();
+  });
+
+  it('disables active-conversation subscriptions when synchronization is disabled', () => {
+    renderHook(() =>
+      useConversationWorkspaceSubscription({
+        conversationId: '40c3cd3b-69d8-4af3-b1a7-f9174537fb97',
+        queryKey: ['conversation-workspace'],
+        enabled: false,
+      }),
+    );
+
+    expect(subscriptions.groupConversationChanged).toHaveBeenCalledWith({
+      activeConversationId: null,
+      onGroupConversationChanged: undefined,
+    });
+    expect(subscriptions.reconnected).toHaveBeenCalledWith({
+      activeConversationId: null,
+      onReconnected: expect.any(Function),
     });
   });
 });

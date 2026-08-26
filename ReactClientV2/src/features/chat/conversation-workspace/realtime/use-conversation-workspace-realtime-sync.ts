@@ -1,7 +1,6 @@
 import type { QueryKey } from '@tanstack/react-query';
 
 import type { ConversationMessageBufferState } from '../cache/conversation-message-buffer';
-import { useConversationMessageSync } from '../cache/use-conversation-message-sync';
 
 import { useConversationWorkspaceSubscription } from './use-conversation-workspace-subscription';
 import type { UseConversationWorkspaceSubscriptionOptions } from './use-conversation-workspace-subscription';
@@ -27,24 +26,12 @@ export function useConversationWorkspaceRealtimeSync<
   onParticipantsAdded,
   onParticipantsRemoved,
 }: UseConversationWorkspaceRealtimeSyncOptions) {
-  const synchronizeMessages = useConversationMessageSync<TState>({
+  return useConversationWorkspaceSubscription<TState>({
     conversationId,
     queryKey,
     enabled,
-  });
-
-  useConversationWorkspaceSubscription<TState>({
-    activeConversationId: enabled ? conversationId : null,
-    queryKey,
-    enabled,
-    synchronizeMessages,
     onGroupConversationChanged,
     onParticipantsAdded,
     onParticipantsRemoved,
-    onReconnected: () => {
-      void synchronizeMessages();
-    },
   });
-
-  return synchronizeMessages;
 }
