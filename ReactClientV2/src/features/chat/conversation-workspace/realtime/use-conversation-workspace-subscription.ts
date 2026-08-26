@@ -1,4 +1,6 @@
-import type { ConversationMessage } from '../api/conversation-contracts';
+import type { QueryKey } from '@tanstack/react-query';
+
+import type { ConversationMessageBufferState } from '../cache/conversation-message-buffer';
 
 import type { ConversationParticipantsAddedEvent } from './conversation-participants-added/conversation-participants-added-event';
 import { useConversationParticipantsAddedSubscription } from './conversation-participants-added/use-conversation-participants-added-subscription';
@@ -11,22 +13,33 @@ import { useConversationWorkspaceReconnectedSubscription } from './reconnected/u
 
 export interface UseConversationWorkspaceSubscriptionOptions {
   activeConversationId: string | null;
-  onMessageReceived?: (message: ConversationMessage) => void;
+  queryKey: QueryKey;
+  enabled: boolean;
+  synchronizeMessages: () => Promise<number | null>;
   onGroupConversationChanged?: (event: GroupConversationChangedEvent) => void;
   onParticipantsAdded?: (event: ConversationParticipantsAddedEvent) => void;
   onParticipantsRemoved?: (event: ConversationParticipantsRemovedEvent) => void;
   onReconnected?: (conversationId: string) => void;
 }
 
-export function useConversationWorkspaceSubscription({
+export function useConversationWorkspaceSubscription<
+  TState extends ConversationMessageBufferState = ConversationMessageBufferState,
+>({
   activeConversationId,
-  onMessageReceived,
+  queryKey,
+  enabled,
+  synchronizeMessages,
   onGroupConversationChanged,
   onParticipantsAdded,
   onParticipantsRemoved,
   onReconnected,
 }: UseConversationWorkspaceSubscriptionOptions) {
-  useMessageReceivedSubscription({ activeConversationId, onMessageReceived });
+  useMessageReceivedSubscription<TState>({
+    activeConversationId,
+    queryKey,
+    enabled,
+    synchronizeMessages,
+  });
   useGroupConversationChangedSubscription({ activeConversationId, onGroupConversationChanged });
   useConversationParticipantsAddedSubscription({ activeConversationId, onParticipantsAdded });
   useConversationParticipantsRemovedSubscription({ activeConversationId, onParticipantsRemoved });

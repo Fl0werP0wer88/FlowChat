@@ -43,7 +43,9 @@ describe('useConversationWorkspaceSubscription', () => {
   it('composes all workspace subscriptions with their matching options', () => {
     const options: UseConversationWorkspaceSubscriptionOptions = {
       activeConversationId: '40c3cd3b-69d8-4af3-b1a7-f9174537fb97',
-      onMessageReceived: vi.fn(),
+      queryKey: ['conversation-workspace'],
+      enabled: true,
+      synchronizeMessages: vi.fn(() => Promise.resolve<number | null>(null)),
       onGroupConversationChanged: vi.fn(),
       onParticipantsAdded: vi.fn(),
       onParticipantsRemoved: vi.fn(),
@@ -54,7 +56,9 @@ describe('useConversationWorkspaceSubscription', () => {
 
     expect(subscriptions.messageReceived).toHaveBeenCalledWith({
       activeConversationId: options.activeConversationId,
-      onMessageReceived: options.onMessageReceived,
+      queryKey: options.queryKey,
+      enabled: options.enabled,
+      synchronizeMessages: options.synchronizeMessages,
     });
     expect(subscriptions.groupConversationChanged).toHaveBeenCalledWith({
       activeConversationId: options.activeConversationId,
