@@ -2,20 +2,12 @@ import { MessageCircleMore } from 'lucide-react';
 import { ZodError } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/utils/cn';
+import { PresenceIndicator } from '@/components/ui/presence-indicator';
 
 import {
   type DuetConversationWithPresence,
-  type PresenceStatus,
   useDuetsWithPresence,
 } from '../api/get-duets-with-presence';
-
-const presenceClasses: Record<PresenceStatus, string> = {
-  Active: 'bg-emerald-500',
-  AFK: 'bg-amber-400',
-  Busy: 'bg-red-500',
-  Invisible: 'bg-slate-400',
-};
 
 function getPartnerName(conversation: DuetConversationWithPresence) {
   return conversation.displayName?.trim() || conversation.email?.trim() || 'Unknown user';
@@ -62,14 +54,7 @@ function DuetConversationRow({ conversation }: { conversation: DuetConversationW
           </span>
         )}
 
-        <span
-          className={cn(
-            'absolute right-0 bottom-0 size-3 rounded-full border-2 border-slate-50',
-            presenceClasses[conversation.status],
-          )}
-          role="img"
-          aria-label={`Presence: ${conversation.status}`}
-        />
+        <PresenceIndicator className="absolute right-0 bottom-0" status={conversation.status} />
       </div>
 
       <p className="m-0 min-w-0 truncate text-sm font-semibold text-slate-900">{partnerName}</p>
