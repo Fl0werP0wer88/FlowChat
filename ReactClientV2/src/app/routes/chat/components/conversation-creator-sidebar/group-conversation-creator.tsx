@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { InputField } from '@/components/ui/input-field';
 import { useCreateGroup } from '@/features/chat/conversations/group/api/create-group';
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import type { UserProfile } from '@/features/chat/user-profiles/api/search-user-profiles';
@@ -49,20 +50,16 @@ export function GroupConversationCreator() {
   return (
     <ConversationCreatorLayout title="Create a group" disabled={groupMutation.isPending}>
       <div className="border-b border-slate-200 px-5 pt-5 pb-3 sm:px-6">
-        <div className="grid gap-1.5">
-          <label className="text-sm font-semibold text-slate-800" htmlFor="group-name">
-            Group name
-          </label>
-          <input
-            className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-            id="group-name"
-            disabled={groupMutation.isPending}
-            onChange={(event) => setGroupName(event.target.value)}
-            placeholder="e.g. Product team"
-            type="text"
-            value={groupName}
-          />
-        </div>
+        <InputField
+          id="group-name"
+          label="Group name"
+          variant="compact"
+          disabled={groupMutation.isPending}
+          onChange={(event) => setGroupName(event.target.value)}
+          placeholder="e.g. Product team"
+          type="text"
+          value={groupName}
+        />
       </div>
 
       <UserPicker
