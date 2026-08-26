@@ -1,12 +1,10 @@
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
-import {
-  mergeConversationMessage,
-  type ConversationMessageBufferState,
-} from '../cache/conversation-message-buffer';
+import type { ConversationMessageBufferState } from '../cache/conversation-message-buffer';
 import { useConversationMessageSync } from '../cache/use-conversation-message-sync';
 
+import { applyMessageReceived } from './message-received/apply-message-received';
 import { useConversationWorkspaceSubscription } from './use-conversation-workspace-subscription';
 import type { UseConversationWorkspaceSubscriptionOptions } from './use-conversation-workspace-subscription';
 
@@ -54,9 +52,9 @@ export function useConversationWorkspaceRealtimeSync<
       let needsCatchUp = false;
       let requiresRefetch = false;
       queryClient.setQueryData<TState>(queryKeyRef.current, (current) => {
-        if (!current) return current;
+        const result = applyMessageReceived(current, message);
+        if (!result) return current;
 
-        const result = mergeConversationMessage(current, message);
         needsCatchUp = result.needsCatchUp;
         requiresRefetch = result.requiresRefetch;
         return result.state;

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   conversationSequenceNumberSchema,
   type ConversationMessage,
-} from '../api/conversation-contracts';
+} from '../../api/conversation-contracts';
 
 export const messageReceivedSchema = z.object({
   messageId: z.guid(),

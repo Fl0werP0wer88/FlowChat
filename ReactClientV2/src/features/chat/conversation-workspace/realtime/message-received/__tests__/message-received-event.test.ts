@@ -1,4 +1,4 @@
-import { parseMessageReceived } from '../message-received';
+import { parseMessageReceived } from '../message-received-event';
 
 const messageId = 'c7d063d8-0db1-4adf-a425-01f9000b8ace';
 const conversationId = '40c3cd3b-69d8-4af3-b1a7-f9174537fb97';
