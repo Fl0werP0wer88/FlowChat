@@ -2,14 +2,15 @@ import { UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { SidebarLayout } from '@/components/layouts/sidebar-layout';
 import { Button } from '@/components/ui/button';
 import { InputField } from '@/components/ui/input-field';
 import { useCreateGroup } from '@/features/chat/conversations/group/api/create-group';
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
+import { ShowConversationsButton } from '@/features/chat/navigation/show-conversations-button';
 import type { UserProfile } from '@/features/chat/user-profiles/api/search-user-profiles';
 import { toApiError } from '@/lib/api-error';
 
-import { ConversationCreatorLayout } from './conversation-creator-layout';
 import { UserPicker } from './user-picker/user-picker';
 
 export function GroupConversationCreator() {
@@ -48,7 +49,12 @@ export function GroupConversationCreator() {
   };
 
   return (
-    <ConversationCreatorLayout title="Create a group" disabled={groupMutation.isPending}>
+    <SidebarLayout
+      backAction={<ShowConversationsButton disabled={groupMutation.isPending} />}
+      eyebrow="New conversation"
+      headingId="conversation-creator-heading"
+      title="Create a group"
+    >
       <div className="border-b border-slate-200 px-5 pt-5 pb-3 sm:px-6">
         <InputField
           id="group-name"
@@ -86,6 +92,6 @@ export function GroupConversationCreator() {
           Create group
         </Button>
       </div>
-    </ConversationCreatorLayout>
+    </SidebarLayout>
   );
 }

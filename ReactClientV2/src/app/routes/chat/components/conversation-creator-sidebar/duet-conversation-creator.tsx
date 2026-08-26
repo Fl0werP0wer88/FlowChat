@@ -1,11 +1,12 @@
 import { toast } from 'sonner';
 
+import { SidebarLayout } from '@/components/layouts/sidebar-layout';
 import { useCreateDuet } from '@/features/chat/conversations/duet/api/create-duet';
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
+import { ShowConversationsButton } from '@/features/chat/navigation/show-conversations-button';
 import type { UserProfile } from '@/features/chat/user-profiles/api/search-user-profiles';
 import { toApiError } from '@/lib/api-error';
 
-import { ConversationCreatorLayout } from './conversation-creator-layout';
 import { UserPicker } from './user-picker/user-picker';
 
 export function DuetConversationCreator() {
@@ -25,7 +26,12 @@ export function DuetConversationCreator() {
   };
 
   return (
-    <ConversationCreatorLayout title="Create a duet" disabled={duetMutation.isPending}>
+    <SidebarLayout
+      backAction={<ShowConversationsButton disabled={duetMutation.isPending} />}
+      eyebrow="New conversation"
+      headingId="conversation-creator-heading"
+      title="Create a duet"
+    >
       <UserPicker
         mode="single"
         selectedUsers={[]}
@@ -34,6 +40,6 @@ export function DuetConversationCreator() {
         onSelect={handleUserSelect}
         onRemove={() => undefined}
       />
-    </ConversationCreatorLayout>
+    </SidebarLayout>
   );
 }
