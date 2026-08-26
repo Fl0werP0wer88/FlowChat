@@ -9,7 +9,7 @@ import { toApiError } from '@/lib/api-error';
 
 import { UserPicker } from './user-picker/user-picker';
 
-export function DuetConversationCreator() {
+export function DuetConversationCreatorSidebar() {
   const { showConversations } = useNavigationContext();
   const duetMutation = useCreateDuet({
     mutationConfig: {

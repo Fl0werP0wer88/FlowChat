@@ -7,8 +7,7 @@ import { NavigationContextProvider } from '@/features/chat/navigation/context/na
 import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
-import { ConversationCreatorSidebar } from './components/conversation-creator-sidebar/conversation-creator-sidebar';
-import { ConversationsSidebar } from './components/conversations-sidebar/conversations-sidebar';
+import { SidebarSelector } from './components/sidebar-selector';
 
 export function Component() {
   useDocumentTitle('Chat');
@@ -27,13 +26,7 @@ function ChatPage() {
     <AppLayout
       contentLabel="Active conversation"
       header={<AppHeader />}
-      sidebar={
-        activeView.sidebar.view === 'conversations' ? (
-          <ConversationsSidebar />
-        ) : (
-          <ConversationCreatorSidebar />
-        )
-      }
+      sidebar={<SidebarSelector />}
     >
       <ChatMainWindow state={activeView.mainWindow} />
     </AppLayout>

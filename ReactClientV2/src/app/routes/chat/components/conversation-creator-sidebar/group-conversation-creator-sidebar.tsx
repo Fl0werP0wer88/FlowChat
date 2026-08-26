@@ -13,7 +13,7 @@ import { toApiError } from '@/lib/api-error';
 
 import { UserPicker } from './user-picker/user-picker';
 
-export function GroupConversationCreator() {
+export function GroupConversationCreatorSidebar() {
   const { showConversations } = useNavigationContext();
   const [selectedUsers, setSelectedUsers] = useState<UserProfile[]>([]);
   const [groupName, setGroupName] = useState('');
