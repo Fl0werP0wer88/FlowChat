@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 
 import {
   useConversationWorkspaceSubscription,
@@ -11,7 +11,6 @@ const subscriptions = vi.hoisted(() => ({
   groupConversationChanged: vi.fn(),
   participantsAdded: vi.fn(),
   participantsRemoved: vi.fn(),
-  reconnected: vi.fn(),
 }));
 
 vi.mock('../message-received/use-message-received-subscription', () => ({
@@ -34,16 +33,12 @@ vi.mock(
     useConversationParticipantsRemovedSubscription: subscriptions.participantsRemoved,
   }),
 );
-vi.mock('../reconnected/use-conversation-workspace-reconnected-subscription', () => ({
-  useConversationWorkspaceReconnectedSubscription: subscriptions.reconnected,
-}));
-
 describe('useConversationWorkspaceSubscription', () => {
   beforeEach(() => {
     for (const subscription of Object.values(subscriptions)) subscription.mockClear();
   });
 
-  it('composes subscriptions and connects message synchronization to reconnect', () => {
+  it('composes workspace subscriptions and returns message synchronization', () => {
     const options: UseConversationWorkspaceSubscriptionOptions = {
       conversationId: '40c3cd3b-69d8-4af3-b1a7-f9174537fb97',
       queryKey: ['conversation-workspace'],
@@ -73,14 +68,6 @@ describe('useConversationWorkspaceSubscription', () => {
       activeConversationId: options.conversationId,
       onParticipantsRemoved: options.onParticipantsRemoved,
     });
-    expect(subscriptions.reconnected).toHaveBeenCalledWith({
-      activeConversationId: options.conversationId,
-      onReconnected: expect.any(Function),
-    });
-
-    const reconnectOptions = subscriptions.reconnected.mock.calls[0]?.[0];
-    act(() => reconnectOptions?.onReconnected?.(options.conversationId!));
-    expect(subscriptions.synchronizeMessages).toHaveBeenCalledOnce();
   });
 
   it('disables active-conversation subscriptions when synchronization is disabled', () => {
@@ -95,10 +82,6 @@ describe('useConversationWorkspaceSubscription', () => {
     expect(subscriptions.groupConversationChanged).toHaveBeenCalledWith({
       activeConversationId: null,
       onGroupConversationChanged: undefined,
-    });
-    expect(subscriptions.reconnected).toHaveBeenCalledWith({
-      activeConversationId: null,
-      onReconnected: expect.any(Function),
     });
   });
 });

@@ -15,9 +15,12 @@ import {
 
 const realtime = vi.hoisted(() => ({
   handler: undefined as ((payload: unknown) => void) | undefined,
+  reconnectedHandler: undefined as (() => void) | undefined,
   messageSyncOptions: undefined as UseMessageReceivedSubscriptionOptions | undefined,
   subscribe: vi.fn(),
+  subscribeToReconnected: vi.fn(),
   unsubscribe: vi.fn(),
+  unsubscribeReconnected: vi.fn(),
   synchronizeMessages: vi.fn(() => Promise.resolve<number | null>(null)),
   useMessageSync: vi.fn(),
 }));
@@ -27,6 +30,12 @@ vi.mock('@/lib/realtime/realtime-client', () => ({
     (_eventName: string, handler: (payload: unknown) => void) => {
       realtime.handler = handler;
       return realtime.unsubscribe;
+    },
+  ),
+  subscribeToRealtimeReconnected: realtime.subscribeToReconnected.mockImplementation(
+    (handler: () => void) => {
+      realtime.reconnectedHandler = handler;
+      return realtime.unsubscribeReconnected;
     },
   ),
 }));
@@ -85,9 +94,12 @@ function createWrapper(queryClient: ReturnType<typeof createTestQueryClient>) {
 describe('useMessageReceivedSubscription', () => {
   beforeEach(() => {
     realtime.handler = undefined;
+    realtime.reconnectedHandler = undefined;
     realtime.messageSyncOptions = undefined;
     realtime.subscribe.mockClear();
+    realtime.subscribeToReconnected.mockClear();
     realtime.unsubscribe.mockClear();
+    realtime.unsubscribeReconnected.mockClear();
     realtime.synchronizeMessages.mockClear();
     realtime.useMessageSync.mockClear();
   });
@@ -113,8 +125,12 @@ describe('useMessageReceivedSubscription', () => {
       queryClient.getQueryData<ConversationMessageBufferState>(queryKey)?.lastContiguousSequenceNum,
     ).toBe(3);
     expect(realtime.synchronizeMessages).not.toHaveBeenCalled();
+
+    act(() => realtime.reconnectedHandler?.());
+    expect(realtime.synchronizeMessages).toHaveBeenCalledOnce();
     unmount();
     expect(realtime.unsubscribe).toHaveBeenCalledOnce();
+    expect(realtime.unsubscribeReconnected).toHaveBeenCalledOnce();
   });
 
   it('starts its synchronizer for a gap and invalidates the query for a conflict', () => {

@@ -1,7 +1,10 @@
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
-import { subscribeToRealtimeEvent } from '@/lib/realtime/realtime-client';
+import {
+  subscribeToRealtimeEvent,
+  subscribeToRealtimeReconnected,
+} from '@/lib/realtime/realtime-client';
 
 import type { ConversationMessageBufferState } from '../../cache/conversation-message-buffer';
 import { useConversationMessageSync } from '../../cache/use-conversation-message-sync';
@@ -52,7 +55,15 @@ export function useMessageReceivedSubscription<
       }
     };
 
-    return subscribeToRealtimeEvent('MessageReceived', handleMessageReceived);
+    const unsubscribeMessage = subscribeToRealtimeEvent('MessageReceived', handleMessageReceived);
+    const unsubscribeReconnected = subscribeToRealtimeReconnected(() => {
+      void synchronizeMessagesRef.current();
+    });
+
+    return () => {
+      unsubscribeMessage();
+      unsubscribeReconnected();
+    };
   }, [queryClient]);
 
   return synchronizeMessages;

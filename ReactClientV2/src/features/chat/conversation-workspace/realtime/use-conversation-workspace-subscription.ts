@@ -9,7 +9,6 @@ import { useConversationParticipantsRemovedSubscription } from './conversation-p
 import type { GroupConversationChangedEvent } from './group-conversation-changed/group-conversation-changed-event';
 import { useGroupConversationChangedSubscription } from './group-conversation-changed/use-group-conversation-changed-subscription';
 import { useMessageReceivedSubscription } from './message-received/use-message-received-subscription';
-import { useConversationWorkspaceReconnectedSubscription } from './reconnected/use-conversation-workspace-reconnected-subscription';
 
 export interface UseConversationWorkspaceSubscriptionOptions {
   conversationId: string | null;
@@ -39,12 +38,6 @@ export function useConversationWorkspaceSubscription<
   useGroupConversationChangedSubscription({ activeConversationId, onGroupConversationChanged });
   useConversationParticipantsAddedSubscription({ activeConversationId, onParticipantsAdded });
   useConversationParticipantsRemovedSubscription({ activeConversationId, onParticipantsRemoved });
-  useConversationWorkspaceReconnectedSubscription({
-    activeConversationId,
-    onReconnected: () => {
-      void synchronizeMessages();
-    },
-  });
 
   return synchronizeMessages;
 }
