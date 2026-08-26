@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { SidebarLayout } from '@/components/layouts/sidebar-layout';
 import { Button } from '@/components/ui/button';
 
 import { DuetConversationsPanel } from './duet-conversations-panel';
@@ -11,19 +12,12 @@ export function ConversationsSidebar() {
   const [activeList, setActiveList] = useState<ConversationListType>('duets');
 
   return (
-    <aside className="chat-conversation-panel flex min-h-64 flex-col border-b border-slate-200 bg-slate-50/70 lg:min-h-0 lg:border-r lg:border-b-0">
-      <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
-        <p className="m-0 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-blue-700">
-          Inbox
-        </p>
-        <h1
-          className="mt-1 mb-0 font-display text-2xl font-semibold tracking-[-0.035em] text-slate-950"
-          id="conversations-heading"
-        >
-          Conversations
-        </h1>
-      </div>
-
+    <SidebarLayout
+      className="chat-conversation-panel"
+      eyebrow="Inbox"
+      headingId="conversations-heading"
+      title="Conversations"
+    >
       <div
         className="grid w-full grid-cols-2 divide-x divide-slate-200 border-b border-slate-200 bg-white"
         role="group"
@@ -55,6 +49,6 @@ export function ConversationsSidebar() {
       >
         {activeList === 'duets' ? <DuetConversationsPanel /> : <GroupConversationsPanel />}
       </section>
-    </aside>
+    </SidebarLayout>
   );
 }
