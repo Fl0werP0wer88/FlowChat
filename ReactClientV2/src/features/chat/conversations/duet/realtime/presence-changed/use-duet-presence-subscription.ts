@@ -9,7 +9,7 @@ import {
 import {
   getDuetsWithPresenceQueryOptions,
   type GetDuetsWithPresenceResponse,
-} from '../api/get-duets-with-presence';
+} from '../../api/get-duets-with-presence';
 
 import { applyPresenceChanged } from './presence-changed';
 

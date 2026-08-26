@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   presenceStatusSchema,
   type GetDuetsWithPresenceResponse,
-} from '../api/get-duets-with-presence';
+} from '../../api/get-duets-with-presence';
 
 export const presenceChangedSchema = z.object({
   userId: z.uuid(),

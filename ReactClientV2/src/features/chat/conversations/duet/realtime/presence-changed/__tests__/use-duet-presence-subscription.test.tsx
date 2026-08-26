@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { createTestQueryClient } from '@/testing/test-utils';
 
-import { getDuetsWithPresenceQueryOptions } from '../../api/get-duets-with-presence';
+import { getDuetsWithPresenceQueryOptions } from '../../../api/get-duets-with-presence';
 import { useDuetPresenceSubscription } from '../use-duet-presence-subscription';
 
 const realtime = vi.hoisted(() => ({

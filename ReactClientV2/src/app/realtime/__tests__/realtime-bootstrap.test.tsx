@@ -15,9 +15,12 @@ vi.mock('@/lib/realtime/realtime-client', () => ({
   stopRealtimeConnection: realtime.stop,
 }));
 
-vi.mock('@/features/chat/conversations/duet/realtime/use-duet-presence-subscription', () => ({
-  useDuetPresenceSubscription: realtime.subscribe,
-}));
+vi.mock(
+  '@/features/chat/conversations/duet/realtime/presence-changed/use-duet-presence-subscription',
+  () => ({
+    useDuetPresenceSubscription: realtime.subscribe,
+  }),
+);
 
 describe('RealtimeBootstrap', () => {
   beforeEach(() => {

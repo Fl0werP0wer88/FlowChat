@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 
-import { useDuetPresenceSubscription } from '@/features/chat/conversations/duet/realtime/use-duet-presence-subscription';
+import { useDuetPresenceSubscription } from '@/features/chat/conversations/duet/realtime/presence-changed/use-duet-presence-subscription';
 import { startRealtimeConnection, stopRealtimeConnection } from '@/lib/realtime/realtime-client';
 import { useAuthStore } from '@/stores/auth-store';
 
