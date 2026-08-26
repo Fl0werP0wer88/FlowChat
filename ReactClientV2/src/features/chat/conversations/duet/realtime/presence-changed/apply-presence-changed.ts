@@ -1,17 +1,6 @@
-import { z } from 'zod';
+import type { GetDuetsWithPresenceResponse } from '../../api/get-duets-with-presence';
 
-import {
-  presenceStatusSchema,
-  type GetDuetsWithPresenceResponse,
-} from '../../api/get-duets-with-presence';
-
-export const presenceChangedSchema = z.object({
-  userId: z.uuid(),
-  status: presenceStatusSchema,
-  changedAtUtc: z.iso.datetime({ offset: true }),
-});
-
-export type PresenceChangedEvent = z.infer<typeof presenceChangedSchema>;
+import { parsePresenceChanged } from './presence-changed-event';
 
 export function applyPresenceChanged(
   current: GetDuetsWithPresenceResponse | undefined,
@@ -19,10 +8,9 @@ export function applyPresenceChanged(
 ): GetDuetsWithPresenceResponse | undefined {
   if (!current) return current;
 
-  const parsed = presenceChangedSchema.safeParse(payload);
-  if (!parsed.success) return current;
+  const event = parsePresenceChanged(payload);
+  if (!event) return current;
 
-  const event = parsed.data;
   let changed = false;
   const conversations = current.conversations.map((conversation) => {
     if (

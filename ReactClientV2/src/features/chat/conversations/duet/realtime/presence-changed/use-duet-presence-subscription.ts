@@ -11,7 +11,7 @@ import {
   type GetDuetsWithPresenceResponse,
 } from '../../api/get-duets-with-presence';
 
-import { applyPresenceChanged } from './presence-changed';
+import { applyPresenceChanged } from './apply-presence-changed';
 
 export function useDuetPresenceSubscription() {
   const queryClient = useQueryClient();

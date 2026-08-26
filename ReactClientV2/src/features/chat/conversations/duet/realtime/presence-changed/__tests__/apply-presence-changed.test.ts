@@ -1,5 +1,5 @@
 import type { GetDuetsWithPresenceResponse } from '../../../api/get-duets-with-presence';
-import { applyPresenceChanged } from '../presence-changed';
+import { applyPresenceChanged } from '../apply-presence-changed';
 
 const partnerUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
 
