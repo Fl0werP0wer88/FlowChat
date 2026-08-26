@@ -51,23 +51,23 @@ export function LoginForm() {
     <div className="grid gap-6">
       <form className="grid gap-5" onSubmit={submit} noValidate>
         <InputField
+          {...form.register('login')}
           id="login"
           label="Email or FriendlyUserId"
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}
           placeholder="you@example.com"
-          registration={form.register('login')}
-          error={form.formState.errors.login}
+          error={form.formState.errors.login?.message}
         />
         <InputField
+          {...form.register('password')}
           id="password"
           label="Password"
           type="password"
           autoComplete="current-password"
           placeholder="Enter your password"
-          registration={form.register('password')}
-          error={form.formState.errors.password}
+          error={form.formState.errors.password?.message}
         />
         <Button type="submit" isLoading={form.formState.isSubmitting} className="mt-1 w-full">
           Sign in

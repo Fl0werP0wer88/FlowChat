@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { InputField } from '@/components/ui/input-field';
 import {
   searchUserProfilesInputSchema,
   type SearchUserProfilesInput,
@@ -14,7 +15,6 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 
 import { SelectedUsers } from './selected-users';
-import { UserPickerField } from './user-picker-field';
 
 type SearchCriteria = {
   firstName: string;
@@ -83,29 +83,35 @@ export function UserPicker({
             </h2>
           </div>
           <div className="grid gap-3">
-            <UserPickerField
+            <InputField
               id="search-first-name"
               label="First name"
-              maximumLength={100}
+              maxLength={100}
+              type="search"
+              variant="compact"
               value={criteria.firstName}
               disabled={disabled}
-              onChange={(value) => updateCriterion('firstName', value)}
+              onChange={(event) => updateCriterion('firstName', event.target.value)}
             />
-            <UserPickerField
+            <InputField
               id="search-last-name"
               label="Last name"
-              maximumLength={100}
+              maxLength={100}
+              type="search"
+              variant="compact"
               value={criteria.lastName}
               disabled={disabled}
-              onChange={(value) => updateCriterion('lastName', value)}
+              onChange={(event) => updateCriterion('lastName', event.target.value)}
             />
-            <UserPickerField
+            <InputField
               id="search-organization"
               label="Organization"
-              maximumLength={200}
+              maxLength={200}
+              type="search"
+              variant="compact"
               value={criteria.organization}
               disabled={disabled}
-              onChange={(value) => updateCriterion('organization', value)}
+              onChange={(event) => updateCriterion('organization', event.target.value)}
             />
           </div>
         </section>

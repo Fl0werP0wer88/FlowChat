@@ -49,16 +49,17 @@ export function RegisterForm() {
     <div className="grid gap-6">
       <form className="grid gap-5" onSubmit={submit} noValidate>
         <InputField
+          {...form.register('email')}
           id="register-email"
           label="Email"
           type="email"
           autoComplete="email"
           autoCapitalize="none"
           placeholder="you@example.com"
-          registration={form.register('email')}
-          error={form.formState.errors.email}
+          error={form.formState.errors.email?.message}
         />
         <InputField
+          {...form.register('friendlyUserId')}
           id="register-friendly-id"
           label="FriendlyUserId"
           autoComplete="username"
@@ -66,43 +67,42 @@ export function RegisterForm() {
           spellCheck={false}
           placeholder="alex.morgan"
           hint="Lowercase letters, numbers, periods, and hyphens."
-          registration={form.register('friendlyUserId')}
-          error={form.formState.errors.friendlyUserId}
+          error={form.formState.errors.friendlyUserId?.message}
         />
         <div className="grid gap-5 sm:grid-cols-2">
           <InputField
+            {...form.register('firstName')}
             id="register-first-name"
             label="First name"
             autoComplete="given-name"
             placeholder="Alex"
-            registration={form.register('firstName')}
-            error={form.formState.errors.firstName}
+            error={form.formState.errors.firstName?.message}
           />
           <InputField
+            {...form.register('lastName')}
             id="register-last-name"
             label="Last name"
             autoComplete="family-name"
             placeholder="Morgan"
-            registration={form.register('lastName')}
-            error={form.formState.errors.lastName}
+            error={form.formState.errors.lastName?.message}
           />
         </div>
         <InputField
+          {...form.register('organization')}
           id="register-organization"
           label="Organization"
           autoComplete="organization"
           placeholder="Optional"
-          registration={form.register('organization')}
-          error={form.formState.errors.organization}
+          error={form.formState.errors.organization?.message}
         />
         <InputField
+          {...form.register('password')}
           id="register-password"
           label="Password"
           type="password"
           autoComplete="new-password"
           placeholder="At least 8 characters"
-          registration={form.register('password')}
-          error={form.formState.errors.password}
+          error={form.formState.errors.password?.message}
         />
         <Button type="submit" isLoading={form.formState.isSubmitting} className="mt-1 w-full">
           Create account
