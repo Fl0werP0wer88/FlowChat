@@ -1,34 +1,25 @@
-import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
+import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/get-groups';
 import { subscribeToRealtimeEvent } from '@/lib/realtime/realtime-client';
 
-import {
-  parseGroupConversationChanged,
-  type GroupConversationChangedEvent,
-} from './group-conversation-changed-event';
+import { invalidateConversationWorkspaceQueries } from '../../cache/conversation-workspace-query-cache';
 
-export interface UseGroupConversationChangedSubscriptionOptions {
-  activeConversationId: string | null;
-  onGroupConversationChanged?: (event: GroupConversationChangedEvent) => void;
-}
+import { parseGroupConversationChanged } from './group-conversation-changed-event';
 
-export function useGroupConversationChangedSubscription(
-  options: UseGroupConversationChangedSubscriptionOptions,
-) {
-  const optionsRef = useRef(options);
-
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
+export function useGroupConversationChangedSubscription() {
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleGroupConversationChanged = (payload: unknown) => {
       const event = parseGroupConversationChanged(payload);
-      if (!event || optionsRef.current.activeConversationId !== event.conversationId) return;
+      if (!event) return;
 
-      optionsRef.current.onGroupConversationChanged?.(event);
+      void invalidateConversationWorkspaceQueries(queryClient, event.conversationId);
+      void queryClient.invalidateQueries({ queryKey: getGroupsQueryOptions().queryKey });
     };
 
     return subscribeToRealtimeEvent('GroupConversationChanged', handleGroupConversationChanged);
-  }, []);
+  }, [queryClient]);
 }

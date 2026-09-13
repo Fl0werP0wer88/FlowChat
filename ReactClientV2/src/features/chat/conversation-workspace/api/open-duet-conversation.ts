@@ -7,6 +7,7 @@ import {
   createConversationMessageBuffer,
   type BufferedConversationSnapshot,
 } from '../cache/conversation-message-buffer';
+import { conversationWorkspaceQueryKey } from '../cache/conversation-workspace-query-cache';
 
 import {
   conversationMessageSchema,
@@ -47,7 +48,12 @@ export function openDuetConversationQueryOptions(input: OpenDuetConversationInpu
   const data = openDuetConversationInputSchema.parse(input);
 
   return queryOptions({
-    queryKey: ['conversation-workspace', 'duet', data.partnerUserId, data.knownConversationId],
+    queryKey: [
+      ...conversationWorkspaceQueryKey,
+      'duet',
+      data.partnerUserId,
+      data.knownConversationId,
+    ],
     queryFn: async ({ signal }) =>
       createConversationMessageBuffer(await openDuetConversation(data, signal)),
   });

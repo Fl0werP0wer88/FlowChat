@@ -7,6 +7,7 @@ import {
   createConversationMessageBuffer,
   type BufferedConversationSnapshot,
 } from '../cache/conversation-message-buffer';
+import { conversationWorkspaceQueryKey } from '../cache/conversation-workspace-query-cache';
 
 import {
   conversationMessageSchema,
@@ -47,7 +48,7 @@ export function openGroupConversationQueryOptions(input: OpenGroupConversationIn
   const data = openGroupConversationInputSchema.parse(input);
 
   return queryOptions({
-    queryKey: ['conversation-workspace', 'group', data.conversationId],
+    queryKey: [...conversationWorkspaceQueryKey, 'group', data.conversationId],
     queryFn: async ({ signal }) =>
       createConversationMessageBuffer(await openGroupConversation(data, signal)),
   });

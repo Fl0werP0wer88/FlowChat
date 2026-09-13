@@ -1,4 +1,10 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
+
+import { getDuetsWithPresenceQueryOptions } from '@/features/chat/conversations/duet/api/get-duets-with-presence';
+import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/get-groups';
+import { createTestQueryClient } from '@/testing/test-utils';
 
 import { useConversationParticipantsRemovedSubscription } from '../use-conversation-participants-removed-subscription';
 
@@ -18,14 +24,12 @@ vi.mock('@/lib/realtime/realtime-client', () => ({
 }));
 
 const conversationId = '40c3cd3b-69d8-4af3-b1a7-f9174537fb97';
-const otherConversationId = '3965a011-e9ec-4379-9b0b-e2d3132f67d8';
 const participantUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
+const workspaceQueryKey = ['conversation-workspace', 'group', conversationId] as const;
 
-function createPayload(targetConversationId = conversationId) {
-  return {
-    conversationId: targetConversationId,
-    conversationType: 2,
-    participantUserIds: [participantUserId],
+function createWrapper(queryClient: ReturnType<typeof createTestQueryClient>) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 }
 
@@ -36,52 +40,53 @@ describe('useConversationParticipantsRemovedSubscription', () => {
     realtime.unsubscribe.mockClear();
   });
 
-  it('routes only valid events for the active conversation and unsubscribes', () => {
-    const onParticipantsRemoved = vi.fn();
-    const { unmount } = renderHook(() =>
-      useConversationParticipantsRemovedSubscription({
-        activeConversationId: conversationId,
-        onParticipantsRemoved,
+  it.each([
+    [1, getDuetsWithPresenceQueryOptions().queryKey],
+    [2, getGroupsQueryOptions().queryKey],
+  ] as const)(
+    'invalidates workspace and conversation list for type %s',
+    (conversationType, listKey) => {
+      const queryClient = createTestQueryClient();
+      queryClient.setQueryData(workspaceQueryKey, { conversationId });
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+      const { unmount } = renderHook(() => useConversationParticipantsRemovedSubscription(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      act(() =>
+        realtime.handler?.({
+          conversationId,
+          conversationType,
+          participantUserIds: [participantUserId],
+        }),
+      );
+
+      expect(realtime.subscribe).toHaveBeenCalledWith(
+        'ConversationParticipantsRemoved',
+        expect.any(Function),
+      );
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: workspaceQueryKey, exact: true });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: listKey });
+      unmount();
+      expect(realtime.unsubscribe).toHaveBeenCalledOnce();
+    },
+  );
+
+  it('ignores a malformed event', () => {
+    const queryClient = createTestQueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+    renderHook(() => useConversationParticipantsRemovedSubscription(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() =>
+      realtime.handler?.({
+        conversationId,
+        conversationType: 2,
+        participantUserIds: ['invalid'],
       }),
     );
 
-    act(() => {
-      realtime.handler?.(createPayload());
-      realtime.handler?.(createPayload(otherConversationId));
-      realtime.handler?.({ ...createPayload(), participantUserIds: ['invalid'] });
-    });
-
-    expect(realtime.subscribe).toHaveBeenCalledWith(
-      'ConversationParticipantsRemoved',
-      expect.any(Function),
-    );
-    expect(onParticipantsRemoved).toHaveBeenCalledOnce();
-    unmount();
-    expect(realtime.unsubscribe).toHaveBeenCalledOnce();
-  });
-
-  it('uses the latest conversation and callback without subscribing again', () => {
-    const firstCallback = vi.fn();
-    const nextCallback = vi.fn();
-    const { rerender } = renderHook(
-      ({ activeConversationId, onParticipantsRemoved }) =>
-        useConversationParticipantsRemovedSubscription({
-          activeConversationId,
-          onParticipantsRemoved,
-        }),
-      {
-        initialProps: {
-          activeConversationId: conversationId,
-          onParticipantsRemoved: firstCallback,
-        },
-      },
-    );
-
-    rerender({ activeConversationId: otherConversationId, onParticipantsRemoved: nextCallback });
-    act(() => realtime.handler?.(createPayload(otherConversationId)));
-
-    expect(realtime.subscribe).toHaveBeenCalledOnce();
-    expect(firstCallback).not.toHaveBeenCalled();
-    expect(nextCallback).toHaveBeenCalledOnce();
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

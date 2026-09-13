@@ -1,5 +1,5 @@
-import { useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { hashKey, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 import {
   catchUpConversationMessages,
@@ -12,6 +12,7 @@ import {
   mergeConversationMessage,
   type ConversationMessageBufferState,
 } from './conversation-message-buffer';
+import { getConversationWorkspaceQueries } from './conversation-workspace-query-cache';
 
 const retryDelays = [250, 500, 1000] as const;
 const activeSynchronizations = new Map<string, Promise<number | null>>();
@@ -42,126 +43,121 @@ export async function fetchCatchUpPageWithRetry(
 }
 
 export function runConversationMessageSyncSingleFlight(
-  conversationId: string,
+  queryKey: QueryKey,
   operation: () => Promise<number | null>,
 ) {
-  const activeSynchronization = activeSynchronizations.get(conversationId);
+  const synchronizationKey = hashKey(queryKey);
+  const activeSynchronization = activeSynchronizations.get(synchronizationKey);
   if (activeSynchronization) return activeSynchronization;
 
   const synchronization = operation().finally(() => {
-    if (activeSynchronizations.get(conversationId) === synchronization) {
-      activeSynchronizations.delete(conversationId);
+    if (activeSynchronizations.get(synchronizationKey) === synchronization) {
+      activeSynchronizations.delete(synchronizationKey);
     }
   });
-  activeSynchronizations.set(conversationId, synchronization);
+  activeSynchronizations.set(synchronizationKey, synchronization);
 
   return synchronization;
 }
 
-export interface UseConversationMessageSyncOptions {
-  conversationId: string | null;
-  queryKey: QueryKey;
-  enabled: boolean;
-}
-
-export function useConversationMessageSync<
-  TState extends ConversationMessageBufferState = ConversationMessageBufferState,
->({ conversationId, queryKey, enabled }: UseConversationMessageSyncOptions) {
+export function useConversationMessageSync() {
   const queryClient = useQueryClient();
-  const queryKeyRef = useRef(queryKey);
 
-  useEffect(() => {
-    queryKeyRef.current = queryKey;
-  }, [queryKey]);
-
-  const synchronizeMessages = useCallback(() => {
-    if (!enabled || !conversationId) return Promise.resolve(null);
-
-    return runConversationMessageSyncSingleFlight(conversationId, async () => {
-      const activeQueryKey = queryKeyRef.current;
-      queryClient.setQueryData<TState>(activeQueryKey, (current) =>
-        current ? { ...current, syncStatus: 'syncing' } : current,
-      );
-
-      try {
-        while (true) {
-          const snapshot = queryClient.getQueryData<TState>(activeQueryKey);
-          if (!snapshot) return null;
-
-          let afterSequenceNum = snapshot.lastContiguousSequenceNum;
-          let throughSequenceNum: number | undefined;
-          let hasMore = true;
-
-          while (hasMore) {
-            const page = await fetchCatchUpPageWithRetry({
-              conversationId,
-              afterSequenceNum,
-              throughSequenceNum,
-              limit: 100,
-            });
-            throughSequenceNum ??= page.throughSequenceNum;
-
-            let requiresRefetch = false;
-            for (const message of page.items) {
-              queryClient.setQueryData<TState>(activeQueryKey, (current) => {
-                if (!current) return current;
-
-                const result = mergeConversationMessage(current, message);
-                requiresRefetch ||= result.requiresRefetch;
-                return result.state;
-              });
-
-              if (requiresRefetch) break;
-            }
-
-            if (requiresRefetch) {
-              await queryClient.invalidateQueries({ queryKey: activeQueryKey, exact: true });
-              return null;
-            }
-
-            hasMore = page.hasMore;
-            if (hasMore) {
-              if (page.nextAfterSequenceNum === null) {
-                throw new Error('Catch-up response is missing the next sequence cursor.');
-              }
-              afterSequenceNum = page.nextAfterSequenceNum;
-            }
-          }
-
-          if (throughSequenceNum === undefined) return snapshot.lastContiguousSequenceNum;
-
-          queryClient.setQueryData<TState>(activeQueryKey, (current) =>
-            current ? completeConversationMessageSnapshot(current, throughSequenceNum) : current,
-          );
-
-          const completedSnapshot = queryClient.getQueryData<TState>(activeQueryKey);
-          if (!completedSnapshot) return null;
-
-          const needsAnotherSnapshot = Object.keys(
-            completedSnapshot.pendingMessagesBySequence,
-          ).some(
-            (sequenceNum) => Number(sequenceNum) > completedSnapshot.lastContiguousSequenceNum + 1,
-          );
-          if (!needsAnotherSnapshot) {
-            return completedSnapshot.lastContiguousSequenceNum;
-          }
-
-          queryClient.setQueryData<TState>(activeQueryKey, (current) =>
-            current ? { ...current, syncStatus: 'syncing' } : current,
-          );
-        }
-      } catch {
-        queryClient.setQueryData<TState>(activeQueryKey, (current) =>
-          current ? { ...current, syncStatus: 'error' } : current,
+  const synchronizeQuery = useCallback(
+    (conversationId: string, queryKey: QueryKey) =>
+      runConversationMessageSyncSingleFlight(queryKey, async () => {
+        queryClient.setQueryData<ConversationMessageBufferState>(queryKey, (current) =>
+          current ? { ...current, syncStatus: 'syncing' } : current,
         );
-        return null;
-      }
-    });
-  }, [conversationId, enabled, queryClient]);
 
-  useEffect(() => {
-    if (enabled && conversationId) void synchronizeMessages();
-  }, [conversationId, enabled, synchronizeMessages]);
+        try {
+          while (true) {
+            const snapshot = queryClient.getQueryData<ConversationMessageBufferState>(queryKey);
+            if (!snapshot) return null;
 
-  return synchronizeMessages;
+            let afterSequenceNum = snapshot.lastContiguousSequenceNum;
+            let throughSequenceNum: number | undefined;
+            let hasMore = true;
+
+            while (hasMore) {
+              const page = await fetchCatchUpPageWithRetry({
+                conversationId,
+                afterSequenceNum,
+                throughSequenceNum,
+                limit: 100,
+              });
+              throughSequenceNum ??= page.throughSequenceNum;
+
+              let requiresRefetch = false;
+              for (const message of page.items) {
+                queryClient.setQueryData<ConversationMessageBufferState>(queryKey, (current) => {
+                  if (!current) return current;
+
+                  const result = mergeConversationMessage(current, message);
+                  requiresRefetch ||= result.requiresRefetch;
+                  return result.state;
+                });
+
+                if (requiresRefetch) break;
+              }
+
+              if (requiresRefetch) {
+                await queryClient.invalidateQueries({ queryKey, exact: true });
+                return null;
+              }
+
+              hasMore = page.hasMore;
+              if (hasMore) {
+                if (page.nextAfterSequenceNum === null) {
+                  throw new Error('Catch-up response is missing the next sequence cursor.');
+                }
+                afterSequenceNum = page.nextAfterSequenceNum;
+              }
+            }
+
+            if (throughSequenceNum === undefined) return snapshot.lastContiguousSequenceNum;
+
+            queryClient.setQueryData<ConversationMessageBufferState>(queryKey, (current) =>
+              current ? completeConversationMessageSnapshot(current, throughSequenceNum) : current,
+            );
+
+            const completedSnapshot =
+              queryClient.getQueryData<ConversationMessageBufferState>(queryKey);
+            if (!completedSnapshot) return null;
+
+            const needsAnotherSnapshot = Object.keys(
+              completedSnapshot.pendingMessagesBySequence,
+            ).some(
+              (sequenceNum) =>
+                Number(sequenceNum) > completedSnapshot.lastContiguousSequenceNum + 1,
+            );
+            if (!needsAnotherSnapshot) {
+              return completedSnapshot.lastContiguousSequenceNum;
+            }
+
+            queryClient.setQueryData<ConversationMessageBufferState>(queryKey, (current) =>
+              current ? { ...current, syncStatus: 'syncing' } : current,
+            );
+          }
+        } catch {
+          queryClient.setQueryData<ConversationMessageBufferState>(queryKey, (current) =>
+            current ? { ...current, syncStatus: 'error' } : current,
+          );
+          return null;
+        }
+      }),
+    [queryClient],
+  );
+
+  const synchronizeAll = useCallback(
+    () =>
+      Promise.all(
+        getConversationWorkspaceQueries(queryClient).map(([queryKey, current]) =>
+          synchronizeQuery(current.conversationId, queryKey),
+        ),
+      ),
+    [queryClient, synchronizeQuery],
+  );
+
+  return { synchronizeQuery, synchronizeAll };
 }

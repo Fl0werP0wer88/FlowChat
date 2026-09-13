@@ -1,4 +1,10 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
+
+import { getDuetsWithPresenceQueryOptions } from '@/features/chat/conversations/duet/api/get-duets-with-presence';
+import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/get-groups';
+import { createTestQueryClient } from '@/testing/test-utils';
 
 import { useConversationParticipantsAddedSubscription } from '../use-conversation-participants-added-subscription';
 
@@ -18,14 +24,12 @@ vi.mock('@/lib/realtime/realtime-client', () => ({
 }));
 
 const conversationId = '40c3cd3b-69d8-4af3-b1a7-f9174537fb97';
-const otherConversationId = '3965a011-e9ec-4379-9b0b-e2d3132f67d8';
 const participantUserId = '14c11faa-8bd7-4608-abcf-26985f3f62be';
+const workspaceQueryKey = ['conversation-workspace', 'group', conversationId] as const;
 
-function createPayload(targetConversationId = conversationId) {
-  return {
-    conversationId: targetConversationId,
-    conversationType: 2,
-    participantUserIds: [participantUserId],
+function createWrapper(queryClient: ReturnType<typeof createTestQueryClient>) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 }
 
@@ -36,52 +40,53 @@ describe('useConversationParticipantsAddedSubscription', () => {
     realtime.unsubscribe.mockClear();
   });
 
-  it('routes only valid events for the active conversation and unsubscribes', () => {
-    const onParticipantsAdded = vi.fn();
-    const { unmount } = renderHook(() =>
-      useConversationParticipantsAddedSubscription({
-        activeConversationId: conversationId,
-        onParticipantsAdded,
+  it.each([
+    [1, getDuetsWithPresenceQueryOptions().queryKey],
+    [2, getGroupsQueryOptions().queryKey],
+  ] as const)(
+    'invalidates workspace and conversation list for type %s',
+    (conversationType, listKey) => {
+      const queryClient = createTestQueryClient();
+      queryClient.setQueryData(workspaceQueryKey, { conversationId });
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+      const { unmount } = renderHook(() => useConversationParticipantsAddedSubscription(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      act(() =>
+        realtime.handler?.({
+          conversationId,
+          conversationType,
+          participantUserIds: [participantUserId],
+        }),
+      );
+
+      expect(realtime.subscribe).toHaveBeenCalledWith(
+        'ConversationParticipantsAdded',
+        expect.any(Function),
+      );
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: workspaceQueryKey, exact: true });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: listKey });
+      unmount();
+      expect(realtime.unsubscribe).toHaveBeenCalledOnce();
+    },
+  );
+
+  it('ignores a malformed event', () => {
+    const queryClient = createTestQueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+    renderHook(() => useConversationParticipantsAddedSubscription(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() =>
+      realtime.handler?.({
+        conversationId,
+        conversationType: 3,
+        participantUserIds: [participantUserId],
       }),
     );
 
-    act(() => {
-      realtime.handler?.(createPayload());
-      realtime.handler?.(createPayload(otherConversationId));
-      realtime.handler?.({ ...createPayload(), conversationType: 3 });
-    });
-
-    expect(realtime.subscribe).toHaveBeenCalledWith(
-      'ConversationParticipantsAdded',
-      expect.any(Function),
-    );
-    expect(onParticipantsAdded).toHaveBeenCalledOnce();
-    unmount();
-    expect(realtime.unsubscribe).toHaveBeenCalledOnce();
-  });
-
-  it('uses the latest conversation and callback without subscribing again', () => {
-    const firstCallback = vi.fn();
-    const nextCallback = vi.fn();
-    const { rerender } = renderHook(
-      ({ activeConversationId, onParticipantsAdded }) =>
-        useConversationParticipantsAddedSubscription({
-          activeConversationId,
-          onParticipantsAdded,
-        }),
-      {
-        initialProps: {
-          activeConversationId: conversationId,
-          onParticipantsAdded: firstCallback,
-        },
-      },
-    );
-
-    rerender({ activeConversationId: otherConversationId, onParticipantsAdded: nextCallback });
-    act(() => realtime.handler?.(createPayload(otherConversationId)));
-
-    expect(realtime.subscribe).toHaveBeenCalledOnce();
-    expect(firstCallback).not.toHaveBeenCalled();
-    expect(nextCallback).toHaveBeenCalledOnce();
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

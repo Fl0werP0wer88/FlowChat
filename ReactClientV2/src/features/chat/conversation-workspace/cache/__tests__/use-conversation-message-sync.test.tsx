@@ -91,9 +91,10 @@ describe('useConversationMessageSync', () => {
     const queryClient = createSyncQueryClient();
     queryClient.setQueryData(queryKey, createState());
 
-    renderHook(() => useConversationMessageSync({ conversationId, queryKey, enabled: true }), {
+    const { result } = renderHook(() => useConversationMessageSync(), {
       wrapper: createWrapper(queryClient),
     });
+    void result.current.synchronizeQuery(conversationId, queryKey);
 
     await waitFor(() => expect(catchUpMock).toHaveBeenCalledTimes(2));
     await waitFor(() =>
@@ -113,6 +114,30 @@ describe('useConversationMessageSync', () => {
       throughSequenceNum: 4,
       limit: 100,
     });
+  });
+
+  it('synchronizes every cached conversation workspace', async () => {
+    const otherConversationId = '3965a011-e9ec-4379-9b0b-e2d3132f67d8';
+    const otherQueryKey = ['conversation-workspace', 'group', otherConversationId] as const;
+    catchUpMock.mockResolvedValue(createPage([]));
+    const queryClient = createSyncQueryClient();
+    queryClient.setQueryData(queryKey, { conversationId, ...createState() });
+    queryClient.setQueryData(otherQueryKey, {
+      conversationId: otherConversationId,
+      ...createState(),
+    });
+    const { result } = renderHook(() => useConversationMessageSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.synchronizeAll();
+    });
+
+    expect(catchUpMock).toHaveBeenCalledTimes(2);
+    expect(catchUpMock.mock.calls.map(([input]) => input.conversationId)).toEqual(
+      expect.arrayContaining([conversationId, otherConversationId]),
+    );
   });
 
   it('retries a catch-up page after 250, 500 and 1000 milliseconds', async () => {
@@ -138,9 +163,10 @@ describe('useConversationMessageSync', () => {
     const queryClient = createSyncQueryClient();
     queryClient.setQueryData(queryKey, createState());
 
-    renderHook(() => useConversationMessageSync({ conversationId, queryKey, enabled: true }), {
+    const { result } = renderHook(() => useConversationMessageSync(), {
       wrapper: createWrapper(queryClient),
     });
+    void result.current.synchronizeQuery(conversationId, queryKey);
 
     await waitFor(
       () =>
@@ -152,7 +178,7 @@ describe('useConversationMessageSync', () => {
     expect(catchUpMock).toHaveBeenCalledTimes(4);
   });
 
-  it('shares one active synchronization per conversation', async () => {
+  it('shares one active synchronization per query key', async () => {
     let finish: ((value: number) => void) | undefined;
     const operation = vi.fn(
       () =>
@@ -161,13 +187,27 @@ describe('useConversationMessageSync', () => {
         }),
     );
 
-    const first = runConversationMessageSyncSingleFlight(conversationId, operation);
-    const second = runConversationMessageSyncSingleFlight(conversationId, operation);
+    const first = runConversationMessageSyncSingleFlight(queryKey, operation);
+    const second = runConversationMessageSyncSingleFlight(queryKey, operation);
 
     expect(first).toBe(second);
     expect(operation).toHaveBeenCalledOnce();
     finish?.(7);
     await expect(first).resolves.toBe(7);
+  });
+
+  it('runs independent synchronizations for different query keys', async () => {
+    const otherQueryKey = ['conversation-workspace', 'duet', 'partner-id', null] as const;
+    const firstOperation = vi.fn(() => Promise.resolve<number | null>(3));
+    const secondOperation = vi.fn(() => Promise.resolve<number | null>(4));
+
+    const first = runConversationMessageSyncSingleFlight(queryKey, firstOperation);
+    const second = runConversationMessageSyncSingleFlight(otherQueryKey, secondOperation);
+
+    expect(first).not.toBe(second);
+    expect(firstOperation).toHaveBeenCalledOnce();
+    expect(secondOperation).toHaveBeenCalledOnce();
+    await expect(Promise.all([first, second])).resolves.toEqual([3, 4]);
   });
 
   it('invalidates the exact open query when catch-up detects a sequence conflict', async () => {
@@ -176,9 +216,10 @@ describe('useConversationMessageSync', () => {
     queryClient.setQueryData(queryKey, createState());
     const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
 
-    renderHook(() => useConversationMessageSync({ conversationId, queryKey, enabled: true }), {
+    const { result } = renderHook(() => useConversationMessageSync(), {
       wrapper: createWrapper(queryClient),
     });
+    void result.current.synchronizeQuery(conversationId, queryKey);
 
     await waitFor(() => expect(invalidateQueries).toHaveBeenCalledWith({ queryKey, exact: true }));
   });
@@ -201,9 +242,10 @@ describe('useConversationMessageSync', () => {
     const queryClient = createSyncQueryClient();
     queryClient.setQueryData(queryKey, createState());
 
-    renderHook(() => useConversationMessageSync({ conversationId, queryKey, enabled: true }), {
+    const { result } = renderHook(() => useConversationMessageSync(), {
       wrapper: createWrapper(queryClient),
     });
+    void result.current.synchronizeQuery(conversationId, queryKey);
     await waitFor(() => expect(catchUpMock).toHaveBeenCalledOnce());
 
     act(() => {

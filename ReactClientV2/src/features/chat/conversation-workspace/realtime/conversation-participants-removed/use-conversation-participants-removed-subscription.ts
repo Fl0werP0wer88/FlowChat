@@ -1,34 +1,30 @@
-import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
+import { getDuetsWithPresenceQueryOptions } from '@/features/chat/conversations/duet/api/get-duets-with-presence';
+import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/get-groups';
 import { subscribeToRealtimeEvent } from '@/lib/realtime/realtime-client';
 
-import {
-  parseConversationParticipantsRemoved,
-  type ConversationParticipantsRemovedEvent,
-} from './conversation-participants-removed-event';
+import { invalidateConversationWorkspaceQueries } from '../../cache/conversation-workspace-query-cache';
 
-export interface UseConversationParticipantsRemovedSubscriptionOptions {
-  activeConversationId: string | null;
-  onParticipantsRemoved?: (event: ConversationParticipantsRemovedEvent) => void;
-}
+import { parseConversationParticipantsRemoved } from './conversation-participants-removed-event';
 
-export function useConversationParticipantsRemovedSubscription(
-  options: UseConversationParticipantsRemovedSubscriptionOptions,
-) {
-  const optionsRef = useRef(options);
-
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
+export function useConversationParticipantsRemovedSubscription() {
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleParticipantsRemoved = (payload: unknown) => {
       const event = parseConversationParticipantsRemoved(payload);
-      if (!event || optionsRef.current.activeConversationId !== event.conversationId) return;
+      if (!event) return;
 
-      optionsRef.current.onParticipantsRemoved?.(event);
+      const conversationListQueryKey =
+        event.conversationType === 1
+          ? getDuetsWithPresenceQueryOptions().queryKey
+          : getGroupsQueryOptions().queryKey;
+      void invalidateConversationWorkspaceQueries(queryClient, event.conversationId);
+      void queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
     };
 
     return subscribeToRealtimeEvent('ConversationParticipantsRemoved', handleParticipantsRemoved);
-  }, []);
+  }, [queryClient]);
 }

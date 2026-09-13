@@ -11,7 +11,7 @@ export interface ConversationMessageBufferState {
 
 export type BufferedConversationSnapshot<
   TSnapshot extends { messages: ConversationMessage[]; currentSequenceNum: number },
-> = Omit<TSnapshot, 'messages'> & ConversationMessageBufferState;
+> = TSnapshot & ConversationMessageBufferState;
 
 export interface MessageMergeResult<TState extends ConversationMessageBufferState> {
   state: TState;

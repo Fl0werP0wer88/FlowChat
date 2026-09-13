@@ -1,4 +1,9 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
+
+import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/get-groups';
+import { createTestQueryClient } from '@/testing/test-utils';
 
 import { useGroupConversationChangedSubscription } from '../use-group-conversation-changed-subscription';
 
@@ -19,9 +24,13 @@ vi.mock('@/lib/realtime/realtime-client', () => ({
 
 const conversationId = '40c3cd3b-69d8-4af3-b1a7-f9174537fb97';
 const otherConversationId = '3965a011-e9ec-4379-9b0b-e2d3132f67d8';
+const workspaceQueryKey = ['conversation-workspace', 'group', conversationId] as const;
+const otherWorkspaceQueryKey = ['conversation-workspace', 'group', otherConversationId] as const;
 
-function createPayload(targetConversationId = conversationId) {
-  return { conversationId: targetConversationId, type: 2, name: 'Product team' };
+function createWrapper(queryClient: ReturnType<typeof createTestQueryClient>) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
 }
 
 describe('useGroupConversationChangedSubscription', () => {
@@ -31,55 +40,43 @@ describe('useGroupConversationChangedSubscription', () => {
     realtime.unsubscribe.mockClear();
   });
 
-  it('routes only valid events for the active conversation and unsubscribes', () => {
-    const onGroupConversationChanged = vi.fn();
-    const { unmount } = renderHook(() =>
-      useGroupConversationChangedSubscription({
-        activeConversationId: conversationId,
-        onGroupConversationChanged,
-      }),
-    );
-
-    act(() => {
-      realtime.handler?.(createPayload());
-      realtime.handler?.(createPayload(otherConversationId));
-      realtime.handler?.({ ...createPayload(), type: 1 });
+  it('invalidates the matching workspace and group list', () => {
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(workspaceQueryKey, { conversationId });
+    queryClient.setQueryData(otherWorkspaceQueryKey, { conversationId: otherConversationId });
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+    const { unmount } = renderHook(() => useGroupConversationChangedSubscription(), {
+      wrapper: createWrapper(queryClient),
     });
+
+    act(() => realtime.handler?.({ conversationId, type: 2, name: 'Updated product team' }));
 
     expect(realtime.subscribe).toHaveBeenCalledWith(
       'GroupConversationChanged',
       expect.any(Function),
     );
-    expect(onGroupConversationChanged).toHaveBeenCalledOnce();
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: workspaceQueryKey, exact: true });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: getGroupsQueryOptions().queryKey,
+    });
+    expect(invalidateQueries).not.toHaveBeenCalledWith({
+      queryKey: otherWorkspaceQueryKey,
+      exact: true,
+    });
+
     unmount();
     expect(realtime.unsubscribe).toHaveBeenCalledOnce();
   });
 
-  it('uses the latest conversation and callback without subscribing again', () => {
-    const firstCallback = vi.fn();
-    const nextCallback = vi.fn();
-    const { rerender } = renderHook(
-      ({ activeConversationId, onGroupConversationChanged }) =>
-        useGroupConversationChangedSubscription({
-          activeConversationId,
-          onGroupConversationChanged,
-        }),
-      {
-        initialProps: {
-          activeConversationId: conversationId,
-          onGroupConversationChanged: firstCallback,
-        },
-      },
-    );
-
-    rerender({
-      activeConversationId: otherConversationId,
-      onGroupConversationChanged: nextCallback,
+  it('ignores a malformed event', () => {
+    const queryClient = createTestQueryClient();
+    const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+    renderHook(() => useGroupConversationChangedSubscription(), {
+      wrapper: createWrapper(queryClient),
     });
-    act(() => realtime.handler?.(createPayload(otherConversationId)));
 
-    expect(realtime.subscribe).toHaveBeenCalledOnce();
-    expect(firstCallback).not.toHaveBeenCalled();
-    expect(nextCallback).toHaveBeenCalledOnce();
+    act(() => realtime.handler?.({ conversationId, type: 1, name: 'Invalid' }));
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

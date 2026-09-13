@@ -1,34 +1,30 @@
-import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
+import { getDuetsWithPresenceQueryOptions } from '@/features/chat/conversations/duet/api/get-duets-with-presence';
+import { getGroupsQueryOptions } from '@/features/chat/conversations/group/api/get-groups';
 import { subscribeToRealtimeEvent } from '@/lib/realtime/realtime-client';
 
-import {
-  parseConversationParticipantsAdded,
-  type ConversationParticipantsAddedEvent,
-} from './conversation-participants-added-event';
+import { invalidateConversationWorkspaceQueries } from '../../cache/conversation-workspace-query-cache';
 
-export interface UseConversationParticipantsAddedSubscriptionOptions {
-  activeConversationId: string | null;
-  onParticipantsAdded?: (event: ConversationParticipantsAddedEvent) => void;
-}
+import { parseConversationParticipantsAdded } from './conversation-participants-added-event';
 
-export function useConversationParticipantsAddedSubscription(
-  options: UseConversationParticipantsAddedSubscriptionOptions,
-) {
-  const optionsRef = useRef(options);
-
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
+export function useConversationParticipantsAddedSubscription() {
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleParticipantsAdded = (payload: unknown) => {
       const event = parseConversationParticipantsAdded(payload);
-      if (!event || optionsRef.current.activeConversationId !== event.conversationId) return;
+      if (!event) return;
 
-      optionsRef.current.onParticipantsAdded?.(event);
+      const conversationListQueryKey =
+        event.conversationType === 1
+          ? getDuetsWithPresenceQueryOptions().queryKey
+          : getGroupsQueryOptions().queryKey;
+      void invalidateConversationWorkspaceQueries(queryClient, event.conversationId);
+      void queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
     };
 
     return subscribeToRealtimeEvent('ConversationParticipantsAdded', handleParticipantsAdded);
-  }, []);
+  }, [queryClient]);
 }
