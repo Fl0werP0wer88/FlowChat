@@ -64,8 +64,8 @@ export function useConversationMessageSync() {
   const queryClient = useQueryClient();
 
   const synchronizeQuery = useCallback(
-    (conversationId: string, queryKey: QueryKey) =>
-      runConversationMessageSyncSingleFlight(queryKey, async () => {
+    (conversationId: string, queryKey: QueryKey) => {
+      const synchronizeMessages = async (): Promise<number | null> => {
         queryClient.setQueryData<ConversationMessageBufferState>(queryKey, (current) =>
           current ? { ...current, syncStatus: 'syncing' } : current,
         );
@@ -145,7 +145,10 @@ export function useConversationMessageSync() {
           );
           return null;
         }
-      }),
+      };
+
+      return runConversationMessageSyncSingleFlight(queryKey, synchronizeMessages);
+    },
     [queryClient],
   );
 
