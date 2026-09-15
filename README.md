@@ -2,6 +2,45 @@
 
 [Polish version](ReadMe.PL.txt) | [English text version](ReadMe.EN.txt)
 
+## Table of contents
+
+- [1. System architecture](#1-system-architecture)
+  - [1.1. Microservice boundaries and data ownership](#11-microservice-boundaries-and-data-ownership)
+  - [1.2. Clean Architecture layers](#12-clean-architecture-layers)
+  - [1.3. CQRS, DDD, and result handling](#13-cqrs-ddd-and-result-handling)
+  - [1.4. Asynchronous communication, Outbox, and resilience](#14-asynchronous-communication-outbox-and-resilience)
+    - [1.4.1. Cross-service projections](#141-cross-service-projections)
+    - [1.4.2. Retry and DLQ](#142-retry-and-dlq)
+  - [1.5. Real-time communication](#15-real-time-communication)
+- [2. Component responsibilities](#2-component-responsibilities)
+  - [2.1. ReactClient](#21-reactclient)
+  - [2.2. GatewayService](#22-gatewayservice)
+  - [2.3. AuthService](#23-authservice)
+  - [2.4. UserProfileService](#24-userprofileservice)
+  - [2.5. ChatService](#25-chatservice)
+  - [2.6. PresenceService](#26-presenceservice)
+  - [2.7. RealtimeService](#27-realtimeservice)
+  - [2.8. NotificationService](#28-notificationservice)
+  - [2.9. HarnessService](#29-harnessservice)
+  - [2.10. Common](#210-common)
+- [3. Technology stack](#3-technology-stack)
+  - [Backend and API](#backend-and-api)
+  - [Application architecture](#application-architecture)
+  - [Data](#data)
+  - [Messaging and integration](#messaging-and-integration)
+  - [Security](#security)
+  - [Frontend](#frontend)
+  - [Notifications](#notifications)
+  - [Observability](#observability)
+  - [Tests](#tests)
+  - [Local infrastructure](#local-infrastructure)
+- [4. Key business flows](#4-key-business-flows)
+  - [4.1. User registration](#41-user-registration)
+  - [4.2. Sending a message](#42-sending-a-message)
+  - [4.3. Changing presence status](#43-changing-presence-status)
+- [5. Repository structure](#5-repository-structure)
+- [6. Configuration and local startup](#6-configuration-and-local-startup)
+
 FlowChat is a web-based chat application built using a microservice architecture.
 The system supports user registration and authentication, profiles, private and group
 conversations, messages, contacts, presence statuses, notifications, and real-time
@@ -360,11 +399,34 @@ Bootstrap scripts are located in `Scripts/PostgreSQL`, `Scripts/Kafka`, `Scripts
 the required components or the prepared stacks, such as Kafka with Kafka UI, Redis with
 RedisInsight, and the complete observability stack.
 
-After starting PostgreSQL, run migrations for all registered services with:
+For a first-time setup, run the idempotent bootstrap from the repository root:
 
 ```powershell
-./Scripts/PostgreSQL/migrate-all.ps1
+.\Scripts\setup-project.ps1
 ```
+
+The script validates the required host tools, pulls and starts all Docker infrastructure,
+restores the backend and frontend dependencies, builds both applications, and applies all
+database migrations. It does not install host tools or delete existing databases, topics,
+or Docker volumes. Infisical and the observability stack are included by default.
+
+Optional switches:
+
+```powershell
+.\Scripts\setup-project.ps1 -SkipPull
+.\Scripts\setup-project.ps1 -SkipBuild
+.\Scripts\setup-project.ps1 -SkipMigrations
+.\Scripts\setup-project.ps1 -SkipInfisical
+.\Scripts\setup-project.ps1 -SkipObservability
+```
+
+If the ASP.NET Core development certificate is not trusted, the script prints the
+one-time `dotnet dev-certs https --trust` command. Once setup finishes, open
+`FlowChat.code-workspace` and start the `All Services` debug compound.
+
+Individual bootstrap scripts remain available when only one infrastructure component is
+needed. After starting PostgreSQL manually, migrations for all registered services can be
+applied with `./Scripts/PostgreSQL/migrate-all.ps1`.
 
 The backend can be started separately from each service solution or by using compounds
 in `FlowChat.code-workspace`. The default public gateway address in the development
