@@ -36,18 +36,18 @@ public sealed class CreateGroupConversationCommandHandlerV2
         CancellationToken cancellationToken)
     {
         var participantIds = request.ParticipantUserIds
-            .Prepend(request.CreatedByUserId)
+            .Prepend(request.RequestingUserId)
             .Distinct()
             .Select(Id<UserProfileMarker>.FromGuid)
             .ToArray();
 
         _conversation = ConversationAggregate.CreateGroup(
             Id<ConversationAggregate>.FromGuid(request.ConversationId),
-            Id<UserProfileMarker>.FromGuid(request.CreatedByUserId),
+            Id<UserProfileMarker>.FromGuid(request.RequestingUserId),
             participantIds,
             request.Name);
 
-        await _conversationRepository.AddAsync(_conversation, participantIds, cancellationToken);
+        await _conversationRepository.AddAsync(_conversation, cancellationToken);
 
         var profiles = await _profileRepository.GetByIdsAsync(
             participantIds.Select(x => x.Value).ToList(),

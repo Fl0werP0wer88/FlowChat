@@ -5,22 +5,26 @@ import type {
   GroupConversationMessage,
   GroupConversationParticipant,
 } from "../../types/chat";
-import type { ContactDto } from "./contact/queries/getContacts/ContactDto";
-import type { GetContactsResponseDto } from "./contact/queries/getContacts/GetContactsResponseDto";
+import type { DuetConversationWithPresenceDto } from "./conversation/queries/getDuetConversationsWithPresence/DuetConversationWithPresenceDto";
+import type { GetDuetConversationsWithPresenceResponseDto } from "./conversation/queries/getDuetConversationsWithPresence/GetDuetConversationsWithPresenceResponseDto";
 import type { ConversationMessageDto } from "./conversation/queries/getConversationMessages/ConversationMessageDto";
 import type { ConversationParticipantDto } from "./conversation/queries/getConversationParticipants/ConversationParticipantDto";
 import { calculateUnreadCount } from "../../utils/chatUtils";
 
-export function resolveContacts(response: GetContactsResponseDto): ContactDto[] {
-  return response.contacts ?? [];
+export function resolveDuetConversationsWithPresence(
+  response: GetDuetConversationsWithPresenceResponseDto,
+): DuetConversationWithPresenceDto[] {
+  return response.conversations ?? [];
 }
 
-export function mapContact(dto: ContactDto): Contact {
+export function mapDuetConversationWithPresenceToContact(
+  dto: DuetConversationWithPresenceDto,
+): Contact {
   const lastReadMsgSeqNum = dto.lastReadMsgSeqNum ?? 0;
   const currentMsgSeqNum = dto.currentMsgSeqNum ?? 0;
 
   return {
-    userId: dto.contactUserId ?? "",
+    userId: dto.partnerUserId ?? "",
     displayName: dto.displayName ?? "Nowy kontakt",
     email: dto.email ?? null,
     status: dto.status ?? "Invisible",

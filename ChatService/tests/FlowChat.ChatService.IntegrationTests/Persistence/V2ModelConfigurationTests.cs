@@ -1,9 +1,11 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.Conversation.ValueObjects;
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Persistence.Entities;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence;
 
@@ -22,7 +24,6 @@ public sealed class V2ModelConfigurationTests
         model.FindEntityType(typeof(ConversationMembership))!.GetTableName().Should().Be("ConversationMembershipsV2");
         model.FindEntityType(typeof(ConversationParticipant))!.GetTableName().Should().Be("ConversationParticipantsV2");
         model.FindEntityType(typeof(ChatMessageV2))!.GetTableName().Should().Be("ChatMessagesV2");
-        model.FindEntityType(typeof(DuetConversationLookupEntityV2))!.GetTableName().Should().Be("DuetConversationsV2");
         model.FindEntityType(typeof(ConversationMessageSequenceEntityV2))!.GetTableName()
             .Should().Be("ConversationMessageSequencesV2");
 
@@ -51,5 +52,20 @@ public sealed class V2ModelConfigurationTests
         model.FindEntityType(typeof(ChatMessageV2))!
             .FindProperty("RecipientUserIds")
             .Should().BeNull();
+
+        var conversationEntity = model.FindEntityType(typeof(ConversationV2))!;
+        conversationEntity.FindProperty("CreatedByUserId").Should().BeNull();
+
+        var duetPairEntity = model.FindEntityType(typeof(DuetParticipantPair))!;
+        duetPairEntity.GetIndexes().Should().ContainSingle(index =>
+            index.GetDatabaseName() == "UX_ConversationsV2_DuetParticipantPair" &&
+            index.IsUnique &&
+            index.GetFilter() == "\"DeletedAt\" IS NULL AND \"ConversationType\" = 1");
+
+        var conversationsTable = StoreObjectIdentifier.Table("ConversationsV2", null);
+        duetPairEntity.FindProperty(nameof(DuetParticipantPair.FirstUserId))!
+            .GetColumnName(conversationsTable).Should().Be("DuetFirstUserId");
+        duetPairEntity.FindProperty(nameof(DuetParticipantPair.SecondUserId))!
+            .GetColumnName(conversationsTable).Should().Be("DuetSecondUserId");
     }
 }

@@ -5,6 +5,6 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Commands.Create
 
 public sealed record CreateGroupConversationCommandV2(
     Guid ConversationId,
-    Guid CreatedByUserId,
+    Guid RequestingUserId,
     IReadOnlyCollection<Guid> ParticipantUserIds,
     string Name) : ICommand<GroupConversationDetailDto>;

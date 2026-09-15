@@ -50,7 +50,7 @@ public sealed class CreateDuetConversationCommandHandlerV2
 
         var participantIds = new[] { requestingUserId, partnerUserId };
         _conversation = ConversationAggregate.CreateDuet(requestingUserId, partnerUserId);
-        await _conversationRepository.AddAsync(_conversation, participantIds, cancellationToken);
+        await _conversationRepository.AddAsync(_conversation, cancellationToken);
 
         var profiles = await _profileRepository.GetByIdsAsync(
             participantIds.Select(x => x.Value).ToList(),

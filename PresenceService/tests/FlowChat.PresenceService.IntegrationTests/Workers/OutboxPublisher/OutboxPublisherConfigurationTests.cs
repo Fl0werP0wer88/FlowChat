@@ -38,7 +38,7 @@ public sealed class OutboxPublisherConfigurationTests
         await provider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
         var producers = provider.GetRequiredService<IProducerCollection>();
 
-        topics.Should().HaveCount(5).And.OnlyHaveUniqueItems();
+        topics.Should().HaveCount(3).And.OnlyHaveUniqueItems();
         topics.Should().AllSatisfy(topic =>
             producers.GetProducerForEndpoint(topic).Should().NotBeNull());
         producers.GetProducerForEndpoint("presence-status-changed").Should().NotBeNull();

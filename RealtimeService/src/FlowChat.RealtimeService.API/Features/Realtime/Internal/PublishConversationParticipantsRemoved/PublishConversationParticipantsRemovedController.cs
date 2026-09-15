@@ -33,7 +33,9 @@ public sealed class PublishConversationParticipantsRemovedController : ApiContro
             new PublishConversationParticipantsRemovedCommand(
                 request.ConversationId,
                 request.ConversationType,
-                request.ParticipantUserIds),
+                request.ParticipantUserIds,
+                request.ParticipantCount,
+                request.MembershipRevision),
             cancellationToken);
 
         return result.IsSuccess

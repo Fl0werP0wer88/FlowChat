@@ -9,7 +9,7 @@ public interface IDuetConversationReadRepository
         Guid partnerUserId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<ContactDto>> GetContactsForUserAsync(
+    Task<IReadOnlyCollection<DuetConversationListItemDto>> GetDuetConversationsAsync(
         Guid requestingUserId,
         CancellationToken cancellationToken = default);
 }

@@ -30,6 +30,8 @@ public sealed class PublishConversationParticipantsRemovedCommandHandlerTests
         var participantUserId = _fixture.Create<Guid>();
         var connectionId = _fixture.Create<string>();
         const int conversationType = 2;
+        const int participantCount = 3;
+        const int membershipRevision = 8;
         var callOrder = new List<string>();
 
         _connectionRegistryMock
@@ -42,6 +44,8 @@ public sealed class PublishConversationParticipantsRemovedCommandHandlerTests
                 It.Is<ConversationParticipantsRemovedParam>(notification =>
                     notification.ConversationId == conversationId &&
                     notification.ConversationType == conversationType &&
+                    notification.ParticipantCount == participantCount &&
+                    notification.MembershipRevision == membershipRevision &&
                     notification.ParticipantUserIds.SequenceEqual(new[] { participantUserId })),
                 It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("dispatch"))
@@ -52,7 +56,12 @@ public sealed class PublishConversationParticipantsRemovedCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
-            new PublishConversationParticipantsRemovedCommand(conversationId, conversationType, [participantUserId]),
+            new PublishConversationParticipantsRemovedCommand(
+                conversationId,
+                conversationType,
+                [participantUserId],
+                participantCount,
+                membershipRevision),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();

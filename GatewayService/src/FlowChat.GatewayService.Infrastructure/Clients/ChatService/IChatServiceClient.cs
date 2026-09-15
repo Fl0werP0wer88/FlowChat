@@ -12,7 +12,8 @@ public interface IChatServiceClient
         Guid partnerUserId,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<ContactClientDto>> GetContactsForUserAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<DuetConversationListItemClientDto>> GetDuetConversationsAsync(
+        CancellationToken cancellationToken);
 
     Task<GroupConversationClientDto?> GetGroupConversationAsync(
         Guid conversationId,

@@ -122,12 +122,11 @@ public sealed class ConversationMessageSequenceRepositoryV2Tests : IAsyncLifetim
     private static async Task<Id<ConversationV2>> SeedConversationAsync(AppDbContext dbContext)
     {
         var conversationId = Id<ConversationV2>.New();
-        var creatorUserId = Id<UserProfile>.New();
         var conversation = ConversationV2.Restore(
             conversationId,
             ConversationType.Group,
             "Sequence test",
-            creatorUserId);
+            duetParticipants: null);
         conversation.SetCreated("test");
         conversation.SetUpdated("test");
 

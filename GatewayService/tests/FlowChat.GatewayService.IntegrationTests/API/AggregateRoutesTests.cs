@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using FluentAssertions;
 using FlowChat.Core.Domain;
 using FlowChat.Core.Results;
-using FlowChat.GatewayService.Api.Features.Contact.Public.GetContactsWithConversations;
+using FlowChat.GatewayService.Api.Features.Conversation.Public.GetDuetConversationsWithPresence;
 using FlowChat.GatewayService.Api.Features.Conversation.Public.OpenDuetConversation;
 using FlowChat.GatewayService.Api.Features.Conversation.Public.OpenGroupConversation;
 using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
@@ -21,15 +21,15 @@ public sealed class AggregateRoutesTests(GatewayApiFactory factory)
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
     [Fact]
-    public async Task ContactsRoute_IsHandledByContactSlice()
+    public async Task DuetConversationsWithPresenceRoute_IsHandledByConversationSlice()
     {
         var userId = Guid.NewGuid();
         var partnerId = Guid.NewGuid();
         factory.ChatServiceClient
-            .Setup(x => x.GetContactsForUserAsync(It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetDuetConversationsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(
             [
-                new ContactClientDto(
+                new DuetConversationListItemClientDto(
                     partnerId,
                     "partner",
                     null,
@@ -52,13 +52,15 @@ public sealed class AggregateRoutesTests(GatewayApiFactory factory)
             });
         using var client = CreateClient(userId);
 
-        var response = await client.GetAsync("/api/aggregate/contacts");
+        var response = await client.GetAsync("/api/aggregate/conversations/duets");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetContactsWithConversationsResponse>(
+        var body = await response.Content.ReadFromJsonAsync<GetDuetConversationsWithPresenceResponse>(
             JsonOptions);
         body.Should().NotBeNull();
-        body!.Contacts.Should().ContainSingle().Which.UnreadCount.Should().Be(3);
+        var conversation = body!.Conversations.Should().ContainSingle().Which;
+        conversation.PartnerUserId.Should().Be(partnerId);
+        conversation.UnreadCount.Should().Be(3);
     }
 
     [Fact]

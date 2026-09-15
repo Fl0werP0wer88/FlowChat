@@ -261,6 +261,113 @@ public sealed class UserProfileReadRepositoryTests
     }
 
     [Fact]
+    public async Task SearchRangeAscendingAsync_WhenReadingConsecutivePages_ReturnsFilteredUniqueLightweightRows()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            var deletedProfile = UserProfile.Create(
+                Id<UserProfile>.New(),
+                "dave",
+                EmailAddress.Create("dave@example.com"),
+                firstName: "John",
+                lastName: "Deleted",
+                organization: "FlowChat");
+            deletedProfile.Delete(
+                UtcDateTimeOffset.Create(new DateTimeOffset(2026, 8, 24, 12, 0, 0, TimeSpan.Zero)));
+
+            seedContext.UserProfiles.AddRange(
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "charlie",
+                    EmailAddress.Create("charlie@example.com"),
+                    avatarUrl: "https://cdn.example/charlie.png",
+                    firstName: "Johnny",
+                    lastName: "Doe",
+                    organization: "FlowChat"),
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "alice",
+                    EmailAddress.Create("alice@example.com"),
+                    firstName: "Joan",
+                    lastName: "Doe",
+                    organization: "FlowChat"),
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "bob",
+                    EmailAddress.Create("bob@example.com"),
+                    firstName: "John",
+                    lastName: "Doe",
+                    organization: "FlowChat"),
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "edgar",
+                    EmailAddress.Create("edgar@example.com"),
+                    firstName: "John",
+                    lastName: "Doe",
+                    organization: "AnotherOrg"),
+                deletedProfile);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileReadRepository(readContext);
+
+        var firstPage = await repository.SearchRangeAscendingAsync(
+            "Jo",
+            "Do",
+            "Flow",
+            null,
+            2,
+            CancellationToken.None);
+        var secondPage = await repository.SearchRangeAscendingAsync(
+            "Jo",
+            "Do",
+            "Flow",
+            firstPage[^1].FriendlyUserId,
+            2,
+            CancellationToken.None);
+
+        firstPage.Select(profile => profile.FriendlyUserId).Should().Equal("alice", "bob");
+        secondPage.Select(profile => profile.FriendlyUserId).Should().Equal("charlie");
+        firstPage.Concat(secondPage).Select(profile => profile.FriendlyUserId)
+            .Should().OnlyHaveUniqueItems();
+        secondPage[0].AvatarUrl.Should().Be("https://cdn.example/charlie.png");
+    }
+
+    [Fact]
+    public async Task SearchRangeAscendingAsync_WhenCursorIsAfterLastMatch_ReturnsEmptyPage()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfiles.Add(UserProfile.Create(
+                Id<UserProfile>.New(),
+                "alice",
+                EmailAddress.Create("alice@example.com"),
+                firstName: "Alice"));
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileReadRepository(readContext);
+
+        var result = await repository.SearchRangeAscendingAsync(
+            "Ali",
+            null,
+            null,
+            "zoe",
+            20,
+            CancellationToken.None);
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetByFriendlyUserIdAsync_WhenFriendlyUserIdHasDifferentCasing_ReturnsProjectedProfile()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

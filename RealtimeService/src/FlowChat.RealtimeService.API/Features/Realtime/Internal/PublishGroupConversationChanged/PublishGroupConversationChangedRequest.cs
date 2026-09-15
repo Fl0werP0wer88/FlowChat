@@ -7,5 +7,4 @@ public sealed class PublishGroupConversationChangedRequest : IServiceInput
     public Guid ConversationId { get; init; }
     public int Type { get; init; }
     public string? Name { get; init; }
-    public Guid CreatedByUserId { get; init; }
 }

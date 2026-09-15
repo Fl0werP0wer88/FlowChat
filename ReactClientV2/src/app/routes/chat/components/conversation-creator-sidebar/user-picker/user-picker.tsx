@@ -1,0 +1,142 @@
+import { Search } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+
+import { InputField } from '@/components/ui/input-field';
+import {
+  searchUserProfilesInputSchema,
+  type SearchUserProfilesInput,
+  type UserProfile,
+} from '@/features/chat/user-profiles/api/search-user-profiles';
+import { UserSearchResults } from '@/features/chat/user-profiles/components/user-search-results/user-search-results';
+import {
+  UserSearchLoading,
+  UserSearchStatus,
+} from '@/features/chat/user-profiles/components/user-search-results/user-search-status';
+import { useAuthStore } from '@/stores/auth-store';
+
+import { SelectedUsers } from './selected-users';
+
+type SearchCriteria = {
+  firstName: string;
+  lastName: string;
+  organization: string;
+};
+
+const initialSearchCriteria: SearchCriteria = {
+  firstName: '',
+  lastName: '',
+  organization: '',
+};
+
+interface UserPickerProps {
+  mode: 'single' | 'multiple';
+  selectedUsers: UserProfile[];
+  disabled: boolean;
+  processingUserId?: string;
+  onSelect: (userProfile: UserProfile) => void;
+  onRemove: (userProfileId: string) => void;
+}
+
+export function UserPicker({
+  mode,
+  selectedUsers,
+  disabled,
+  processingUserId,
+  onSelect,
+  onRemove,
+}: UserPickerProps) {
+  const currentUserId = useAuthStore((state) => state.session?.user.id);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [criteria, setCriteria] = useState<SearchCriteria>(initialSearchCriteria);
+  const [debouncedCriteria, setDebouncedCriteria] = useState<SearchUserProfilesInput | null>(null);
+
+  useEffect(() => {
+    const parsedCriteria = searchUserProfilesInputSchema.safeParse(criteria);
+    if (!parsedCriteria.success) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedCriteria(parsedCriteria.data);
+    }, 280);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [criteria]);
+
+  const updateCriterion = (field: keyof SearchCriteria, value: string) => {
+    setDebouncedCriteria(null);
+    setCriteria((current) => ({ ...current, [field]: value }));
+  };
+  const hasSearchCriteria = Object.values(criteria).some((value) => value.trim().length > 0);
+  const selectedUserIds = new Set(selectedUsers.map((userProfile) => userProfile.id));
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollContainerRef}>
+      <div className="grid gap-5 px-5 py-5 sm:px-6">
+        {mode === 'multiple' ? (
+          <SelectedUsers users={selectedUsers} disabled={disabled} onRemove={onRemove} />
+        ) : null}
+
+        <section className="grid gap-3" aria-labelledby="search-users-heading">
+          <div className="flex items-center gap-2">
+            <Search className="size-4 text-blue-700" aria-hidden="true" />
+            <h2 className="m-0 text-sm font-semibold text-slate-900" id="search-users-heading">
+              Search users
+            </h2>
+          </div>
+          <div className="grid gap-3">
+            <InputField
+              id="search-first-name"
+              label="First name"
+              maxLength={100}
+              type="search"
+              variant="compact"
+              value={criteria.firstName}
+              disabled={disabled}
+              onChange={(event) => updateCriterion('firstName', event.target.value)}
+            />
+            <InputField
+              id="search-last-name"
+              label="Last name"
+              maxLength={100}
+              type="search"
+              variant="compact"
+              value={criteria.lastName}
+              disabled={disabled}
+              onChange={(event) => updateCriterion('lastName', event.target.value)}
+            />
+            <InputField
+              id="search-organization"
+              label="Organization"
+              maxLength={200}
+              type="search"
+              variant="compact"
+              value={criteria.organization}
+              disabled={disabled}
+              onChange={(event) => updateCriterion('organization', event.target.value)}
+            />
+          </div>
+        </section>
+      </div>
+
+      <div className="border-t border-slate-200 px-5 sm:px-6">
+        {!hasSearchCriteria ? (
+          <UserSearchStatus>
+            Enter a first name, last name, or organization to find users.
+          </UserSearchStatus>
+        ) : !debouncedCriteria ? (
+          <UserSearchLoading />
+        ) : (
+          <UserSearchResults
+            criteria={debouncedCriteria}
+            currentUserId={currentUserId}
+            selectedUserIds={selectedUserIds}
+            mode={mode}
+            disabled={disabled}
+            processingUserId={processingUserId}
+            scrollContainerRef={scrollContainerRef}
+            onSelect={onSelect}
+          />
+        )}
+      </div>
+    </div>
+  );
+}

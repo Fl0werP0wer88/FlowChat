@@ -29,7 +29,6 @@ public sealed class PersistenceServiceRegistrationTests
         var participantReadRepository = scope.ServiceProvider.GetService<IConversationParticipantReadRepository>();
         var conversationWriteRepository = scope.ServiceProvider.GetService<IConversationV2WriteRepository>();
         var sequenceRepository = scope.ServiceProvider.GetService<IConversationMessageSequenceRepositoryV2>();
-
         duetReadRepository.Should().NotBeNull();
         conversationWriteRepository.Should().NotBeNull();
         participantReadRepository.Should().NotBeNull();

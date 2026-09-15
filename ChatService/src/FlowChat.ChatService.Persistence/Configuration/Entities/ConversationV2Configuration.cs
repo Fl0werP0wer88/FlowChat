@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.Conversation.ValueObjects;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,21 @@ namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
 public sealed class ConversationV2Configuration : IEntityTypeConfiguration<ConversationV2>
 {
+    internal const string DuetParticipantPairUniqueIndexName =
+        "UX_ConversationsV2_DuetParticipantPair";
+
     public void Configure(EntityTypeBuilder<ConversationV2> builder)
     {
-        builder.ToTable("ConversationsV2");
+        builder.ToTable("ConversationsV2", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_ConversationsV2_DuetParticipantShape",
+                "(\"ConversationType\" = 1 AND \"DuetFirstUserId\" IS NOT NULL AND \"DuetSecondUserId\" IS NOT NULL) OR " +
+                "(\"ConversationType\" = 2 AND \"DuetFirstUserId\" IS NULL AND \"DuetSecondUserId\" IS NULL)");
+            table.HasCheckConstraint(
+                "CK_ConversationsV2_NormalizedDuetParticipants",
+                "\"DuetFirstUserId\" IS NULL OR \"DuetFirstUserId\" < \"DuetSecondUserId\"");
+        });
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Id)
@@ -23,14 +36,32 @@ public sealed class ConversationV2Configuration : IEntityTypeConfiguration<Conve
         builder.Property(x => x.Name)
             .HasMaxLength(200);
 
-        builder.Property(x => x.CreatedByUserId)
-            .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
-            .IsRequired();
+        ConfigureDuetParticipants(builder);
 
         ConfigureAggregate(builder);
 
         builder.HasIndex(x => x.ConversationType)
             .HasFilter("\"DeletedAt\" IS NULL");
+    }
+
+    private static void ConfigureDuetParticipants(EntityTypeBuilder<ConversationV2> builder)
+    {
+        builder.OwnsOne(x => x.DuetParticipants, duetParticipants =>
+        {
+            duetParticipants.Property(x => x.FirstUserId)
+                .HasColumnName("DuetFirstUserId")
+                .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x));
+            duetParticipants.Property(x => x.SecondUserId)
+                .HasColumnName("DuetSecondUserId")
+                .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x));
+
+            duetParticipants.HasIndex(x => new { x.FirstUserId, x.SecondUserId })
+                .IsUnique()
+                .HasDatabaseName(DuetParticipantPairUniqueIndexName)
+                .HasFilter("\"DeletedAt\" IS NULL AND \"ConversationType\" = 1");
+        });
+
+        builder.Navigation(x => x.DuetParticipants).IsRequired(false);
     }
 
     private static void ConfigureAggregate(EntityTypeBuilder<ConversationV2> builder)

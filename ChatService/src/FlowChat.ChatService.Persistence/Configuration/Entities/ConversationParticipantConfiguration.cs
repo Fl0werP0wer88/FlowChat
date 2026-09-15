@@ -60,5 +60,9 @@ public sealed class ConversationParticipantConfiguration
 
         builder.HasIndex(x => new { x.ConversationId, x.IsHidden })
             .HasFilter("\"DeletedAt\" IS NULL");
+
+        builder.HasIndex(x => new { x.UserId, x.ConversationId })
+            .HasFilter(
+                "\"DeletedAt\" IS NULL AND \"IsHidden\" = FALSE AND \"DuetPartnerUserId\" IS NOT NULL");
     }
 }

@@ -7,6 +7,8 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class DuetConversationReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IDuetConversationReadRepository
 {
+    private const int DuetConversationType = 1;
+
     public async Task<DuetConversationDetailDto?> GetByUserIdsAsync(
         Guid requestingUserId,
         Guid partnerUserId,
@@ -15,10 +17,8 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
         var rawRows = await (
-            from duet in Active(dbContext.DuetConversationReadsV2)
-            where duet.FirstUserId == first && duet.SecondUserId == second
-            join conversation in Active(dbContext.ConversationReadsV2)
-                on duet.ConversationId equals conversation.Id
+            from conversation in Active(dbContext.ConversationReadsV2)
+            where conversation.DuetFirstUserId == first && conversation.DuetSecondUserId == second
             join participant in Active(dbContext.ConversationParticipantReadsV2)
                 on conversation.Id equals participant.ConversationId
             join profile in Active(dbContext.UserProfileProjections)
@@ -74,7 +74,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
             [requestingParticipant, partnerParticipant]);
     }
     //ToDo: Pomyśleć o uproszczeniu zapytania albo robic read model
-    public async Task<IReadOnlyCollection<ContactDto>> GetContactsForUserAsync(
+    public async Task<IReadOnlyCollection<DuetConversationListItemDto>> GetDuetConversationsAsync(
         Guid requestingUserId,
         CancellationToken cancellationToken = default)
     {
@@ -87,12 +87,11 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
             });
 
         var rawRows = await (
-            from duet in Active(dbContext.DuetConversationReadsV2)
-            join conversation in Active(dbContext.ConversationReadsV2)
-                on duet.ConversationId equals conversation.Id
+            from conversation in Active(dbContext.ConversationReadsV2)
             join myParticipant in Active(dbContext.ConversationParticipantReadsV2)
                 on conversation.Id equals myParticipant.ConversationId
-            where myParticipant.UserId == requestingUserId
+            where conversation.ConversationType == DuetConversationType
+                  && myParticipant.UserId == requestingUserId
                   && !myParticipant.IsHidden
                   && myParticipant.DuetPartnerUserId != null
             join partnerParticipant in Active(dbContext.ConversationParticipantReadsV2)
@@ -130,7 +129,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
             })
             .ToListAsync(cancellationToken);
 
-        return rawRows.Select(r => new ContactDto(
+        return rawRows.Select(r => new DuetConversationListItemDto(
                 r.PartnerUserId,
                 string.IsNullOrEmpty(r.PartnerDisplayName)
                     ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)

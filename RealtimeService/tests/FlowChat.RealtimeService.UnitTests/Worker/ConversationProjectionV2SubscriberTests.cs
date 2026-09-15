@@ -57,7 +57,6 @@ public sealed class ConversationProjectionV2SubscriberTests
         capturedCommand.ConversationId.Should().Be(message.Value.ConversationId);
         capturedCommand.ConversationType.Should().Be(conversationType);
         capturedCommand.Name.Should().Be(message.Value.Name);
-        capturedCommand.CreatedByUserId.Should().Be(message.Value.CreatedByUserId);
         capturedCommand.Operation.Should().Be(message.Operation);
     }
 
@@ -161,7 +160,8 @@ public sealed class ConversationProjectionV2SubscriberTests
                 ConversationId = conversationId,
                 ConversationType = conversationType,
                 Name = "Dev Team",
-                CreatedByUserId = _fixture.Create<Guid>()
+                DuetFirstUserId = conversationType == 1 ? _fixture.Create<Guid>() : null,
+                DuetSecondUserId = conversationType == 1 ? _fixture.Create<Guid>() : null
             }
         };
     }

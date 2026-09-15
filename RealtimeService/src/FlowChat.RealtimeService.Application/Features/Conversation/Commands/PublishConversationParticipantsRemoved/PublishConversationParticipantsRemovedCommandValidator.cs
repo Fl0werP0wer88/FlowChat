@@ -17,5 +17,13 @@ public sealed class PublishConversationParticipantsRemovedCommandValidator : Abs
         RuleFor(command => command.ParticipantUserIds)
             .Must(ids => ids != null && ids.Any(id => id != Guid.Empty))
             .WithMessage("ParticipantUserIds must contain at least one valid user id.");
+
+        RuleFor(command => command.ParticipantCount)
+            .GreaterThanOrEqualTo(0)
+            .WithMessage("ParticipantCount cannot be negative.");
+
+        RuleFor(command => command.MembershipRevision)
+            .GreaterThanOrEqualTo(2)
+            .WithMessage("MembershipRevision must be at least 2.");
     }
 }

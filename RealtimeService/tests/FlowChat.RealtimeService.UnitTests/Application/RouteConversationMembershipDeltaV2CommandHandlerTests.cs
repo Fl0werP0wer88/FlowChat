@@ -88,6 +88,8 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
                 notification.ConversationId == conversationId &&
                 notification.ConversationType == GroupConversationType &&
                 notification.ParticipantUserIds.SequenceEqual(participantUserIds) &&
+                notification.ParticipantCount == 2 &&
+                notification.MembershipRevision == 2 &&
                 notification.RecipientUserIds.ToHashSet().SetEquals(participantUserIds)),
             It.IsAny<CancellationToken>()), Times.Once);
         _routerMock.Verify(x => x.RouteConversationParticipantsRemovedAsync(
@@ -129,14 +131,58 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
             It.Is<ConversationParticipantsAddedParam>(notification =>
                 notification.ConversationType == GroupConversationType &&
                 notification.ParticipantUserIds.SequenceEqual(addedParticipantUserIds) &&
+                notification.ParticipantCount == 3 &&
+                notification.MembershipRevision == 3 &&
                 notification.RecipientUserIds.ToHashSet().SetEquals(expectedRecipients)),
             It.IsAny<CancellationToken>()), Times.Once);
         _routerMock.Verify(x => x.RouteConversationParticipantsRemovedAsync(
             It.Is<ConversationParticipantsRemovedParam>(notification =>
                 notification.ConversationType == GroupConversationType &&
                 notification.ParticipantUserIds.SequenceEqual(removedParticipantUserIds) &&
+                notification.ParticipantCount == 3 &&
+                notification.MembershipRevision == 3 &&
                 notification.RecipientUserIds.ToHashSet().SetEquals(expectedRecipients)),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_NextRevisionRemovingParticipants_RoutesResultingCountAndRevision()
+    {
+        var conversationId = _fixture.Create<Guid>();
+        var existingParticipantUserIds = _fixture.CreateMany<Guid>(4).ToArray();
+        var removedParticipantUserIds = existingParticipantUserIds.Take(2).ToArray();
+        _revisionTrackerRepositoryMock
+            .Setup(x => x.GetRevisionAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
+        _readModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(
+                RealtimeGroupType.Conversation,
+                conversationId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingParticipantUserIds);
+
+        var result = await _handler.Handle(
+            new RouteConversationMembershipDeltaV2Command(
+                conversationId,
+                GroupConversationType,
+                3,
+                removedParticipantUserIds
+                    .Select(userId => new ConversationMembershipDeltaItemV2(
+                        userId,
+                        OperationType.Deleted))
+                    .ToArray()),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        _routerMock.Verify(x => x.RouteConversationParticipantsRemovedAsync(
+            It.Is<ConversationParticipantsRemovedParam>(notification =>
+                notification.ParticipantCount == 2 &&
+                notification.MembershipRevision == 3 &&
+                notification.ParticipantUserIds.SequenceEqual(removedParticipantUserIds)),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _routerMock.Verify(x => x.RouteConversationParticipantsAddedAsync(
+            It.IsAny<ConversationParticipantsAddedParam>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]

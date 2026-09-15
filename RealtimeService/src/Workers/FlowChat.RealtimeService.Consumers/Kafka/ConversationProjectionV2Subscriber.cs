@@ -38,7 +38,6 @@ public sealed class ConversationProjectionV2Subscriber(
             message.Value.ConversationId,
             message.Value.ConversationType,
             message.Value.Name,
-            message.Value.CreatedByUserId,
             message.Operation);
 
         var result = await mediator.Send(command, cancellationToken);

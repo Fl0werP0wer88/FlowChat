@@ -6,4 +6,6 @@ namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.Pu
 public sealed record PublishConversationParticipantsRemovedCommand(
     Guid ConversationId,
     int ConversationType,
-    IReadOnlyCollection<Guid> ParticipantUserIds) : ICommand<Unit>;
+    IReadOnlyCollection<Guid> ParticipantUserIds,
+    int ParticipantCount,
+    int MembershipRevision) : ICommand<Unit>;

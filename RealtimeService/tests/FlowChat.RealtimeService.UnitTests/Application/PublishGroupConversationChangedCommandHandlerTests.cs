@@ -35,8 +35,7 @@ public sealed class PublishGroupConversationChangedCommandHandlerTests
             new PublishGroupConversationChangedCommand(
                 _fixture.Create<Guid>(),
                 2,
-                " Dev Team ",
-                _fixture.Create<Guid>()),
+                " Dev Team "),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();

@@ -9,5 +9,4 @@ public sealed record RouteConversationProjectionV2Command(
     Guid ConversationId,
     int ConversationType,
     string? Name,
-    Guid CreatedByUserId,
     OperationType Operation) : ICommand<Unit>, IInProcessRetryableRequest;

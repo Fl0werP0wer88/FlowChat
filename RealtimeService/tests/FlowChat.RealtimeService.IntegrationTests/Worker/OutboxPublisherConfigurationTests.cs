@@ -39,7 +39,7 @@ public sealed class OutboxPublisherConfigurationTests
         await provider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
         var producers = provider.GetRequiredService<IProducerCollection>();
 
-        topics.Should().HaveCount(20).And.OnlyHaveUniqueItems();
+        topics.Should().HaveCount(12).And.OnlyHaveUniqueItems();
         topics.Should().AllSatisfy(topic => producers.GetProducerForEndpoint(topic).Should().NotBeNull());
     }
 

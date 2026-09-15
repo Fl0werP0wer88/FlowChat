@@ -1,0 +1,22 @@
+import { useSearchParams } from 'react-router-dom';
+
+import { AuthLayout } from '@/components/layouts/auth-layout';
+import { AboutCarousel } from '@/features/about/components/about-carousel';
+import { EmailVerificationStatus } from '@/features/email-verification/components/email-verification-status';
+import { useDocumentTitle } from '@/hooks/use-document-title';
+
+export function Component() {
+  useDocumentTitle('Verify email');
+  const [searchParams] = useSearchParams();
+
+  return (
+    <AuthLayout
+      eyebrow="Account activation"
+      title="Verify your email"
+      description="One final check keeps your FlowChat identity secure."
+      brandContent={<AboutCarousel />}
+    >
+      <EmailVerificationStatus token={searchParams.get('token')} />
+    </AuthLayout>
+  );
+}

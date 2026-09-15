@@ -69,7 +69,6 @@ internal static class CommonPersistenceServiceRegistration
         services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
-
         return services;
     }
 }

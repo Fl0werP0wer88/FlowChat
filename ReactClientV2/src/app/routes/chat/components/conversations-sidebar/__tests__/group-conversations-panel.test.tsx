@@ -1,0 +1,55 @@
+import { http, HttpResponse } from 'msw';
+
+import { NavigationContextProvider } from '@/features/chat/navigation/context/navigation-context-provider';
+import { useNavigationContext } from '@/features/chat/navigation/context/use-navigation-context';
+import { server } from '@/testing/mocks/server';
+import { renderWithProviders, screen, userEvent } from '@/testing/test-utils';
+
+import { GroupConversationsPanel } from '../group-conversations-panel';
+
+function CreatorStateProbe() {
+  const { activeView } = useNavigationContext();
+
+  return (
+    <output>
+      {activeView.sidebar.view === 'conversationCreator'
+        ? `${activeView.sidebar.view}:${activeView.sidebar.conversationType}`
+        : activeView.sidebar.view}
+    </output>
+  );
+}
+
+describe('GroupConversationsPanel', () => {
+  it('renders the group action and list, then opens the group creator', async () => {
+    server.use(
+      http.get('*/api/conversations/group', () =>
+        HttpResponse.json({
+          groupConversations: [
+            {
+              conversationId: '40c3cd3b-69d8-4af3-b1a7-f9174537fb97',
+              name: 'Product team',
+              participantCount: 5,
+              lastReadMsgSeqNum: 3,
+              currentMsgSeqNum: 7,
+            },
+          ],
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <NavigationContextProvider>
+        <GroupConversationsPanel />
+        <CreatorStateProbe />
+      </NavigationContextProvider>,
+    );
+
+    expect(await screen.findByText('Product team')).toBeInTheDocument();
+    expect(screen.getByText('conversations')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'New group' }));
+
+    expect(screen.getByText('conversationCreator:group')).toBeInTheDocument();
+  });
+});

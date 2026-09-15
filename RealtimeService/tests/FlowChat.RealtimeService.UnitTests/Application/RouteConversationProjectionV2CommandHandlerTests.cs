@@ -49,7 +49,6 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
     public async Task Handle_GroupProjectionWithReadyMembership_RoutesGroupConversation()
     {
         var conversationId = _fixture.Create<Guid>();
-        var createdByUserId = _fixture.Create<Guid>();
         var participantUserIds = _fixture.CreateMany<Guid>(2).ToArray();
         const string name = "Project group";
         ArrangeReadyMembership(conversationId, participantUserIds);
@@ -60,7 +59,6 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
                 conversationId,
                 GroupConversationType,
                 name,
-                createdByUserId,
                 OperationType.Created),
             CancellationToken.None);
 
@@ -70,7 +68,6 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
                 notification.ConversationId == conversationId &&
                 notification.Type == GroupConversationType &&
                 notification.Name == name &&
-                notification.CreatedByUserId == createdByUserId &&
                 notification.ParticipantUserIds.SequenceEqual(participantUserIds)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -86,7 +83,6 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
                 conversationId,
                 DuetConversationType,
                 null,
-                _fixture.Create<Guid>(),
                 OperationType.Created),
             CancellationToken.None);
 
@@ -164,7 +160,6 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
             conversationId,
             GroupConversationType,
             _fixture.Create<string>(),
-            _fixture.Create<Guid>(),
             OperationType.Created);
     }
 

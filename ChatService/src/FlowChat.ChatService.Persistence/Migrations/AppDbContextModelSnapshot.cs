@@ -198,6 +198,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"DeletedAt\" IS NULL");
 
+                    b.HasIndex("UserId", "ConversationId")
+                        .HasFilter("\"DeletedAt\" IS NULL AND \"IsHidden\" = FALSE AND \"DuetPartnerUserId\" IS NOT NULL");
+
                     b.ToTable("ConversationParticipantsV2", (string)null);
                 });
 
@@ -216,9 +219,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -244,7 +244,12 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasIndex("ConversationType")
                         .HasFilter("\"DeletedAt\" IS NULL");
 
-                    b.ToTable("ConversationsV2", (string)null);
+                    b.ToTable("ConversationsV2", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ConversationsV2_DuetParticipantShape", "(\"ConversationType\" = 1 AND \"DuetFirstUserId\" IS NOT NULL AND \"DuetSecondUserId\" IS NOT NULL) OR (\"ConversationType\" = 2 AND \"DuetFirstUserId\" IS NULL AND \"DuetSecondUserId\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_ConversationsV2_NormalizedDuetParticipants", "\"DuetFirstUserId\" IS NULL OR \"DuetFirstUserId\" < \"DuetSecondUserId\"");
+                        });
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ChatMessageReadEntityV2", b =>
@@ -388,6 +393,12 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("DuetFirstUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DuetSecondUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -399,53 +410,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable((string)null);
 
                     b.ToView("ConversationsV2", (string)null);
-                });
-
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntityV2", b =>
-                {
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FirstUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SecondUserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("ConversationId");
-
-                    b.HasIndex("FirstUserId", "SecondUserId")
-                        .IsUnique()
-                        .HasFilter("\"DeletedAt\" IS NULL");
-
-                    b.ToTable("DuetConversationsV2", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_DuetConversationsV2_NormalizedUsers", "\"FirstUserId\" < \"SecondUserId\"");
-                        });
-                });
-
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationReadEntityV2", b =>
-                {
-                    b.Property<Guid>("FirstUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SecondUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("FirstUserId", "SecondUserId");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("DuetConversationsV2", (string)null);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileReadModelEntity", b =>
@@ -578,20 +542,42 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", b =>
+                {
+                    b.OwnsOne("FlowChat.ChatService.Domain.Entities.Conversation.ValueObjects.DuetParticipantPair", "DuetParticipants", b1 =>
+                        {
+                            b1.Property<Guid>("ConversationV2Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("FirstUserId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("DuetFirstUserId");
+
+                            b1.Property<Guid>("SecondUserId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("DuetSecondUserId");
+
+                            b1.HasKey("ConversationV2Id");
+
+                            b1.HasIndex("FirstUserId", "SecondUserId")
+                                .IsUnique()
+                                .HasDatabaseName("UX_ConversationsV2_DuetParticipantPair")
+                                .HasFilter("\"DeletedAt\" IS NULL AND \"ConversationType\" = 1");
+
+                            b1.ToTable("ConversationsV2");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ConversationV2Id");
+                        });
+
+                    b.Navigation("DuetParticipants");
+                });
+
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceEntityV2", b =>
                 {
                     b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", null)
                         .WithOne()
                         .HasForeignKey("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceEntityV2", "ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntityV2", b =>
-                {
-                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", null)
-                        .WithOne()
-                        .HasForeignKey("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntityV2", "ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

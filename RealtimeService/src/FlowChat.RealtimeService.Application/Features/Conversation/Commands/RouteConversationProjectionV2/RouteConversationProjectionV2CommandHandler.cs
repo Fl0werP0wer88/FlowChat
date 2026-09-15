@@ -81,7 +81,6 @@ public sealed class RouteConversationProjectionV2CommandHandler(
                 request.ConversationId,
                 request.ConversationType,
                 request.Name,
-                request.CreatedByUserId,
                 normalizedParticipantUserIds),
             cancellationToken);
 

@@ -8,7 +8,6 @@ public sealed class ConversationCreatedDomainEventV2(
     Id<ConversationV2> aggregateId,
     ConversationType type,
     string? name,
-    Id<UserProfileMarker> createdByUserId,
     IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds,
     UtcDateTimeOffset? occurredOnUtc = null)
     : BaseConversationDomainEventV2(aggregateId, occurredOnUtc)
@@ -16,7 +15,6 @@ public sealed class ConversationCreatedDomainEventV2(
     public Guid ConversationId { get; } = aggregateId.Value;
     public ConversationType Type { get; } = type;
     public string? Name { get; } = name;
-    public Id<UserProfileMarker> CreatedByUserId { get; } = createdByUserId;
     public IReadOnlyCollection<Id<UserProfileMarker>> ParticipantUserIds { get; } =
         participantUserIds?.ToArray() ?? throw new ArgumentNullException(nameof(participantUserIds));
 }

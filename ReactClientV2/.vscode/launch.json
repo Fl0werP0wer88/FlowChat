@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ReactClientV2",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "preLaunchTask": "dev: ReactClientV2",
+      "url": "http://127.0.0.1:5173",
+      "webRoot": "${workspaceFolder}",
+      "skipFiles": ["${workspaceFolder}/node_modules/**/*.js", "<node_internals>/**"],
+      "presentation": {
+        "hidden": false,
+        "group": "react-client-v2"
+      }
+    },
+    {
+      "name": "ReactClientV2 (No Build)",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:5173",
+      "webRoot": "${workspaceFolder}",
+      "skipFiles": ["${workspaceFolder}/node_modules/**/*.js", "<node_internals>/**"],
+      "presentation": {
+        "hidden": false,
+        "group": "react-client-v2"
+      }
+    }
+  ]
+}

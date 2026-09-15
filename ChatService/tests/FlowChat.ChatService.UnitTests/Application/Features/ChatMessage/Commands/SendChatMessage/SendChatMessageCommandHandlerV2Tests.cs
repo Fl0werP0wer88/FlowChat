@@ -61,7 +61,7 @@ public sealed class SendChatMessageCommandHandlerV2Tests
             conversationId,
             ConversationType.Group,
             "Friends",
-            senderUserId);
+            duetParticipants: null);
         var participants = new[]
         {
             CreateParticipant(conversationId, senderUserId),
@@ -130,7 +130,7 @@ public sealed class SendChatMessageCommandHandlerV2Tests
             conversationId,
             ConversationType.Group,
             "Friends",
-            senderUserId);
+            duetParticipants: null);
         _conversationRepository
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);

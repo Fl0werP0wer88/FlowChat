@@ -69,7 +69,6 @@ public sealed class SignalRRealtimeClientDispatcherTests
                 conversationId,
                 2,
                 "Dev Team",
-                Guid.NewGuid(),
                 [participantUserId]),
             CancellationToken.None);
 
@@ -98,13 +97,21 @@ public sealed class SignalRRealtimeClientDispatcherTests
         var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
 
         await dispatcher.ConversationParticipantsAddedAsync(
-            new ConversationParticipantsAddedParam(conversationId, 2, [participantUserId], [participantUserId]),
+            new ConversationParticipantsAddedParam(
+                conversationId,
+                2,
+                [participantUserId],
+                4,
+                7,
+                [participantUserId]),
             CancellationToken.None);
 
         capturedPayload.Should().NotBeNull();
         capturedPayload!.ConversationId.Should().Be(conversationId);
         capturedPayload.ConversationType.Should().Be(2);
         capturedPayload.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
+        capturedPayload.ParticipantCount.Should().Be(4);
+        capturedPayload.MembershipRevision.Should().Be(7);
     }
 
     [Fact]
@@ -127,12 +134,20 @@ public sealed class SignalRRealtimeClientDispatcherTests
         var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
 
         await dispatcher.ConversationParticipantsRemovedAsync(
-            new ConversationParticipantsRemovedParam(conversationId, 1, [participantUserId], [participantUserId]),
+            new ConversationParticipantsRemovedParam(
+                conversationId,
+                1,
+                [participantUserId],
+                1,
+                8,
+                [participantUserId]),
             CancellationToken.None);
 
         capturedPayload.Should().NotBeNull();
         capturedPayload!.ConversationId.Should().Be(conversationId);
         capturedPayload.ConversationType.Should().Be(1);
         capturedPayload.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
+        capturedPayload.ParticipantCount.Should().Be(1);
+        capturedPayload.MembershipRevision.Should().Be(8);
     }
 }
