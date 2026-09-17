@@ -13,6 +13,7 @@ Optional:
 #>
 
 param(
+  [string]$ProjectName = "flowchat",
   [string]$ComposeFile = ".\docker-compose.yml",
   [string]$ServiceName = "mailhog",
   [string]$UiUrl = "http://localhost:8025",
@@ -34,7 +35,7 @@ function Assert-Command($cmd) {
 }
 
 function Get-ContainerIdForService([string]$service) {
-  (docker compose -f $ComposeFile ps -q $service 2>$null).Trim()
+  (docker compose -p $ProjectName -f $ComposeFile ps -q $service 2>$null).Trim()
 }
 
 function Wait-ForHttpOk([string]$url, [int]$timeoutSeconds) {
@@ -73,11 +74,11 @@ Assert-Command "docker"
 
 Write-Step "Starting MailHog via docker compose"
 # Idempotent: creates if missing, starts if stopped, leaves it if already running
-docker compose -f $ComposeFile up -d --remove-orphans | Out-Null
+docker compose -p $ProjectName -f $ComposeFile up -d | Out-Null
 
 $containerId = Get-ContainerIdForService -service $ServiceName
 if ([string]::IsNullOrWhiteSpace($containerId)) {
-  throw "Could not find container for service '$ServiceName'. Check: docker compose -f $ComposeFile ps"
+  throw "Could not find container for service '$ServiceName'. Check: docker compose -p $ProjectName -f $ComposeFile ps"
 }
 
 Write-Step "Using container id: $containerId"

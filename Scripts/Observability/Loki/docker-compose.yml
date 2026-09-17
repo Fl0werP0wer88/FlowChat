@@ -17,6 +17,8 @@ services:
 
 volumes:
   flowchat_loki_data:
+    external: true
+    name: flowchat-observability_flowchat_loki_data
 
 networks:
   flowchat-observability:

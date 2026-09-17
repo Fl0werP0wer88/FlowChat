@@ -5,7 +5,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      infisical-redis:
         condition: service_started
     env_file:
       - .env
@@ -16,7 +16,7 @@ services:
     networks:
       - infisical
 
-  redis:
+  infisical-redis:
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
@@ -41,7 +41,11 @@ services:
 
 volumes:
   pg_data:
+    external: true
+    name: flowchat-infisical_pg_data
   redis_data:
+    external: true
+    name: flowchat-infisical_redis_data
 
 networks:
   infisical:

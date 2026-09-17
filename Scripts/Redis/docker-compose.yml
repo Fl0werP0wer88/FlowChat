@@ -27,3 +27,5 @@ services:
 
 volumes:
   redis_data:
+    external: true
+    name: flowchat-redis_redis_data

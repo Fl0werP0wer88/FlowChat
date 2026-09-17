@@ -25,6 +25,7 @@ Optional flags:
 #>
 
 param(
+  [string]$ProjectName = "flowchat",
   [string]$ComposeFile = ".\docker-compose.yml",
   [string]$ServiceName = "postgres",
 
@@ -74,8 +75,22 @@ function Assert-Command([string]$cmd) {
   }
 }
 
+function Ensure-DockerVolume([string]$volumeName) {
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    docker volume inspect $volumeName 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      docker volume create $volumeName | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "Failed to create Docker volume '$volumeName'." }
+    }
+  } finally {
+    $ErrorActionPreference = $old
+  }
+}
+
 function Get-ContainerIdForService([string]$service) {
-  (docker compose -f $ComposeFile ps -q $service 2>$null).Trim()
+  (docker compose -p $ProjectName -f $ComposeFile ps -q $service 2>$null).Trim()
 }
 
 function Wait-ForPostgresReady([string]$containerId, [int]$timeoutSeconds) {
@@ -264,9 +279,10 @@ function Ensure-AppCrudAccess([string]$containerId, [string]$dbName, [string]$ow
 
 # -------------------- MAIN --------------------
 Assert-Command "docker"
+Ensure-DockerVolume -volumeName "postgresql_flowchat_pgdata"
 
 Write-Step "Starting PostgreSQL via docker compose"
-docker compose -f $ComposeFile up -d --remove-orphans | Out-Null
+docker compose -p $ProjectName -f $ComposeFile up -d | Out-Null
 
 $containerId = Get-ContainerIdForService -service $ServiceName
 if ([string]::IsNullOrWhiteSpace($containerId)) {

@@ -16,7 +16,7 @@ Optional:
 param(
   [string]$ComposeFile = ".\docker-compose.yml",
   [string]$EnvFile = ".\.env",
-  [string]$ProjectName = "flowchat-infisical",
+  [string]$ProjectName = "flowchat",
   [string]$ServiceName = "backend",
   [int]$Port = 18180,
   [int]$TimeoutSeconds = 180
@@ -33,6 +33,20 @@ function Write-Step([string]$Message) {
 function Assert-Command([string]$CommandName) {
   if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
     throw "Missing required command: $CommandName. Make sure it is installed and available in PATH."
+  }
+}
+
+function Ensure-DockerVolume([string]$volumeName) {
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    docker volume inspect $volumeName 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      docker volume create $volumeName | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "Failed to create Docker volume '$volumeName'." }
+    }
+  } finally {
+    $ErrorActionPreference = $old
   }
 }
 
@@ -59,6 +73,18 @@ function New-RandomBase64([int]$ByteCount) {
 function Ensure-EnvFile([string]$TargetPath, [int]$HostPort) {
   if (Test-Path $TargetPath) {
     Write-Step "Using existing environment file: $TargetPath"
+
+    $lines = [System.IO.File]::ReadAllLines($TargetPath)
+    $legacyRedisUrl = 'REDIS_URL=redis://redis:6379'
+    if ($lines -contains $legacyRedisUrl) {
+      $updatedLines = @($lines | ForEach-Object {
+        if ($_ -eq $legacyRedisUrl) { 'REDIS_URL=redis://infisical-redis:6379' } else { $_ }
+      })
+      $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+      [System.IO.File]::WriteAllLines($TargetPath, $updatedLines, $utf8WithoutBom)
+      Write-Host 'Updated the local Redis endpoint for the unified FlowChat Compose project'
+    }
+
     return
   }
 
@@ -80,7 +106,7 @@ function Ensure-EnvFile([string]$TargetPath, [int]$HostPort) {
     "POSTGRES_PASSWORD=$postgresPassword",
     "POSTGRES_DB=$postgresDb",
     "DB_CONNECTION_URI=$dbConnectionUri",
-    "REDIS_URL=redis://redis:6379",
+    "REDIS_URL=redis://infisical-redis:6379",
     "SITE_URL=$siteUrl",
     "HTTPS_ENABLED=false"
   )
@@ -152,6 +178,8 @@ if (-not (Test-Path $resolvedComposeFile)) {
 }
 
 Assert-Command "docker"
+Ensure-DockerVolume -volumeName "flowchat-infisical_pg_data"
+Ensure-DockerVolume -volumeName "flowchat-infisical_redis_data"
 Ensure-EnvFile -TargetPath $resolvedEnvFile -HostPort $Port
 
 $composeArgs = Get-ComposeCommandArgs -Project $ProjectName -ComposePath $resolvedComposeFile
@@ -166,7 +194,7 @@ $uiUrl = "http://localhost:$effectivePort"
 
 Write-Step "Starting Infisical via docker compose"
 # Idempotent: creates containers if missing, starts them if stopped, and keeps them running if already up
-Invoke-DockerCompose -ComposeArgs $composeArgs -ExtraArgs @("up", "-d", "--remove-orphans")
+Invoke-DockerCompose -ComposeArgs $composeArgs -ExtraArgs @("up", "-d")
 
 $containerId = Get-ContainerIdForService -ComposeArgs $composeArgs -Name $ServiceName
 if ([string]::IsNullOrWhiteSpace($containerId)) {

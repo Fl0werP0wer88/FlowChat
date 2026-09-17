@@ -28,8 +28,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:COMPOSE_IGNORE_ORPHANS = 'true'
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$composeProjectName = 'flowchat'
 $solutionPath = Join-Path $repoRoot 'FlowChat.slnx'
 $workspacePath = Join-Path $repoRoot 'FlowChat.code-workspace'
 $clientRoot = Join-Path $repoRoot 'ReactClient'
@@ -67,6 +69,23 @@ $observabilityComposeFiles = @(
     (Join-Path $observabilityRoot 'Grafana\docker-compose.yml')
 )
 $observabilityBootstrap = Join-Path $observabilityRoot 'bootstrap-observability-stack.ps1'
+
+$persistentVolumeNames = @(
+    'postgresql_flowchat_pgdata',
+    'flowchat-redis_redis_data',
+    'flowchat-redisinsight_redisinsight_data'
+)
+$infisicalVolumeNames = @(
+    'flowchat-infisical_pg_data',
+    'flowchat-infisical_redis_data'
+)
+$observabilityVolumeNames = @(
+    'flowchat-observability_flowchat_loki_data',
+    'flowchat-observability_flowchat_tempo_data',
+    'flowchat-observability_flowchat_prometheus_data',
+    'flowchat-observability_flowchat_alloy_data',
+    'flowchat-observability_flowchat_grafana_data'
+)
 
 function Write-Step([string]$Message) {
     Write-Host "`n==> $Message" -ForegroundColor Cyan
@@ -109,6 +128,32 @@ function Invoke-Stage([string]$Name, [scriptblock]$Action) {
     catch {
         throw "Stage '$Name' failed. $($_.Exception.Message)"
     }
+}
+
+function Ensure-DockerVolume([string]$VolumeName) {
+    & docker volume inspect $VolumeName *> $null
+    if ($LASTEXITCODE -ne 0) {
+        Invoke-NativeCommand 'docker' @('volume', 'create', $VolumeName)
+    }
+}
+
+function Get-ComposeProjectContainerIds([string]$ProjectName) {
+    $containerIds = & docker ps -aq --filter "label=com.docker.compose.project=$ProjectName"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not inspect Docker Compose project '$ProjectName'."
+    }
+
+    return @($containerIds | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Remove-LegacyComposeProject([string]$ProjectName, [string[]]$ComposeArguments) {
+    $containerIds = @(Get-ComposeProjectContainerIds -ProjectName $ProjectName)
+    if ($containerIds.Count -eq 0) {
+        return
+    }
+
+    Write-Host "Migrating legacy Docker Compose project '$ProjectName' to '$composeProjectName'."
+    Invoke-NativeCommand 'docker' ($ComposeArguments + @('down', '--remove-orphans'))
 }
 
 function Test-TrustedDevelopmentCertificate {
@@ -226,22 +271,56 @@ Invoke-Stage 'Checking local prerequisites' {
     Write-Host ".NET 10 SDK   : available"
 }
 
+Invoke-Stage "Migrating legacy Docker Compose groups to '$composeProjectName'" {
+    Remove-LegacyComposeProject -ProjectName 'postgresql' -ComposeArguments @('compose', '-p', 'postgresql', '-f', $postgresCompose)
+    Remove-LegacyComposeProject -ProjectName 'flowchat-kafka' -ComposeArguments @('compose', '-p', 'flowchat-kafka', '-f', $kafkaCompose, '-f', $kafkaUiCompose)
+    Remove-LegacyComposeProject -ProjectName 'flowchat-redis' -ComposeArguments @('compose', '-p', 'flowchat-redis', '-f', $redisCompose)
+    Remove-LegacyComposeProject -ProjectName 'flowchat-redisinsight' -ComposeArguments @('compose', '-p', 'flowchat-redisinsight', '-f', $redisInsightCompose)
+    Remove-LegacyComposeProject -ProjectName 'mailhog' -ComposeArguments @('compose', '-p', 'mailhog', '-f', $mailHogCompose)
+
+    if (-not $SkipInfisical) {
+        Remove-LegacyComposeProject -ProjectName 'flowchat-infisical' -ComposeArguments @('compose', '-p', 'flowchat-infisical', '-f', $infisicalCompose)
+    }
+
+    if (-not $SkipObservability) {
+        $legacyObservabilityArguments = @('compose', '-p', 'flowchat-observability', '--project-directory', $observabilityRoot)
+        foreach ($composeFile in $observabilityComposeFiles) {
+            $legacyObservabilityArguments += @('-f', $composeFile)
+        }
+        Remove-LegacyComposeProject -ProjectName 'flowchat-observability' -ComposeArguments $legacyObservabilityArguments
+    }
+}
+
+Invoke-Stage 'Preparing persistent Docker volumes' {
+    $requiredVolumeNames = @($persistentVolumeNames)
+    if (-not $SkipInfisical) {
+        $requiredVolumeNames += $infisicalVolumeNames
+    }
+    if (-not $SkipObservability) {
+        $requiredVolumeNames += $observabilityVolumeNames
+    }
+
+    foreach ($volumeName in $requiredVolumeNames) {
+        Ensure-DockerVolume -VolumeName $volumeName
+    }
+}
+
 if (-not $SkipPull) {
     Invoke-Stage 'Pulling PostgreSQL image' {
-        Invoke-NativeCommand 'docker' @('compose', '-f', $postgresCompose, 'pull')
+        Invoke-NativeCommand 'docker' @('compose', '-p', $composeProjectName, '-f', $postgresCompose, 'pull')
     }
 
     Invoke-Stage 'Pulling Kafka and Kafka UI images' {
-        Invoke-NativeCommand 'docker' @('compose', '-p', 'flowchat-kafka', '-f', $kafkaCompose, '-f', $kafkaUiCompose, 'pull')
+        Invoke-NativeCommand 'docker' @('compose', '-p', $composeProjectName, '-f', $kafkaCompose, '-f', $kafkaUiCompose, 'pull')
     }
 
     Invoke-Stage 'Pulling Redis and RedisInsight images' {
-        Invoke-NativeCommand 'docker' @('compose', '-f', $redisCompose, 'pull')
-        Invoke-NativeCommand 'docker' @('compose', '-f', $redisInsightCompose, 'pull')
+        Invoke-NativeCommand 'docker' @('compose', '-p', $composeProjectName, '-f', $redisCompose, 'pull')
+        Invoke-NativeCommand 'docker' @('compose', '-p', $composeProjectName, '-f', $redisInsightCompose, 'pull')
     }
 
     Invoke-Stage 'Pulling MailHog image' {
-        Invoke-NativeCommand 'docker' @('compose', '-f', $mailHogCompose, 'pull')
+        Invoke-NativeCommand 'docker' @('compose', '-p', $composeProjectName, '-f', $mailHogCompose, 'pull')
     }
 
     if (-not $SkipInfisical) {
@@ -254,7 +333,7 @@ if (-not $SkipPull) {
 
     if (-not $SkipObservability) {
         Invoke-Stage 'Pulling observability images' {
-            $arguments = @('compose', '-p', 'flowchat-observability', '--project-directory', $observabilityRoot)
+            $arguments = @('compose', '-p', $composeProjectName, '--project-directory', $observabilityRoot)
             foreach ($composeFile in $observabilityComposeFiles) {
                 $arguments += @('-f', $composeFile)
             }
@@ -265,30 +344,30 @@ if (-not $SkipPull) {
 }
 
 Invoke-Stage 'Bootstrapping PostgreSQL databases and roles' {
-    & $postgresBootstrap -ComposeFile $postgresCompose
+    & $postgresBootstrap -ProjectName $composeProjectName -ComposeFile $postgresCompose
 }
 
 Invoke-Stage 'Bootstrapping Kafka, Kafka UI, and topics' {
-    & $kafkaBootstrap -KafkaComposeFile $kafkaCompose -UiComposeFile $kafkaUiCompose
+    & $kafkaBootstrap -ProjectName $composeProjectName -KafkaComposeFile $kafkaCompose -UiComposeFile $kafkaUiCompose
 }
 
 Invoke-Stage 'Bootstrapping Redis and RedisInsight' {
-    & $redisBootstrap -RedisComposeFile $redisCompose -RedisInsightComposeFile $redisInsightCompose
+    & $redisBootstrap -ProjectName $composeProjectName -RedisComposeFile $redisCompose -RedisInsightComposeFile $redisInsightCompose
 }
 
 Invoke-Stage 'Bootstrapping MailHog' {
-    & $mailHogBootstrap -ComposeFile $mailHogCompose
+    & $mailHogBootstrap -ProjectName $composeProjectName -ComposeFile $mailHogCompose
 }
 
 if (-not $SkipInfisical) {
     Invoke-Stage 'Bootstrapping Infisical' {
-        & $infisicalBootstrap -ComposeFile $infisicalCompose -EnvFile (Join-Path $infisicalRoot '.env')
+        & $infisicalBootstrap -ProjectName $composeProjectName -ComposeFile $infisicalCompose -EnvFile (Join-Path $infisicalRoot '.env')
     }
 }
 
 if (-not $SkipObservability) {
     Invoke-Stage 'Bootstrapping observability stack' {
-        & $observabilityBootstrap
+        & $observabilityBootstrap -ProjectName $composeProjectName
     }
 }
 
@@ -331,18 +410,18 @@ else {
 }
 
 Write-Step 'Docker status'
-Show-ComposeStatus 'PostgreSQL' @('compose', '-f', $postgresCompose)
-Show-ComposeStatus 'Kafka' @('compose', '-p', 'flowchat-kafka', '-f', $kafkaCompose, '-f', $kafkaUiCompose)
-Show-ComposeStatus 'Redis' @('compose', '-f', $redisCompose)
-Show-ComposeStatus 'RedisInsight' @('compose', '-f', $redisInsightCompose)
-Show-ComposeStatus 'MailHog' @('compose', '-f', $mailHogCompose)
+Show-ComposeStatus 'PostgreSQL' @('compose', '-p', $composeProjectName, '-f', $postgresCompose)
+Show-ComposeStatus 'Kafka' @('compose', '-p', $composeProjectName, '-f', $kafkaCompose, '-f', $kafkaUiCompose)
+Show-ComposeStatus 'Redis' @('compose', '-p', $composeProjectName, '-f', $redisCompose)
+Show-ComposeStatus 'RedisInsight' @('compose', '-p', $composeProjectName, '-f', $redisInsightCompose)
+Show-ComposeStatus 'MailHog' @('compose', '-p', $composeProjectName, '-f', $mailHogCompose)
 
 if (-not $SkipInfisical) {
-    Show-ComposeStatus 'Infisical' @('compose', '-p', 'flowchat-infisical', '-f', $infisicalCompose)
+    Show-ComposeStatus 'Infisical' @('compose', '-p', $composeProjectName, '-f', $infisicalCompose)
 }
 
 if (-not $SkipObservability) {
-    $observabilityStatusArguments = @('compose', '-p', 'flowchat-observability', '--project-directory', $observabilityRoot)
+    $observabilityStatusArguments = @('compose', '-p', $composeProjectName, '--project-directory', $observabilityRoot)
     foreach ($composeFile in $observabilityComposeFiles) {
         $observabilityStatusArguments += @('-f', $composeFile)
     }

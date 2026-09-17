@@ -22,6 +22,8 @@ services:
 
 volumes:
   flowchat_alloy_data:
+    external: true
+    name: flowchat-observability_flowchat_alloy_data
 
 networks:
   flowchat-observability:

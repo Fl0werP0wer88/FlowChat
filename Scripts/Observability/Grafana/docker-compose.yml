@@ -21,6 +21,8 @@ services:
 
 volumes:
   flowchat_grafana_data:
+    external: true
+    name: flowchat-observability_flowchat_grafana_data
 
 networks:
   flowchat-observability:

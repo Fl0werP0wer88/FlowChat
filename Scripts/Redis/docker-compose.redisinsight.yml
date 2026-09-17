@@ -20,3 +20,5 @@ services:
 
 volumes:
   redisinsight_data:
+    external: true
+    name: flowchat-redisinsight_redisinsight_data

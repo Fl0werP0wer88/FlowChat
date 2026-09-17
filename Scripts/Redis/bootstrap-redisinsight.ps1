@@ -14,6 +14,7 @@ Optional:
 #>
 
 param(
+  [string]$ProjectName = "flowchat",
   [string]$ComposeFile = ".\docker-compose.redisinsight.yml",
   [string]$ServiceName = "redisinsight",
   [string]$UiUrl = "http://localhost:5540",
@@ -37,6 +38,20 @@ function Assert-Command([string]$cmd) {
   }
 }
 
+function Ensure-DockerVolume([string]$volumeName) {
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    docker volume inspect $volumeName 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      docker volume create $volumeName | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "Failed to create Docker volume '$volumeName'." }
+    }
+  } finally {
+    $ErrorActionPreference = $old
+  }
+}
+
 function Assert-PathExists([string]$path, [string]$label) {
   if (-not (Test-Path $path)) {
     throw "Missing ${label}: $path"
@@ -44,7 +59,7 @@ function Assert-PathExists([string]$path, [string]$label) {
 }
 
 function Get-ContainerIdForService([string]$service) {
-  $containerId = docker compose -f $ComposeFile ps -q $service 2>$null
+  $containerId = docker compose -p $ProjectName -f $ComposeFile ps -q $service 2>$null
   if ($null -eq $containerId) {
     return ""
   }
@@ -73,6 +88,7 @@ function Wait-ForHttpOk([string]$url, [int]$timeoutSeconds, [string]$displayName
 }
 
 Assert-Command "docker"
+Ensure-DockerVolume -volumeName "flowchat-redisinsight_redisinsight_data"
 
 $redisBootstrapScript = Join-Path $PSScriptRoot "bootstrap-redis.ps1"
 Assert-PathExists -path $redisBootstrapScript -label "Redis bootstrap script"
@@ -82,16 +98,16 @@ $env:FLOWCHAT_REDIS_PASSWORD = $RedisPassword
 
 if (-not $SkipRedisBootstrap) {
   Write-Step "Ensuring Redis is running"
-  & $redisBootstrapScript -RedisUsername $RedisUsername -RedisPassword $RedisPassword
+  & $redisBootstrapScript -ProjectName $ProjectName -RedisUsername $RedisUsername -RedisPassword $RedisPassword
 }
 
 Write-Step "Starting RedisInsight via docker compose"
 # Idempotent: creates if missing, starts if stopped, and leaves it running if already up
-docker compose -f $ComposeFile up -d --remove-orphans | Out-Null
+docker compose -p $ProjectName -f $ComposeFile up -d | Out-Null
 
 $containerId = Get-ContainerIdForService -service $ServiceName
 if ([string]::IsNullOrWhiteSpace($containerId)) {
-  throw "Could not find container for service '$ServiceName'. Check: docker compose -f $ComposeFile ps"
+  throw "Could not find container for service '$ServiceName'. Check: docker compose -p $ProjectName -f $ComposeFile ps"
 }
 
 Write-Step "Using container id: $containerId"

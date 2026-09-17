@@ -17,6 +17,8 @@ services:
 
 volumes:
   flowchat_tempo_data:
+    external: true
+    name: flowchat-observability_flowchat_tempo_data
 
 networks:
   flowchat-observability:

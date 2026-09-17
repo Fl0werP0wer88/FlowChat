@@ -13,6 +13,7 @@ Optional:
 #>
 
 param(
+  [string]$ProjectName = "flowchat",
   [string]$ComposeFile = ".\docker-compose.yml",
   [string]$ServiceName = "redis",
   [string]$RedisUsername = "default",
@@ -34,8 +35,22 @@ function Assert-Command([string]$cmd) {
   }
 }
 
+function Ensure-DockerVolume([string]$volumeName) {
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    docker volume inspect $volumeName 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      docker volume create $volumeName | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "Failed to create Docker volume '$volumeName'." }
+    }
+  } finally {
+    $ErrorActionPreference = $old
+  }
+}
+
 function Get-ContainerIdForService([string]$service) {
-  $containerId = docker compose -f $ComposeFile ps -q $service 2>$null
+  $containerId = docker compose -p $ProjectName -f $ComposeFile ps -q $service 2>$null
   if ($null -eq $containerId) {
     return ""
   }
@@ -69,17 +84,18 @@ function Wait-ForRedisReady([string]$containerId, [string]$redisUsername, [strin
 }
 
 Assert-Command "docker"
+Ensure-DockerVolume -volumeName "flowchat-redis_redis_data"
 
 $env:FLOWCHAT_REDIS_USERNAME = $RedisUsername
 $env:FLOWCHAT_REDIS_PASSWORD = $RedisPassword
 
 Write-Step "Starting Redis via docker compose"
 # Idempotent: creates if missing, starts if stopped, and leaves it running if already up
-docker compose -f $ComposeFile up -d --remove-orphans | Out-Null
+docker compose -p $ProjectName -f $ComposeFile up -d | Out-Null
 
 $containerId = Get-ContainerIdForService -service $ServiceName
 if ([string]::IsNullOrWhiteSpace($containerId)) {
-  throw "Could not find container for service '$ServiceName'. Check: docker compose -f $ComposeFile ps"
+  throw "Could not find container for service '$ServiceName'. Check: docker compose -p $ProjectName -f $ComposeFile ps"
 }
 
 Write-Step "Using container id: $containerId"

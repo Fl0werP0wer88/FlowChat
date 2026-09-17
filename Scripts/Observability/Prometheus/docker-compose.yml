@@ -18,6 +18,8 @@ services:
 
 volumes:
   flowchat_prometheus_data:
+    external: true
+    name: flowchat-observability_flowchat_prometheus_data
 
 networks:
   flowchat-observability:

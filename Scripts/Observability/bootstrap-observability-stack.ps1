@@ -9,7 +9,7 @@ Run:
 #>
 
 param(
-  [string]$ProjectName = "flowchat-observability",
+  [string]$ProjectName = "flowchat",
   [string]$NetworkName = "flowchat-observability",
   [int]$TimeoutSeconds = 180
 )
@@ -43,6 +43,20 @@ function Ensure-Network([string]$networkName) {
     docker network inspect $networkName 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) {
       docker network create $networkName | Out-Null
+    }
+  } finally {
+    $ErrorActionPreference = $old
+  }
+}
+
+function Ensure-DockerVolume([string]$volumeName) {
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    docker volume inspect $volumeName 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      docker volume create $volumeName | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "Failed to create Docker volume '$volumeName'." }
     }
   } finally {
     $ErrorActionPreference = $old
@@ -86,13 +100,22 @@ foreach ($composeFile in $composeFiles) {
 }
 
 Ensure-Network -networkName $NetworkName
+foreach ($volumeName in @(
+  "flowchat-observability_flowchat_loki_data",
+  "flowchat-observability_flowchat_tempo_data",
+  "flowchat-observability_flowchat_prometheus_data",
+  "flowchat-observability_flowchat_alloy_data",
+  "flowchat-observability_flowchat_grafana_data"
+)) {
+  Ensure-DockerVolume -volumeName $volumeName
+}
 
 $dockerComposeArgs = @("-p", $ProjectName)
 $dockerComposeArgs += @("--project-directory", $observabilityRoot)
 foreach ($composeFile in $composeFiles) {
   $dockerComposeArgs += @("-f", $composeFile)
 }
-$dockerComposeArgs += @("up", "-d", "--remove-orphans")
+$dockerComposeArgs += @("up", "-d")
 
 Write-Step "Starting FlowChat observability stack as compose project: $ProjectName"
 docker compose @dockerComposeArgs | Out-Null

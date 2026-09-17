@@ -10,6 +10,7 @@ Run:
 #>
 
 param(
+  [string]$ProjectName = "flowchat",
   [string]$RedisComposeFile = ".\docker-compose.yml",
   [string]$RedisServiceName = "redis",
   [string]$RedisInsightComposeFile = ".\docker-compose.redisinsight.yml",
@@ -43,6 +44,7 @@ Assert-PathExists -path $redisInsightBootstrapScript -label "RedisInsight bootst
 
 Write-Step "Bootstrapping Redis"
 & $redisBootstrapScript `
+  -ProjectName $ProjectName `
   -ComposeFile $RedisComposeFile `
   -ServiceName $RedisServiceName `
   -RedisUsername $RedisUsername `
@@ -51,6 +53,7 @@ Write-Step "Bootstrapping Redis"
 
 Write-Step "Bootstrapping RedisInsight"
 & $redisInsightBootstrapScript `
+  -ProjectName $ProjectName `
   -ComposeFile $RedisInsightComposeFile `
   -ServiceName $RedisInsightServiceName `
   -UiUrl $RedisInsightUiUrl `

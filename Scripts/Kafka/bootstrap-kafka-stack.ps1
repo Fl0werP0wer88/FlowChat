@@ -11,7 +11,7 @@ Run:
 #>
 
 param(
-  [string]$ProjectName = "flowchat-kafka",
+  [string]$ProjectName = "flowchat",
   [string]$KafkaComposeFile = ".\docker-compose.kafka.yml",
   [string]$UiComposeFile = ".\docker-compose.kafka-ui.yml",
   [string]$KafkaServiceName = "broker",
@@ -37,7 +37,7 @@ function Assert-Command($cmd) {
 Assert-Command "docker"
 
 Write-Step "Starting Kafka + Kafka UI as one compose project: $ProjectName"
-docker compose -p $ProjectName -f $KafkaComposeFile -f $UiComposeFile up -d --remove-orphans | Out-Null
+docker compose -p $ProjectName -f $KafkaComposeFile -f $UiComposeFile up -d | Out-Null
 
 $ensureScript = Join-Path $PSScriptRoot "ensure-kafka-topics.ps1"
 if (-not (Test-Path $ensureScript)) {

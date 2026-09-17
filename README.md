@@ -408,7 +408,10 @@ For a first-time setup, run the idempotent bootstrap from the repository root:
 The script validates the required host tools, pulls and starts all Docker infrastructure,
 restores the backend and frontend dependencies, builds both applications, and applies all
 database migrations. It does not install host tools or delete existing databases, topics,
-or Docker volumes. Infisical and the observability stack are included by default.
+or Docker volumes. Infisical and the observability stack are included by default. All
+containers are grouped as the single `flowchat` Docker Compose project in Docker Desktop.
+When upgrading from the earlier bootstrap scripts, setup safely replaces their legacy
+Compose groups while retaining the existing Docker volumes.
 
 Optional switches:
 
