@@ -32,7 +32,8 @@ ensure_volume() { docker volume inspect "$1" >/dev/null 2>&1 || docker volume cr
 ensure_network() { docker network inspect "$1" >/dev/null 2>&1 || docker network create "$1" >/dev/null; }
 
 wait_http() {
-  local url=$1 timeout=$2 name=${3:-$1} deadline=$((SECONDS + timeout))
+  local url=$1 timeout=$2 name=${3:-$1}
+  local deadline=$((SECONDS + timeout))
   step "Waiting for $name at $url"
   until curl --silent --show-error --fail --max-time 5 --output /dev/null "$url" 2>/dev/null; do
     ((SECONDS < deadline)) || { printf '%s did not become ready within %ss\n' "$name" "$timeout" >&2; return 1; }
@@ -47,7 +48,8 @@ compose_project_container() {
 }
 
 wait_kafka() {
-  local container=$1 binary=$2 server=$3 timeout=$4 deadline=$((SECONDS + timeout))
+  local container=$1 binary=$2 server=$3 timeout=$4
+  local deadline=$((SECONDS + timeout))
   until docker exec "$container" "$binary" --bootstrap-server "$server" --list >/dev/null 2>&1; do
     ((SECONDS < deadline)) || { printf 'Kafka did not become ready within %ss\n' "$timeout" >&2; return 1; }
     sleep 2
@@ -55,7 +57,8 @@ wait_kafka() {
 }
 
 wait_postgres() {
-  local container=$1 user=$2 database=$3 password=$4 timeout=$5 deadline=$((SECONDS + timeout))
+  local container=$1 user=$2 database=$3 password=$4 timeout=$5
+  local deadline=$((SECONDS + timeout))
   until docker exec -e "PGPASSWORD=$password" "$container" pg_isready --username="$user" --dbname="$database" >/dev/null 2>&1; do
     ((SECONDS < deadline)) || { printf 'PostgreSQL did not become ready within %ss\n' "$timeout" >&2; return 1; }
     sleep 2
