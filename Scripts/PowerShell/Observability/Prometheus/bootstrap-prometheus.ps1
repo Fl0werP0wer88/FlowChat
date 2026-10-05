@@ -1,0 +1,119 @@
+#requires -Version 5.1
+<#
+Idempotent Prometheus bootstrap:
+- Ensures the shared observability Docker network exists
+- Starts Prometheus via docker compose
+- Waits until Prometheus reports ready
+
+Run:
+  .\bootstrap-prometheus.ps1
+#>
+
+param(
+  [string]$ComposeFile = (Join-Path $PSScriptRoot "../../../Infrastructure/Observability/Prometheus/docker-compose.yml"),
+  [string]$ConfigFile = (Join-Path $PSScriptRoot "../../../Infrastructure/Observability/Prometheus/prometheus.yml"),
+  [string]$ServiceName = "prometheus",
+  [string]$NetworkName = "flowchat-observability",
+  [string]$ReadyUrl = "http://localhost:9090/-/ready",
+  [int]$TimeoutSeconds = 120
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+function Write-Step([string]$msg) {
+  Write-Host "`n==> $msg"
+}
+
+function Assert-Command([string]$cmd) {
+  if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+    throw "Missing required command: $cmd. Make sure it is installed and available in PATH."
+  }
+}
+
+function Resolve-InputPath([string]$path) {
+  if ([System.IO.Path]::IsPathRooted($path)) {
+    return $path
+  }
+
+  return Join-Path (Resolve-Path (Join-Path $PSScriptRoot "../../../Infrastructure/Observability/Prometheus")) $path
+}
+
+function Assert-PathExists([string]$path, [string]$label) {
+  if (-not (Test-Path $path)) {
+    throw "Missing ${label}: $path"
+  }
+}
+
+function Ensure-Network([string]$networkName) {
+  Write-Step "Ensuring Docker network exists: $networkName"
+
+  $old = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    docker network inspect $networkName 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      docker network create $networkName | Out-Null
+    }
+  } finally {
+    $ErrorActionPreference = $old
+  }
+}
+
+function Get-ProjectDirectory() {
+  return (Resolve-Path (Join-Path $PSScriptRoot "../../../Infrastructure/Observability")).Path
+}
+
+function Get-ComposeArgs([string]$composeFile) {
+  return @("--project-directory", (Get-ProjectDirectory), "-f", $composeFile)
+}
+
+function Get-ContainerIdForService([string]$composeFile, [string]$service) {
+  $composeArgs = Get-ComposeArgs -composeFile $composeFile
+  (docker compose @composeArgs ps -q $service 2>$null).Trim()
+}
+
+function Wait-ForHttpOk([string]$url, [int]$timeoutSeconds, [string]$displayName) {
+  Write-Step "Waiting for $displayName at $url (timeout ${timeoutSeconds}s)..."
+  $deadline = (Get-Date).AddSeconds($timeoutSeconds)
+
+  while ((Get-Date) -lt $deadline) {
+    try {
+      $resp = Invoke-WebRequest -Uri $url -Method Get -UseBasicParsing -TimeoutSec 5
+      if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 400) {
+        Write-Host "$displayName is ready."
+        return
+      }
+    } catch {
+    }
+
+    Start-Sleep -Seconds 2
+  }
+
+  throw "$displayName did not become ready within ${timeoutSeconds}s. Check logs: docker logs flowchat-prometheus"
+}
+
+$ComposeFile = Resolve-InputPath $ComposeFile
+$ConfigFile = Resolve-InputPath $ConfigFile
+
+Assert-Command "docker"
+Assert-PathExists $ComposeFile "compose file"
+Assert-PathExists $ConfigFile "Prometheus config"
+
+Ensure-Network -networkName $NetworkName
+
+Write-Step "Starting Prometheus via docker compose"
+$composeArgs = Get-ComposeArgs -composeFile $ComposeFile
+docker compose @composeArgs up -d --remove-orphans | Out-Null
+
+$containerId = Get-ContainerIdForService -composeFile $ComposeFile -service $ServiceName
+if ([string]::IsNullOrWhiteSpace($containerId)) {
+  throw "Could not find container for service '$ServiceName'. Check: docker compose -f $ComposeFile ps"
+}
+
+Write-Step "Using container id: $containerId"
+Wait-ForHttpOk -url $ReadyUrl -timeoutSeconds $TimeoutSeconds -displayName "Prometheus"
+
+Write-Step "Prometheus ready"
+Write-Host "URL : http://localhost:9090"

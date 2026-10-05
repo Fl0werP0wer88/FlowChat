@@ -390,38 +390,49 @@ Requirements:
 
 - .NET 10 SDK,
 - Node.js 20 or later,
-- Docker Desktop or a compatible Docker environment,
-- PowerShell,
+- Docker Engine with the Compose plugin or Docker Desktop,
+- Bash or PowerShell,
+- `jq`, `curl`, and `openssl` for the Bash bootstrap (`openssl` is used by Infisical),
 - optionally, VS Code with `FlowChat.code-workspace` open.
 
-Bootstrap scripts are located in `Scripts/PostgreSQL`, `Scripts/Kafka`, `Scripts/Redis`,
-`Scripts/MailHog`, `Scripts/Infisical`, and `Scripts/Observability`. You can start only
+Docker Compose files and configuration are located in `Scripts/Infrastructure/`,
+under `PostgreSQL`, `Kafka`, `Redis`, `MailHog`, `Infisical`, and `Observability`.
+Executable scripts are in matching `Scripts/Bash` and `Scripts/PowerShell` trees. You can start only
 the required components or the prepared stacks, such as Kafka with Kafka UI, Redis with
 RedisInsight, and the complete observability stack.
 
-For a first-time setup, run the idempotent bootstrap from the repository root:
+For a first-time setup on Ubuntu, run the bootstrap from the repository root:
+
+```bash
+./Scripts/Bash/setup-project.sh
+```
+
+On Windows with PowerShell, run:
 
 ```powershell
-.\Scripts\setup-project.ps1
+.\Scripts\PowerShell\setup-project.ps1
 ```
 
 The script validates the required host tools, pulls and starts all Docker infrastructure,
 restores the backend and frontend dependencies, builds both applications, and applies all
 database migrations. It does not install host tools or delete existing databases, topics,
 or Docker volumes. Infisical and the observability stack are included by default. All
-containers are grouped as the single `flowchat` Docker Compose project in Docker Desktop.
+containers are grouped as the single `flowchat` Docker Compose project in Docker Engine.
 When upgrading from the earlier bootstrap scripts, setup safely replaces their legacy
 Compose groups while retaining the existing Docker volumes.
 
 Optional switches:
 
 ```powershell
-.\Scripts\setup-project.ps1 -SkipPull
-.\Scripts\setup-project.ps1 -SkipBuild
-.\Scripts\setup-project.ps1 -SkipMigrations
-.\Scripts\setup-project.ps1 -SkipInfisical
-.\Scripts\setup-project.ps1 -SkipObservability
+.\Scripts\PowerShell\setup-project.ps1 -SkipPull
+.\Scripts\PowerShell\setup-project.ps1 -SkipBuild
+.\Scripts\PowerShell\setup-project.ps1 -SkipMigrations
+.\Scripts\PowerShell\setup-project.ps1 -SkipInfisical
+.\Scripts\PowerShell\setup-project.ps1 -SkipObservability
 ```
+
+The Bash equivalents use lower-case, hyphenated options, for example
+`./Scripts/Bash/setup-project.sh --skip-pull --skip-build`.
 
 If the ASP.NET Core development certificate is not trusted, the script prints the
 one-time `dotnet dev-certs https --trust` command. Once setup finishes, open
@@ -429,7 +440,8 @@ one-time `dotnet dev-certs https --trust` command. Once setup finishes, open
 
 Individual bootstrap scripts remain available when only one infrastructure component is
 needed. After starting PostgreSQL manually, migrations for all registered services can be
-applied with `./Scripts/PostgreSQL/migrate-all.ps1`.
+applied with `./Scripts/Bash/PostgreSQL/migrate-all.sh` or
+`./Scripts/PowerShell/PostgreSQL/migrate-all.ps1`.
 
 The backend can be started separately from each service solution or by using compounds
 in `FlowChat.code-workspace`. The default public gateway address in the development

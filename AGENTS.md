@@ -27,14 +27,14 @@ When asked to add a new service or any other bootable project/solution to the wo
   - Add matching build tasks for each launch configuration referenced in the local launch file
 - `{Service}/.vscode/settings.json`
   - Keep the local VS Code settings file in place so the service mirrors the existing per-service workspace setup
-- `Scripts/PostgreSQL/migrate-all.ps1`
-  - If the new service has `Persistence` plus a startup project, add it to `$services` so the bulk migration script includes it
+- `Scripts/Infrastructure/PostgreSQL/migration-services.json`
+  - If the new service has `Persistence` plus a startup project, add it to the shared service inventory so both bulk migration scripts include it
 - `Scripts/*`
-  - Review infrastructure scripts only when the new service introduces new shared resources such as database migrations, Kafka topics, Redis usage, or other dev-stack dependencies; today the only script with an explicit service inventory is `Scripts/PostgreSQL/migrate-all.ps1`
-- `Scripts/PostgreSQL/*`
+  - Review infrastructure scripts only when the new service introduces new shared resources such as database migrations, Kafka topics, Redis usage, or other dev-stack dependencies; the shared migration service inventory is `Scripts/Infrastructure/PostgreSQL/migration-services.json`
+- `Scripts/Infrastructure/PostgreSQL/*`
   - If the new service needs its own database, update the PostgreSQL scripts immediately so the database is created and maintained according to the existing rules, privileges, and naming conventions
   - Keep database naming aligned with the current pattern used by `bootstrap-postgres.ps1`, for example `flowchat_<service>_db`
-  - At minimum review `bootstrap-postgres.ps1`, `migrate-all.ps1`, and `reset-db.ps1` so bootstrap, bulk migration, and reset flows all include the new database consistently
+  - At minimum review the Bash and PowerShell versions of `bootstrap-postgres`, `migrate-all`, and `reset-db` so bootstrap, bulk migration, and reset flows all include the new database consistently
 - `AGENTS.md` and `CLAUDE.md`
   - Add the new service under `### Services` with its repo location (for example `{Service}/`) and a short responsibility/description in both files
   - Update any explicit service-specific examples or command lists in both files when the new service should be part of them
@@ -65,7 +65,7 @@ FlowChat is a microservices-based chat application built with .NET 10. Services 
 - **HarnessService** — dev-only general-purpose test harness for AAT-testing cross-cutting infrastructure patterns (projection pipeline, Kafka retry/DLQ isolation, etc.); located in `HarnessService/`
 
 ### Dev Infrastructure (Docker)
-Located in `Scripts/`: PostgreSQL, Kafka, MailHog, Observability stack.
+Located in `Scripts/Infrastructure/`: PostgreSQL, Kafka, MailHog, Observability stack.
 
 ## Architecture
 
@@ -340,5 +340,3 @@ Add comments only where they provide information that cannot be derived by readi
 - Do not put business logic in controllers or infrastructure layer
 - Do not raise domain events in `Restore(...)` factory methods
 - Do not introduce `DateTime` for timestamps or UTC values — use `DateTimeOffset` in UTC instead
-
-
